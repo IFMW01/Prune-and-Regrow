@@ -11,12 +11,11 @@ import utils
 from vgg import VGGish,VGG9
 # from transformer import SimpleViT
 
-def create_base_model(model,optimizer, scheduler,criterion,dataset_pointer,pipeline,save_path,device, n_epochs, seed):
-        train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline)
+def create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader):
         best_model,accuracies = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
         torch.save(best_model, f"{save_path}.pth")
         df_softmax_outputs = mi.mai_logits(best_model, train_loader, test_loader,device)
-        df_softmax_outputs.to_csv(f'{save_path}_softmax_outputs.csv',index = False)
+        df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
 
 
 def main(config):
@@ -42,14 +41,18 @@ def main(config):
     if training == 'Base':
         save_dir = f"{training}_{dataset_pointer}"
         utils.create_dir(save_dir)
+        save_dir = os.path.join(save_dir, f"{architecture}")
+        utils.create_dir(save_dir)
+        train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline)
         for i in range(len(seeds)):
+            save_dir = os.path.join(f"{training}_{dataset_pointer}", f"{architecture}")
             seed = seeds[i]
             utils.set_seed(seed)
             model,optimizer, scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
-            save_dir = os.path.join(f"{training}_{dataset_pointer}", f"{seed}")
+            save_path = os.path.join(save_dir, f"{seed}")
             utils.create_dir(save_dir)
-            save_path = f"{save_dir}\{architecture}_{seed}"
-            create_base_model(model,optimizer, scheduler,criterion,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
+            save_path = save_dir
+            create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader)
     print("FIN")
 
 if __name__ == "__main__":
