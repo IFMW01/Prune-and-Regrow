@@ -22,9 +22,9 @@ class VGGish(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2))
         self.embeddings = nn.Sequential(
-            nn.Linear(1024, 2048),
-            nn.ReLU(inplace=True),
             nn.Linear(2048, 4096),
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
             nn.Linear(4096, num_classes))
 

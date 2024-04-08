@@ -46,7 +46,7 @@ def initialise_model(architecture,n_inputs,n_classes):
     return model
 
 def create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed):
-        train_loader,valid_loader,test_loader,labels = ld.load_datasets(dataset_pointer,pipeline)
+        train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline)
         optimizer, scheduler,criterion = set_hyperparameters(model)
         best_model,accuracies = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
         torch.save(best_model, f"{save_path}.pth")
