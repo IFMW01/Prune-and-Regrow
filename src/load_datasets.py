@@ -16,7 +16,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,batch_size=256):
         pipeline_on_wav = WavToSpec()
 
     if dataset_pointer == 'SpeechCommands':
-        train_list = SubsetSC("training") 
+        train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")
         valid_list = SubsetSC("validation")
         print("Converting Train Set")
