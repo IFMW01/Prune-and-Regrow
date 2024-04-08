@@ -1,7 +1,7 @@
 import random
 import numpy as np
 import torch
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 from copy import deepcopy
 

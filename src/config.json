@@ -2,7 +2,7 @@
     "dataset_pointer": "SpeechCommands",
     "pipeline": "mel",
     "architecture": "VGGish",
-    "n_epochs": 20,
+    "n_epochs": 5,
     "training": "Base",
     "seeds": [42,92,19],
     "n_classes":35,

@@ -20,11 +20,11 @@ def load_model(path,architecture,in_channels,num_classes,device):
   criterion = torch.nn.CrossEntropyLoss()
   return model,optimizer,criterion
 
-def create_forget_set(forget_instances,train_set,seed):
+def create_forget_set(forget_instances_num,train_set,seed):
   tr.set_seed(seed)
   forget_set = []
   remain_set = train_set
-  for i in range(forget_instances):
+  for i in range(forget_instances_num):
     index = random.randint(0, (len(remain_set)-1))
     forget_set.append(remain_set[i])
     remain_set.pop(index)
@@ -38,7 +38,7 @@ def evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device):
     test_set_acc = tr.evaluate(model, test_loader, device)
     print(f"Staring test set Accuracy: {test_set_acc:.2f}")
 
-def naive(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epoch,seed):
+def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epoch,seed):
     naive_model,optimizer,scheduler,criterion = ut.initialise_model(architecture,in_channels,num_classes,device)
     naive_model.to(device)
     losses = []
@@ -108,7 +108,7 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
 
     # return model
 
-def GradientAscent(model,remain_loader,test_loader,forget_loader, optimizer, criterion, device, n_epoch, log_interval, seed):
+def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, criterion, device, n_epoch, log_interval, seed):
     tr.set_seed(seed)
     model.to(device)
     losses = []
