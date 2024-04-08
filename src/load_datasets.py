@@ -51,8 +51,9 @@ def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
         return
 
 class SubsetSC(SPEECHCOMMANDS):
-    def __init__(self):
+    def __init__(self,labels,subset: str = None):
         super().__init__("./", download=True)
+        self.labels = labels
 
     def load_list(self,filename):
         filepath = os.path.join(self._path, filename)
@@ -78,8 +79,8 @@ class SubsetSC(SPEECHCOMMANDS):
                     f.write(f"{line}\n")
             self._walker = self.__add__load_list("all_list.txt")
     
-    def label_to_index(self,labels,word):
-        return torch.tensor(labels.index(word))
+    def label_to_index(self,word):
+        return torch.tensor(self.labels.index(word))
 
     def index_to_label(labels,index):
         return labels[index]
