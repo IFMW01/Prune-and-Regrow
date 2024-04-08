@@ -16,19 +16,19 @@ def load_datasets(dataset_pointer :str,pipeline:str,batch_size=256):
         labels = np.load('./labels/lables.npy')
         labels = labels.tolist()
         speech_commands = SubsetSC()
-        train_list = speech_commands.get_subset("training")
-        test_list = speech_commands.get_subset("testing")
+        # train_list = speech_commands.get_subset("training")
+        # test_list = speech_commands.get_subset("testing")
         valid_list = speech_commands.get_subset("validation")
-        print(train_list[0])
-        print("Converting Train Set")
-        train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
-        print("Converting Test Set")
-        test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
+        # print("Converting Train Set")
+        # train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
+        # print("Converting Test Set")
+        # test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
         print("Converting Validation Set")
         valid_set = pp.convert_waveform(valid_list,pipeline_on_wav,False)
 
-        train_set,valid_set,test_set = loaders(batch_size,train_set,valid_set,test_set,SubsetSC.collate_fn)
-        return train_set,valid_set,test_set,labels
+        # train_set,valid_set,test_set = loaders(batch_size,train_set,valid_set,test_set,SubsetSC.collate_fn)
+        valid_set = loaders(batch_size,valid_set,SubsetSC.collate_fn)
+        return valid_set
 
     else:
         return
@@ -134,15 +134,15 @@ class WavToSpec(torch.nn.Module):
         spec = torch.from_numpy(librosa.power_to_db(spec))
         return spec
 
-def loaders(batch_size,train_set,valid_set,test_set,collate_fn):
-  train_loader = torch.utils.data.DataLoader(
-      train_set,
-      batch_size=batch_size,
-      shuffle=True,
-      num_workers=2,
-      pin_memory=True,
-      collate_fn = collate_fn
-  )
+def loaders(batch_size,valid_set,collate_fn):
+#   train_loader = torch.utils.data.DataLoader(
+#       train_set,
+#       batch_size=batch_size,
+#       shuffle=True,
+#       num_workers=2,
+#       pin_memory=True,
+#       collate_fn = collate_fn
+#   )
 
   valid_loader = torch.utils.data.DataLoader(
       valid_set,
@@ -152,14 +152,16 @@ def loaders(batch_size,train_set,valid_set,test_set,collate_fn):
       pin_memory=True,
       collate_fn = collate_fn
   )
+  return valid_loader
 
-  test_loader = torch.utils.data.DataLoader(
-      test_set,
-      batch_size=batch_size,
-      shuffle=False,
-      drop_last=False,
-      num_workers=2,
-      pin_memory=True,
-      collate_fn = collate_fn
-  )
-  return train_loader,valid_loader,test_loader
+#   test_loader = torch.utils.data.DataLoader(
+#       test_set,
+#       batch_size=batch_size,
+#       shuffle=False,
+#       drop_last=False,
+#       num_workers=2,
+#       pin_memory=True,
+#       collate_fn = collate_fn
+#   )
+#   return train_loader,valid_loader,test_loader
+    
