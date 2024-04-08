@@ -7,7 +7,7 @@ import training as tr
 import load_datasets as ld
 import membership_inference as mi
 from vgg import VGGish,VGG9
-from transformer import SimpleViT
+# from transformer import SimpleViT
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -30,23 +30,23 @@ def initialise_model(architecture,n_inputs,n_classes):
     if architecture == 'VGGish':
         model = VGGish(n_inputs,n_classes)
 
-    elif architecture == 'Transformer':
-        model  = SimpleViT(
-            image_size = 32,
-            patch_size = 32,
-            num_classes = n_classes,
-            dim = 1024,
-            depth = 6,
-            heads = 16,
-            mlp_dim = 2048
-        )
+    # elif architecture == 'Transformer':
+    #     model  = SimpleViT(
+    #         image_size = 32,
+    #         patch_size = 32,
+    #         num_classes = n_classes,
+    #         dim = 1024,
+    #         depth = 6,
+    #         heads = 16,
+    #         mlp_dim = 2048
+    #     )
 
     elif architecture == 'VGG9':
         model = VGG9()
     return model
 
-def create_base_model(model,save_path,device, n_epochs, seed):
-        train_loader,valid_loader,test_loader,labels = ld.load_datasets()
+def create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed):
+        train_loader,valid_loader,test_loader,labels = ld.load_datasets(dataset_pointer,pipeline)
         optimizer, scheduler,criterion = set_hyperparameters(model)
         best_model,accuracies = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
         torch.save(best_model, f"{save_path}.pth")
@@ -77,12 +77,12 @@ def main(config):
     model = initialise_model(architecture,n_inputs,n_classes)
             
     if training == 'Base':
-        save_dir = f"{training}+'_'{dataset_pointer}"
+        save_dir = f"{training}_{dataset_pointer}"
         create_dir(save_dir)
-        save_dir+= f"\{seed}" 
+        save_dir = os.path.join(save_dir, f"{seed}")
         create_dir(save_dir)
-        save_path = f"{save_dir}'\'{architecture}_{seed}"
-        create_base_model(model,save_path,device, n_epochs, seed)
+        save_path = f"{save_dir}\{architecture}_{seed}"
+        create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
     print("FIN")
 
 if __name__ == "__main__":
