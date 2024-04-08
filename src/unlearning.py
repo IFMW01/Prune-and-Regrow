@@ -32,11 +32,11 @@ def create_forget_set(forget_instances,train_set,seed):
 
 def evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device):
     forget_set_acc = tr.evaluate(model, forget_loader, device)
-    print(f"Staring forget set Accuracy: {forget_set_acc}")
+    print(f"Staring forget set Accuracy: {forget_set_acc:.2f}%")
     remain_set_acc = tr.evaluate(model, remain_loader, device)
-    print(f"Staring remain set Accuracy: {remain_set_acc}")
+    print(f"Staring remain set Accuracy: {remain_set_acc:.2f}%")
     test_set_acc = tr.evaluate(model, test_loader, device)
-    print(f"Staring test set Accuracy: {test_set_acc}")
+    print(f"Staring test set Accuracy: {test_set_acc:.2f}")
 
 def naive(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epoch,seed):
     naive_model,optimizer,scheduler,criterion = ut.initialise_model(architecture,in_channels,num_classes,device)
