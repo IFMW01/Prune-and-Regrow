@@ -4,15 +4,6 @@ import torch
 from tqdm import tqdm
 from copy import deepcopy
 
-
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
 def evaluate(model, dataloader, device):
     model.eval()
     correct = 0
@@ -52,7 +43,6 @@ def evaluate_test(model, test_loader, criterion, device):
     return test_loss, test_accuracy
 
 def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epoch, seed):
-    set_seed(seed)
     best_model = None
     best_accuracy = 0.0
     best_model_epoch = 0

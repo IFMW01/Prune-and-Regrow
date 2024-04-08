@@ -5,6 +5,7 @@ import training as tr
 import load_datasets
 import random
 import main as m
+import utils as ut
 from vgg import VGGish, VGG9
 from tqdm import tqdm
 
@@ -37,16 +38,46 @@ def evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device):
     test_set_acc = tr.evaluate(model, test_loader, device)
     print(f"Staring test set Accuracy: {test_set_acc}")
 
-def naive(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epoch,seed):
-    naive_model = m.initialise_model(architecture,in_channels,num_classes,device)
-    model.to(device)
-    optimizer = optim.SGD(model.parameters(), lr=0.01,momentum=0.9)
-    criterion = torch.nn.CrossEntropyLoss()
-    tr.set_seed(seed)
+def naive(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epoch,seed):
+    naive_model,optimizer,scheduler,criterion = ut.initialise_model(architecture,in_channels,num_classes,device)
+    naive_model.to(device)
     losses = []
     accuracies = []
-    evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
+    evaluate_forget_set(naive_model,forget_loader,remain_loader,test_loader,device)
 
+    for epoch in tqdm(range(1, n_epoch + 1)):
+        naive_model.train()
+        epoch_loss = 0.0
+
+        for batch_idx, (data, target) in enumerate(remain_loader):
+            data = data.to(device)
+            target = target.to(device)
+
+            optimizer.zero_grad()
+            output = naive_model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+
+        epoch_loss /= len(remain_loader)
+        accuracy = tr.evaluate(naive_model, remain_loader, device)
+        accuracies.append(accuracy)
+
+        losses.append(epoch_loss)
+
+        test_loss, test_accuracy = tr.evaluate_test(naive_model, test_loader, criterion, device)
+        forget_loss, forget_accuracy = tr.evaluate_test(naive_model, forget_loader, criterion, device)
+        print(f"Epoch: {epoch}/{n_epoch}\tRemain Loss: {epoch_loss:.6f}\tRemain Accuracy: {accuracy:.2f}%")
+        print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
+        print(f'Forget Loss: {forget_loss:.6f}, Forget Accuracy: {forget_accuracy:.2f}%')
+  
+def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epoch, log_interval,seed):
+    losses = []
+    accuracies = []
+    model.to(device)
+    evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
     for epoch in tqdm(range(1, n_epoch + 1)):
         model.train()
         epoch_loss = 0.0
@@ -64,13 +95,49 @@ def naive(architecture,in_channels,num_classes,device,remain_loader,forget_loade
             epoch_loss += loss.item()
 
         epoch_loss /= len(remain_loader)
-        accuracy = evaluate(model, remain_loader, device)
+        accuracy = tr.evaluate(model, remain_loader, device)
         accuracies.append(accuracy)
 
         losses.append(epoch_loss)
 
-        test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
-        forget_loss, forget_accuracy = evaluate_test(model, forget_loader, criterion, device)
+        test_loss, test_accuracy = tr.evaluate_test(model, test_loader, criterion, device)
+        forget_loss, forget_accuracy = tr.evaluate_test(model, forget_loader, criterion, device)
         print(f"Epoch: {epoch}/{n_epoch}\tRemain Loss: {epoch_loss:.6f}\tRemain Accuracy: {accuracy:.2f}%")
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
         print(f'Forget Loss: {forget_loss:.6f}, Forget Accuracy: {forget_accuracy:.2f}%')
+
+    # return model
+
+def GradientAscent(model,remain_loader,test_loader,forget_loader, optimizer, criterion, device, n_epoch, log_interval, seed):
+    tr.set_seed(seed)
+    model.to(device)
+    losses = []
+    accuracies = []
+    evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
+    for epoch in tqdm(range(1, n_epoch + 1)):
+        epoch_loss = 0.0
+        model.train()
+
+        for batch_idx, (data, target) in enumerate(forget_loader):
+            data = data.to(device)
+            target = target.to(device)
+            optimizer.zero_grad()
+            output = model(data)
+            loss = -criterion(output, target)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+
+        epoch_loss /= len(forget_loader)
+        accuracy = tr.evaluate(model, forget_loader, device)
+        accuracies.append(accuracy)
+
+        losses.append(epoch_loss)
+
+        remain_loss, remain_accuracy = tr.evaluate_test(model, remain_loader, criterion, device)
+        test_loss, test_accuracy = tr.evaluate_test(model, test_loader, criterion, device)
+        print(f"Epoch: {epoch}/{n_epoch}\tForget Loss: {epoch_loss:.6f}\tForget Accuracy: {accuracy:.2f}%")
+        print(f'Remain Loss: {remain_loss:.6f}, Remain Accuracy: {remain_accuracy:.2f}%')
+        print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
+    return model

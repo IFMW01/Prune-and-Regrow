@@ -6,48 +6,13 @@ import os
 import training as tr
 import load_datasets as ld
 import membership_inference as mi
+import utils as ut
+
 from vgg import VGGish,VGG9
 # from transformer import SimpleViT
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-def set_hyperparameters(model):
-    optimizer = optim.SGD(model.parameters(), lr=0.01,momentum=0.9)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
-    criterion = nn.CrossEntropyLoss()
-    return optimizer, scheduler,criterion
-
-def get_device():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    return device
-
-def create_dir(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-def initialise_model(architecture,n_inputs,n_classes):
-    if architecture == 'VGGish':
-        model = VGGish(n_inputs,n_classes)
-
-    # elif architecture == 'Transformer':
-    #     model  = SimpleViT(
-    #         image_size = 32,
-    #         patch_size = 32,
-    #         num_classes = n_classes,
-    #         dim = 1024,
-    #         depth = 6,
-    #         heads = 16,
-    #         mlp_dim = 2048
-    #     )
-
-    elif architecture == 'VGG9':
-        model = VGG9()
-    return model
-
-def create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed):
+def create_base_model(model,optimizer, scheduler,criterion,dataset_pointer,pipeline,save_path,device, n_epochs, seed):
         train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline)
-        optimizer, scheduler,criterion = set_hyperparameters(model)
         best_model,accuracies = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
         torch.save(best_model, f"{save_path}.pth")
         df_softmax_outputs = mi.mai_logits(best_model, train_loader, test_loader,device)
@@ -72,18 +37,19 @@ def main(config):
     print(f"Training: {training}")
     print(f"Seeds: {seeds}")
 
-    device = get_device()
+    device = ut.get_device()
             
     if training == 'Base':
         save_dir = f"{training}_{dataset_pointer}"
-        create_dir(save_dir)
+        ut.create_dir(save_dir)
         for i in range(len(seeds)):
-            model = initialise_model(architecture,n_inputs,n_classes)
             seed = seeds[i]
+            ut.set_seed(seed)
+            model,optimizer, scheduler,criterion = ut.initialise_model(architecture,n_inputs,n_classes,device)
             save_dir = os.path.join(f"{training}_{dataset_pointer}", f"{seed}")
-            create_dir(save_dir)
+            ut.create_dir(save_dir)
             save_path = f"{save_dir}\{architecture}_{seed}"
-            create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
+            create_base_model(model,optimizer, scheduler,criterion,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
     print("FIN")
 
 if __name__ == "__main__":
