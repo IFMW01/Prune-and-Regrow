@@ -8,6 +8,7 @@ import main as m
 import utils
 from vgg import VGGish, VGG9
 from tqdm import tqdm
+from copy import deepcopy
 
 def load_model(path,architecture,in_channels,num_classes,device):
   if architecture == 'VGGish':
@@ -38,6 +39,7 @@ def evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device):
     test_set_acc = tr.evaluate(model, test_loader, device)
     print(f"Staring test set Accuracy: {test_set_acc:.2f}")
 
+# NAIVE  UNLEARNING
 def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epoch,seed):
     naive_model,optimizer,scheduler,criterion = utils.initialise_model(architecture,in_channels,num_classes,device)
     naive_model.to(device)
@@ -108,6 +110,8 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
 
     return model
 
+# GRADIENT ASCENT UNLEARNING
+
 def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, criterion, device, n_epoch, log_interval, seed):
     tr.set_seed(seed)
     model.to(device)
@@ -154,7 +158,7 @@ def fine_tuning_unlearning(path,architecture,in_channels,num_classes,device,rema
    return model
 
 
-# KD UNLEARNING
+# STOCHASTIC TEACHER UNLEARNING
 
 def train_knowledge_distillation(optimizer,criterion,teacher, student, train_loader, epochs, T, soft_target_loss_weight,ce_loss_weight,device):
     teacher.eval()  # Teacher set to evaluation mode
@@ -194,6 +198,33 @@ def train_knowledge_distillation(optimizer,criterion,teacher, student, train_loa
 
         print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss / len(train_loader)}")
     return student
+
+def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,optimizer_bt,optimizer_gt,criterion_bt,criterion_gt,device,in_channels,num_classes,architecture='VGGish'):
+  model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
+  model.to(device)
+  optimizer_bt = optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
+  optimizer_gt = optim.SGD(model.parameters(), lr=0.01,momentum=0.9)
+
+
+  if architecture =='VGGish':
+    stochastic_teacher = VGGish(in_channels,num_classes)
+
+  evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
+  orignial_model = deepcopy(model)
+  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher, student=model, train_loader=forget_loader, epochs=1, T=1, soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
+  retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model, student=erased_model, train_loader=remain_loader, epochs=1, T=1, soft_target_loss_weight=0,ce_loss_weight=1,device=device)
+
+  erased_forget_acc = tr.evaluate(erased_model, forget_loader, device)
+  print(f"Erased model forget set ACC: {erased_forget_acc}")
+
+  retrained_forget_acc = tr.evaluate(retrained_model, forget_loader, device)
+  print(f"Retrained model forget set ACC: {retrained_forget_acc}")
+
+  retrained_remain_acc = tr.evaluate(retrained_model, remain_loader, device)
+  print(f"Retrained model remain set ACC: {retrained_remain_acc}")
+
+  retrained_test_acc = tr.evaluate(retrained_model, test_loader, device)
+  print(f"Retrained model test set ACC: {retrained_test_acc}")
 
    
    
