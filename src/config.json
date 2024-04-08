@@ -4,7 +4,7 @@
     "architecture": "VGGish",
     "n_epochs": 40,
     "training": "Base",
-    "seed": 42,
+    "seeds": [42,92,19],
     "n_classes":35,
     "n_inputs":1
 }

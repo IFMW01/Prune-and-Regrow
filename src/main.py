@@ -60,7 +60,7 @@ def main(config):
     architecture = config.get("architecture", None)
     n_epochs = config.get("n_epochs", None)
     training = config.get("training", None)
-    seed = config.get("seed", None)
+    seeds = config.get("seeds", None)
     n_classes = config.get("n_classes", None)
     n_inputs = config.get("n_inputs", None)
 
@@ -70,7 +70,7 @@ def main(config):
     print(f"Architecture: {architecture}")
     print(f"Number of epochs: {n_epochs}")
     print(f"Training: {training}")
-    print(f"Seed: {seed}")
+    print(f"Seeds: {seeds}")
 
     device = get_device()
 
@@ -79,10 +79,12 @@ def main(config):
     if training == 'Base':
         save_dir = f"{training}_{dataset_pointer}"
         create_dir(save_dir)
-        save_dir = os.path.join(save_dir, f"{seed}")
-        create_dir(save_dir)
-        save_path = f"{save_dir}\{architecture}_{seed}"
-        create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
+        for i in range(len(seeds)):
+            seed = seeds[i]
+            save_dir = os.path.join(f"{training}_{dataset_pointer}", f"{seed}")
+            create_dir(save_dir)
+            save_path = f"{save_dir}\{architecture}_{seed}"
+            create_base_model(model,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
     print("FIN")
 
 if __name__ == "__main__":
