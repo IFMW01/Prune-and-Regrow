@@ -15,7 +15,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,batch_size=256):
     if dataset_pointer == 'SpeechCommands':
         labels = np.load('./labels/lables.npy')
         labels = labels.tolist()
-        speech_commands = SubsetSC()
+        speech_commands = SubsetSC(labels)
         # train_list = speech_commands.get_subset("training")
         # test_list = speech_commands.get_subset("testing")
         valid_list = speech_commands.get_subset("validation")
