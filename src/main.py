@@ -73,13 +73,12 @@ def main(config):
     print(f"Seeds: {seeds}")
 
     device = get_device()
-
-    model = initialise_model(architecture,n_inputs,n_classes)
             
     if training == 'Base':
         save_dir = f"{training}_{dataset_pointer}"
         create_dir(save_dir)
         for i in range(len(seeds)):
+            model = initialise_model(architecture,n_inputs,n_classes)
             seed = seeds[i]
             save_dir = os.path.join(f"{training}_{dataset_pointer}", f"{seed}")
             create_dir(save_dir)
