@@ -57,9 +57,6 @@ def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, d
     best_accuracy = 0.0
     best_model_epoch = 0
     best_test_accuracy = 0,
-    best_test_loss = float('inf'),
-    best_valid_accuracy = 0,
-    best_valid_loss = float('inf')
     early_stop_accuracy = 0
 
 
@@ -84,8 +81,9 @@ def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, d
 
       accuracy = evaluate(model, train_loader, device)
       accuracies.append(accuracy)
-
-      valid_accuracy = evaluate(model, valid_loader, device)
+      valid_loss, valid_accuracy = evaluate_test(model, valid_loader, criterion, device)
+      test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
+      
       if valid_accuracy > best_accuracy:
           best_accuracy = valid_accuracy
           best_model = deepcopy(model)
@@ -95,15 +93,16 @@ def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, d
 
       epoch_loss /= len(train_loader)
       losses.append(epoch_loss)
-      print(f"Epoch: {epoch}/{n_epoch}\tTrain Loss: {epoch_loss:.6f}\tTrain Accuracy: {accuracy:.2f}%")
-      test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
-      print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
+      print(f"Epoch: {epoch}/{n_epoch}\tTrain loss: {epoch_loss:.6f}\tTrain accuracy: {accuracy:.2f}%")
+      print(f'Validation loss: {valid_loss:.6f}, Validation accuracy: {valid_accuracy:.2f}%')
+      print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%')
+      
 
     print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {early_stop_accuracy:.2f}\t Valid accuracy: {best_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-    # plt.plot(losses)
-    # plt.title("Training Loss")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.show()
+    plt.plot(losses)
+    plt.title("Training Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.show()
 
     return best_model,accuracies

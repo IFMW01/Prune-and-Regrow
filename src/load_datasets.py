@@ -13,7 +13,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,batch_size=256):
         pipeline_on_wav = WavToSpec()
 
     if dataset_pointer == 'SpeechCommands':
-        labels = np.load('src/SpeechCommands/lables.npy')
+        labels = np.load('src/labels/lables.npy')
         labels = labels.tolist()
         train_list = SubsetSC.get_subset("training")
         test_list = SubsetSC.get_subset("testing")
