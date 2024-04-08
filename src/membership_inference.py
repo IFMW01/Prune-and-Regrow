@@ -25,7 +25,7 @@ def mai_logits(model, train_loader, test_loader,device):
             logits_softmax = nn.Softmax(dim=1)(logits_train)
             numpy_logits_train = logits_softmax.cpu().numpy()
             df_logit_train = pd.DataFrame(numpy_logits_train)
-            df_train = df_train.append(df_logit_train, ignore_index=True)
+            df_train = pd.concat([df_train, df_logit_train], ignore_index=True)
     df_train['label'] = 0
 
     # Process test set
@@ -36,9 +36,9 @@ def mai_logits(model, train_loader, test_loader,device):
             logit_test_softmax = nn.Softmax(dim=1)(logits_test)
             numpy_logits_test = logit_test_softmax.cpu().numpy()
             df_logit_test = pd.DataFrame(numpy_logits_test)
-            df_test = df_test.append(df_logit_test, ignore_index=True)
+            df_test = pd.concat([df_test, df_logit_test], ignore_index=True)
     df_test['label'] = 1
 
-    df_all = df_train.append(df_test,ignore_index=True)
+    df_all = pd.concat([df_train, df_test], ignore_index=True)
 
     return df_all

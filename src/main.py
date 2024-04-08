@@ -6,7 +6,7 @@ import os
 import training as tr
 import load_datasets as ld
 import membership_inference as mi
-import utils as ut
+import utils 
 
 from vgg import VGGish,VGG9
 # from transformer import SimpleViT
@@ -37,17 +37,17 @@ def main(config):
     print(f"Training: {training}")
     print(f"Seeds: {seeds}")
 
-    device = ut.get_device()
+    device = utils.get_device()
             
     if training == 'Base':
         save_dir = f"{training}_{dataset_pointer}"
-        ut.create_dir(save_dir)
+        utils.create_dir(save_dir)
         for i in range(len(seeds)):
             seed = seeds[i]
-            ut.set_seed(seed)
-            model,optimizer, scheduler,criterion = ut.initialise_model(architecture,n_inputs,n_classes,device)
+            utils.set_seed(seed)
+            model,optimizer, scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
             save_dir = os.path.join(f"{training}_{dataset_pointer}", f"{seed}")
-            ut.create_dir(save_dir)
+            utils.create_dir(save_dir)
             save_path = f"{save_dir}\{architecture}_{seed}"
             create_base_model(model,optimizer, scheduler,criterion,dataset_pointer,pipeline,save_path,device, n_epochs, seed)
     print("FIN")

@@ -5,7 +5,7 @@ import training as tr
 import load_datasets
 import random
 import main as m
-import utils as ut
+import utils
 from vgg import VGGish, VGG9
 from tqdm import tqdm
 
@@ -39,7 +39,7 @@ def evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device):
     print(f"Staring test set Accuracy: {test_set_acc:.2f}")
 
 def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epoch,seed):
-    naive_model,optimizer,scheduler,criterion = ut.initialise_model(architecture,in_channels,num_classes,device)
+    naive_model,optimizer,scheduler,criterion = utils.initialise_model(architecture,in_channels,num_classes,device)
     naive_model.to(device)
     losses = []
     accuracies = []
@@ -73,7 +73,7 @@ def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,f
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
         print(f'Forget Loss: {forget_loss:.6f}, Forget Accuracy: {forget_accuracy:.2f}%')
   
-def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epoch, log_interval,seed):
+def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epoch):
     losses = []
     accuracies = []
     model.to(device)
@@ -106,7 +106,7 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
         print(f'Forget Loss: {forget_loss:.6f}, Forget Accuracy: {forget_accuracy:.2f}%')
 
-    # return model
+    return model
 
 def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, criterion, device, n_epoch, log_interval, seed):
     tr.set_seed(seed)
@@ -140,4 +140,8 @@ def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, cr
         print(f"Epoch: {epoch}/{n_epoch}\tForget Loss: {epoch_loss:.6f}\tForget Accuracy: {accuracy:.2f}%")
         print(f'Remain Loss: {remain_loss:.6f}, Remain Accuracy: {remain_accuracy:.2f}%')
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
+        
+    optimizer,scheduler,criterion = utils.set_hyperparameters(model,lr=0.05)
+    print("\nFINE TUNING")
+    model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, 4)
     return model
