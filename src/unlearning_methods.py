@@ -31,7 +31,7 @@ def create_forget_set(forget_instances_num,train_set,seed):
     remain_set.pop(index)
   return forget_set, remain_set
 
-def evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device):
+def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device):
     forget_set_acc = tr.evaluate(model, forget_loader, device)
     print(f"Staring forget set Accuracy: {forget_set_acc:.2f}%")
     remain_set_acc = tr.evaluate(model, remain_loader, device)
@@ -45,7 +45,7 @@ def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,f
     naive_model.to(device)
     losses = []
     accuracies = []
-    evaluate_forget_set(naive_model,forget_loader,remain_loader,test_loader,device)
+    evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
 
     for epoch in tqdm(range(1, n_epoch + 1)):
         naive_model.train()
@@ -79,7 +79,7 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
     losses = []
     accuracies = []
     model.to(device)
-    evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
+    evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
     for epoch in tqdm(range(1, n_epoch + 1)):
         model.train()
         epoch_loss = 0.0
@@ -117,7 +117,7 @@ def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, cr
     model.to(device)
     losses = []
     accuracies = []
-    evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
+    evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
     for epoch in tqdm(range(1, n_epoch + 1)):
         epoch_loss = 0.0
         model.train()
@@ -209,9 +209,11 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
   if architecture =='VGGish':
     stochastic_teacher = VGGish(in_channels,num_classes)
 
-  evaluate_forget_set(model,forget_loader,remain_loader,test_loader,device)
+  evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
   orignial_model = deepcopy(model)
   erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher, student=model, train_loader=forget_loader, epochs=1, T=1, soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
+  evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
+
   retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model, student=erased_model, train_loader=remain_loader, epochs=1, T=1, soft_target_loss_weight=0,ce_loss_weight=1,device=device)
 
   erased_forget_acc = tr.evaluate(erased_model, forget_loader, device)

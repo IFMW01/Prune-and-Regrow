@@ -51,6 +51,7 @@ def main(config):
             model,optimizer, scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
             save_dir = os.path.join(save_dir, f"{seed}")
             utils.create_dir(save_dir)
+            print(save_dir)
             save_path = save_dir
             create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader)
     print("FIN")
