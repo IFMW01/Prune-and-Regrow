@@ -45,7 +45,8 @@ def evaluate_test(model, test_loader, criterion, device):
 
 def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epoch, seed):
     best_model = None
-    best_accuracy = 0.0
+    best_validtion_accuracy = 0.0
+    best_validtion_loss = float('inf')
     best_model_epoch = 0
     best_test_accuracy = 0,
     early_stop_accuracy = 0
@@ -75,8 +76,9 @@ def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, d
       valid_loss, valid_accuracy = evaluate_test(model, valid_loader, criterion, device)
       test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
       
-      if valid_accuracy > best_accuracy:
-          best_accuracy = valid_accuracy
+      if valid_accuracy > best_validtion_accuracy:
+          best_validtion_accuracy = (round(valid_accuracy,2))
+          best_validtion_loss = (round(valid_loss, 3)) 
           best_model = deepcopy(model)
           best_model_epoch = epoch
           best_test_loss, best_test_accuracy = evaluate_test(best_model, test_loader, criterion, device)
@@ -89,11 +91,11 @@ def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, d
       print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%')
       
 
-    print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {early_stop_accuracy:.2f}\t Valid accuracy: {best_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
+    print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {early_stop_accuracy:.2f}\t Valid accuracy: {best_validtion_accuracy}\t Test accuracy: {best_test_accuracy:.2f}")
     plt.plot(losses)
     plt.title("Training Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.show()
 
-    return best_model,accuracies
+    return best_model,best_validtion_accuracy,best_validtion_loss
