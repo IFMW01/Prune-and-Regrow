@@ -19,6 +19,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
         if unlearnng:
              train_list = SubsetSC("testing") 
              test_list = SubsetSC("testing")
+             train_set,test_set,valid_set = convert_sets_unlearn(train_list,test_list,pipeline_on_wav)
              return train_list,test_list
         else:
             train_list = SubsetSC("testing") 
@@ -38,6 +39,12 @@ def convert_sets(train_list,test_list,valid_list,pipeline_on_wav):
     test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
     valid_set = pp.convert_waveform(valid_list,pipeline_on_wav,False)
     return train_set,test_set,valid_set
+
+def convert_sets_unlearn(train_list,test_list,pipeline_on_wav):
+    print("Converting datasets")
+    train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
+    test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
+    return train_set,test_set
 
 
 def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
