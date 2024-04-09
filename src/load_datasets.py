@@ -19,8 +19,8 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
         if unlearnng:
              train_list = SubsetSC("testing") 
              test_list = SubsetSC("testing")
-             train_set,test_set,valid_set = convert_sets_unlearn(train_list,test_list,pipeline_on_wav)
-             return train_list,test_list
+             train_set,test_set = convert_sets_unlearn(train_list,test_list,pipeline_on_wav)
+             return train_set,test_set
         else:
             train_list = SubsetSC("testing") 
             test_list = SubsetSC("testing")

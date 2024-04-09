@@ -43,7 +43,7 @@ def main(config):
 
     device = utils.get_device()
     model_dir = f'TRAIN/{dataset_pointer}/{architecture}'
-    if not os.IsADirectoryError(model_dir):
+    if not os.path.exists(model_dir):
         print(f"There are no models with this {architecture} for this {dataset_pointer} in the TRAIN directory. Please train relevant models")
         return
     else:
@@ -58,12 +58,13 @@ def main(config):
             model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
             save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_instances_num}/{seed}/"
             utils.create_dir(save_dir)
-
-            orginal_model,optimizer,criterion = um.load_model(model_dir,architecture,n_inputs,n_classes,device)
-            unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
-
             print(f"Acessing trained model on seed: {seed}")
             model_path = glob.glob(os.path.join(model_dir, '*.pth'))
+            model_path = model_path[0]
+            orginal_model,optimizer,criterion = um.load_model(model_path,architecture,n_inputs,n_classes,device)
+            unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
+
+
 
             naive_model = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,forget_loader,test_loader, n_epochs,seed)
             unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model')
