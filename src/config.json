@@ -3,7 +3,6 @@
     "pipeline": "mel",
     "architecture": "VGGish",
     "n_epochs": 5,
-    "training": "Base",
     "seeds": [42,92,19],
     "n_classes":35,
     "n_inputs":1,
