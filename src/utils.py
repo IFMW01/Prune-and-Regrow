@@ -88,3 +88,20 @@ def logits(model, train_loader, test_loader,device):
     df_all = pd.concat([df_train, df_test], ignore_index=True)
 
     return df_all
+
+def logits_unlearn(model, forget_loader,device):
+    model.to(device)
+
+    model.eval()
+    df_forget = pd.DataFrame()
+
+    # Process training set
+    for batch_idx, (data, target) in enumerate(tqdm(forget_loader)):
+        data, target = data.to(device), target.to(device)
+        with torch.no_grad():
+            logits_train = model(data)
+            logits_softmax = nn.Softmax(dim=1)(logits_train)
+            numpy_logits_forget = logits_softmax.cpu().numpy()
+            df_logit_forget = pd.DataFrame(numpy_logits_forget)
+            df_forget = pd.concat([df_forget, df_logit_forget], ignore_index=True)
+    return df_forget
