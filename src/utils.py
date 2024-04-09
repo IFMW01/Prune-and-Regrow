@@ -4,7 +4,9 @@ import torch.nn as nn
 import os
 import vgg 
 from vgg import VGGish, VGG9
+from tqdm import tqdm
 import numpy as np
+import pandas as pd
 import random
 
 def set_seed(seed):
@@ -52,3 +54,37 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     model.to(device)
     optimizer, scheduler,criterion = set_hyperparameters(model,lr) 
     return model,optimizer, scheduler,criterion
+
+def logits(model, train_loader, test_loader,device):
+    model.to(device)
+
+    model.eval()
+    df_train = pd.DataFrame()
+    df_test = pd.DataFrame()
+    df_all = pd.DataFrame()
+
+    # Process training set
+    for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
+        data, target = data.to(device), target.to(device)
+        with torch.no_grad():
+            logits_train = model(data)
+            logits_softmax = nn.Softmax(dim=1)(logits_train)
+            numpy_logits_train = logits_softmax.cpu().numpy()
+            df_logit_train = pd.DataFrame(numpy_logits_train)
+            df_train = pd.concat([df_train, df_logit_train], ignore_index=True)
+    df_train['label'] = 0
+
+    # Process test set
+    for data, target in test_loader:
+        data, target = data.to(device), target.to(device)
+        with torch.no_grad():
+            logits_test = model(data)
+            logit_test_softmax = nn.Softmax(dim=1)(logits_test)
+            numpy_logits_test = logit_test_softmax.cpu().numpy()
+            df_logit_test = pd.DataFrame(numpy_logits_test)
+            df_test = pd.concat([df_test, df_logit_test], ignore_index=True)
+    df_test['label'] = 1
+
+    df_all = pd.concat([df_train, df_test], ignore_index=True)
+
+    return df_all

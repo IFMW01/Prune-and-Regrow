@@ -1,14 +1,17 @@
 import vgg
 import torch
+import torch.nn as nn
 import torch.optim as optim
 import training as tr
 import load_datasets
 import random
 import main as m
 import utils
+import numpy as np
 from vgg import VGGish, VGG9
 from tqdm import tqdm
 from copy import deepcopy
+
 
 def load_model(path,architecture,in_channels,num_classes,device):
   if architecture == 'VGGish':
@@ -112,13 +115,14 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
 
 # GRADIENT ASCENT UNLEARNING
 
-def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, criterion, device, n_epoch, log_interval, seed):
+def gradient_ascent(path,architecture,in_channels,num_classes,remain_loader,test_loader,forget_loader, device, n_epoch_impair,n_epoch_repair, seed):
+    model,optimizer,criterion = load_model(path,architecture,in_channels,num_classes,device)
     tr.set_seed(seed)
     model.to(device)
     losses = []
     accuracies = []
     evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
-    for epoch in tqdm(range(1, n_epoch + 1)):
+    for epoch in tqdm(range(n_epoch_impair)):
         epoch_loss = 0.0
         model.train()
 
@@ -141,13 +145,13 @@ def gradient_ascent(model,remain_loader,test_loader,forget_loader, optimizer, cr
 
         remain_loss, remain_accuracy = tr.evaluate_test(model, remain_loader, criterion, device)
         test_loss, test_accuracy = tr.evaluate_test(model, test_loader, criterion, device)
-        print(f"Epoch: {epoch}/{n_epoch}\tForget Loss: {epoch_loss:.6f}\tForget Accuracy: {accuracy:.2f}%")
+        print(f"Epoch: {epoch}/{n_epoch_impair}\tForget Loss: {epoch_loss:.6f}\tForget Accuracy: {accuracy:.2f}%")
         print(f'Remain Loss: {remain_loss:.6f}, Remain Accuracy: {remain_accuracy:.2f}%')
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
 
     optimizer,scheduler,criterion = utils.set_hyperparameters(model,lr=0.05)
     print("\nFINE TUNING")
-    model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, 4)
+    model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epoch_repair)
     return model
 
 # FINE TUNE UNLEARNING
@@ -199,7 +203,7 @@ def train_knowledge_distillation(optimizer,criterion,teacher, student, train_loa
         print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss / len(train_loader)}")
     return student
 
-def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,optimizer_bt,optimizer_gt,criterion_bt,criterion_gt,device,in_channels,num_classes,architecture='VGGish'):
+def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,optimizer_bt,optimizer_gt,device,in_channels,num_classes,architecture='VGGish'):
   model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
   model.to(device)
   optimizer_bt = optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
@@ -230,3 +234,19 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
+  def global_unstructured_pruning(model, pruning_ratio):
+    all_weights = []
+    for param in model.parameters():
+        all_weights.append(param.data.view(-1))
+    all_weights = torch.cat(all_weights)
+    threshold = np.percentile(all_weights.cpu().numpy(), pruning_ratio)
+
+    for param in model.parameters():
+        param.data[param.data.abs() < threshold] = 0
+    return model
+
+  def omp_unlearning(path,architecture,in_channels,num_classes,device,forget_loader,remain_loader,test_loader,pruning_ratio):
+     model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
+     model = global_unstructured_pruning(model,pruning_ratio)
+
+  # CONSINE OMP PRUNE UNLEARNING
