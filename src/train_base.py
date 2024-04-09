@@ -38,7 +38,7 @@ def main(config):
     utils.create_dir(save_dir)
     save_dir = os.path.join(save_dir, f"{architecture}")
     utils.create_dir(save_dir)
-    train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline)
+    train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
         save_dir = os.path.join(f"TRAIN/{dataset_pointer}/{architecture}")
         utils.set_seed(seed)

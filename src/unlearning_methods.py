@@ -24,8 +24,8 @@ def load_model(path,architecture,in_channels,num_classes,device):
   criterion = torch.nn.CrossEntropyLoss()
   return model,optimizer,criterion
 
-def create_forget_remain_set(forget_instances_num,train_set,seed):
-  tr.set_seed(seed)
+def create_forget_remain_set(forget_instances_num,train_set,seed=42):
+  utils.set_seed(seed)
   forget_set = []
   remain_set = train_set
   for i in range(forget_instances_num):
@@ -43,7 +43,9 @@ def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,de
     print(f"Staring test set Accuracy: {test_set_acc:.2f}")
 
 # NAIVE  UNLEARNING
-def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,optimizer,criterion, n_epochs,seed):
+def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader, n_epochs,seed):
+    print("\nNaive Unlearning:")
+    utils.set_seed(seed)
     naive_model,optimizer,scheduler,criterion = utils.initialise_model(architecture,in_channels,num_classes,device)
     naive_model.to(device)
     losses = []
@@ -77,8 +79,10 @@ def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,f
         print(f"Epoch: {epoch}/{n_epochs}\tRemain Loss: {epoch_loss:.6f}\tRemain Accuracy: {accuracy:.2f}%")
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
         print(f'Forget Loss: {forget_loss:.6f}, Forget Accuracy: {forget_accuracy:.2f}%')
+    return naive_model
   
 def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs):
+    print("\nFine Tuning:")
     losses = []
     accuracies = []
     model.to(device)
@@ -116,8 +120,9 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
 # GRADIENT ASCENT UNLEARNING
 
 def gradient_ascent(path,architecture,in_channels,num_classes,remain_loader,test_loader,forget_loader, device, n_epoch_impair,n_epoch_repair, seed):
+    print("\nGradient Ascent Unlearning:")
+    utils.set_seed(seed)
     model,optimizer,criterion = load_model(path,architecture,in_channels,num_classes,device)
-    tr.set_seed(seed)
     model.to(device)
     losses = []
     accuracies = []
@@ -150,13 +155,14 @@ def gradient_ascent(path,architecture,in_channels,num_classes,remain_loader,test
         print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
 
     optimizer,scheduler,criterion = utils.set_hyperparameters(model,lr=0.05)
-    print("\nFINE TUNING")
     model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epoch_repair)
     return model
 
 # FINE TUNE UNLEARNING
 
-def fine_tuning_unlearning(path,architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,n_epochs):
+def fine_tuning_unlearning(path,architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,n_epochs,seed):
+   print("\nFine Tuning Unlearning:")
+   utils.set_seed(seed)
    model,optimizer,criterion = load_model(path,architecture,in_channels,num_classes,device)
    model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs)
    return model
@@ -203,7 +209,9 @@ def train_knowledge_distillation(optimizer,criterion,teacher, student, train_loa
         print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss / len(train_loader)}")
     return student
 
-def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,optimizer_bt,optimizer_gt,device,in_channels,num_classes,architecture='VGGish'):
+def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,optimizer_bt,optimizer_gt,device,in_channels,num_classes,architecture,seed):
+  print("\nStochastic Teacher Unlearning:")
+  utils.set_seed(seed)
   model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
   model.to(device)
   optimizer_bt = optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
@@ -231,6 +239,7 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
 
   retrained_test_acc = tr.evaluate(retrained_model, test_loader, device)
   print(f"Retrained model test set ACC: {retrained_test_acc}")
+  return model
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
@@ -245,9 +254,13 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
         param.data[param.data.abs() < threshold] = 0
     return model
 
-  def omp_unlearning(path,architecture,in_channels,num_classes,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs):
+  def omp_unlearning(path,architecture,in_channels,num_classes,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs,seed):
+     print("\nOMP Unlearning:")
+     utils.set_seed(seed)
      model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
      model = global_unstructured_pruning(model,pruning_ratio)
+     print("Pruning Complete:")
+     evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
      model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs)
      return model
 

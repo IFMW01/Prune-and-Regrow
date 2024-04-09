@@ -9,29 +9,36 @@ from torchaudio.datasets import SPEECHCOMMANDS
 labels = np.load('./labels/lables.npy')
 labels = labels.tolist()
 
-def load_datasets(dataset_pointer :str,pipeline:str,batch_size=256):
+def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=256,):
     if pipeline == 'mel':
         pipeline_on_wav = WavToMel()
     elif pipeline =='spec':
         pipeline_on_wav = WavToSpec()
 
     if dataset_pointer == 'SpeechCommands':
-        train_list = SubsetSC("testing") 
-        test_list = SubsetSC("testing")
-        valid_list = SubsetSC("validation")
-        print("Converting Train Set")
-        train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
-        print("Converting Test Set")
-        test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
-        print("Converting Validation Set")
-        valid_set = pp.convert_waveform(valid_list,pipeline_on_wav,False)
+        if unlearnng:
+             train_list = SubsetSC("testing") 
+             test_list = SubsetSC("testing")
+             return train_list,test_list
+        else:
+            train_list = SubsetSC("testing") 
+            test_list = SubsetSC("testing")
+            valid_list = SubsetSC("validation")
+            train_set,test_set,valid_set = convert_sets(train_list,test_list,valid_list,pipeline_on_wav)
+            train_loader,valid_loader,test_loader = loaders(train_set,valid_set,test_set,collate_fn_SC)
 
-        train_loader,valid_loader,test_loader = loaders(batch_size,train_set,valid_set,test_set,collate_fn_SC)
-
-        return train_loader,valid_loader,test_loader
+            return train_loader,valid_loader,test_loader
 
     else:
         return
+
+def convert_sets(train_list,test_list,valid_list,pipeline_on_wav):
+    print("Converting datasets")
+    train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
+    test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
+    valid_set = pp.convert_waveform(valid_list,pipeline_on_wav,False)
+    return train_set,test_set,valid_set
+
 
 def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
     if pipeline == 'mel':
@@ -132,7 +139,7 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(batch_size,train_set,valid_set,test_set,collate_fn):
+def loaders(train_set,valid_set,test_set,collate_fn,batch_size=256):
   train_loader = torch.utils.data.DataLoader(
       train_set,
       batch_size=batch_size,

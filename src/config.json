@@ -10,5 +10,7 @@
     "unlearning":true,
     "n_impair": 2,
     "n_repair": 4,
-    "n_fine_tine": 20
+    "n_fine_tine": 20,
+    "forget_instances_num":1,
+    "pruning_ratio":95
 }
