@@ -13,7 +13,7 @@ from vgg import VGGish,VGG9
 
 def create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader):
         best_model,accuracies = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
-        torch.save(best_model, f"{save_path}.pth")
+        torch.save(best_model, f"{save_path}Model.pth")
         df_softmax_outputs = mi.mai_logits(best_model, train_loader, test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
 
@@ -52,7 +52,7 @@ def main(config):
             save_dir = os.path.join(save_dir, f"{seed}")
             utils.create_dir(save_dir)
             print(save_dir)
-            save_path = save_dir
+            save_path = save_dir + '/'
             create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader)
     print("FIN")
 

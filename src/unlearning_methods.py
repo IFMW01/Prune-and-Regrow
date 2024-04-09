@@ -228,5 +228,5 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
   retrained_test_acc = tr.evaluate(retrained_model, test_loader, device)
   print(f"Retrained model test set ACC: {retrained_test_acc}")
 
-   
-   
+  # ONE-SHOT MAGNITUTE UNLEARNING
+  
