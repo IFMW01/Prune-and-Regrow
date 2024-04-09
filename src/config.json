@@ -6,5 +6,10 @@
     "training": "Base",
     "seeds": [42,92,19],
     "n_classes":35,
-    "n_inputs":1
+    "n_inputs":1,
+    
+    "unlearning":true,
+    "n_impair": 2,
+    "n_repair": 4,
+    "n_fine_tine": 20
 }

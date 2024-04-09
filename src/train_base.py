@@ -1,11 +1,8 @@
-import torch.optim as optim
 import torch
-import torch.nn as nn
 import json
 import os
 import training as tr
 import load_datasets as ld
-import membership_inference as mi
 import utils 
 
 from vgg import VGGish,VGG9
@@ -14,7 +11,7 @@ from vgg import VGGish,VGG9
 def create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader):
         best_model,acc,loss = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
         torch.save(best_model, f"{save_path}Model_{acc}_{loss}.pth")
-        df_softmax_outputs = mi.mai_logits(best_model, train_loader, test_loader,device)
+        df_softmax_outputs = utils.logits(best_model, train_loader, test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
 
 
@@ -39,7 +36,9 @@ def main(config):
     device = utils.get_device()
             
     if training == 'Base':
-        save_dir = f"{training}_{dataset_pointer}"
+        save_dir = "TRAIN"
+        utils.create_dir(save_dir)
+        save_dir = os.path.join(save_dir, f"{dataset_pointer}")
         utils.create_dir(save_dir)
         save_dir = os.path.join(save_dir, f"{architecture}")
         utils.create_dir(save_dir)
