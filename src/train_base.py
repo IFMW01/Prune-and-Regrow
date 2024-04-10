@@ -8,8 +8,8 @@ import utils
 from vgg import VGGish,VGG9
 # from transformer import SimpleViT
 
-def create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader):
-        best_model,acc,loss = tr.train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
+def create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,test_loader):
+        best_model,acc,loss = tr.train(model, train_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
         torch.save(best_model, f"{save_path}Model_{acc}_{loss}.pth")
         df_softmax_outputs = utils.logits(best_model, train_loader, test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
@@ -38,7 +38,7 @@ def main(config):
     utils.create_dir(save_dir)
     save_dir = os.path.join(save_dir, f"{architecture}")
     utils.create_dir(save_dir)
-    train_loader,valid_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
+    train_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
         save_dir = os.path.join(f"TRAIN/{dataset_pointer}/{architecture}")
         utils.set_seed(seed)
@@ -47,7 +47,7 @@ def main(config):
         utils.create_dir(save_dir)
         print(save_dir)
         save_path = save_dir + '/'
-        create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,valid_loader,test_loader)
+        create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,test_loader)
     print("FIN")
 
 if __name__ == "__main__":

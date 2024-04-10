@@ -2,6 +2,7 @@ import random
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import utils
 from tqdm import tqdm
 from copy import deepcopy
 
@@ -43,10 +44,9 @@ def evaluate_test(model, test_loader, criterion, device):
     test_accuracy = 100 * correct / total
     return test_loss, test_accuracy
 
-def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, device, n_epoch, seed):
+def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoch, seed):
+    utils.set_seed(seed)
     best_model = None
-    best_validtion_accuracy = 0.0
-    best_validtion_loss = float('inf')
     best_model_epoch = 0
     best_test_accuracy = 0,
     early_stop_accuracy = 0
@@ -73,29 +73,26 @@ def train(model, train_loader,valid_loader, test_loader, optimizer, criterion, d
 
       accuracy = evaluate(model, train_loader, device)
       accuracies.append(accuracy)
-      valid_loss, valid_accuracy = evaluate_test(model, valid_loader, criterion, device)
       test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
       
-      if valid_accuracy > best_validtion_accuracy:
-          best_validtion_accuracy = (round(valid_accuracy,2))
-          best_validtion_loss = (round(valid_loss, 3)) 
+      if test_accuracy > best_test_accuracy:
+          best_test_accuracy = (round(test_accuracy,2))
+          best_test_loss = (round(test_loss, 3)) 
           best_model = deepcopy(model)
           best_model_epoch = epoch
-          best_test_loss, best_test_accuracy = evaluate_test(best_model, test_loader, criterion, device)
           early_stop_accuracy = accuracy
 
       epoch_loss /= len(train_loader)
       losses.append(epoch_loss)
       print(f"Epoch: {epoch}/{n_epoch}\tTrain loss: {epoch_loss:.6f}\tTrain accuracy: {accuracy:.2f}%")
-      print(f'Validation loss: {valid_loss:.6f}, Validation accuracy: {valid_accuracy:.2f}%')
       print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%')
       
 
-    print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {early_stop_accuracy:.2f}\t Valid accuracy: {best_validtion_accuracy}\t Test accuracy: {best_test_accuracy:.2f}")
+    print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {early_stop_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
     plt.plot(losses)
     plt.title("Training Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.show()
 
-    return best_model,best_validtion_accuracy,best_validtion_loss
+    return best_model,best_test_accuracy,best_test_loss

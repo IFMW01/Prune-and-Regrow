@@ -3,14 +3,14 @@
     "pipeline": "mel",
     "architecture": "VGGish",
     "n_epochs": 5,
-    "seeds": [42,92,19],
+    "seeds": [42],
     "n_classes":35,
     "n_inputs":1,
     
     "unlearning":true,
-    "n_impair": 2,
-    "n_repair": 4,
-    "n_fine_tine": 10,
+    "n_epoch_impair": 2,
+    "n_epoch_repair": 4,
+    "n_epochs_fine_tune": 10,
     "forget_instances_num":1,
     "pruning_ratio":95
 }

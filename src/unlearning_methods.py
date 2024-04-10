@@ -13,7 +13,7 @@ from tqdm import tqdm
 from copy import deepcopy
 
 
-def load_model(path,architecture,in_channels,num_classes,device):
+def load_model(path,device):
   model= torch.load(path)
   model.to(device)
   optimizer = optim.SGD(model.parameters(), lr=0.005,momentum=0.9)
@@ -41,6 +41,7 @@ def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,de
 # NAIVE  UNLEARNING
 def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader, n_epochs,seed):
     print("\nNaive Unlearning:")
+    print("\n")
     utils.set_seed(seed)
     naive_model,optimizer,scheduler,criterion = utils.initialise_model(architecture,in_channels,num_classes,device)
     naive_model.to(device)
@@ -115,10 +116,11 @@ def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criteri
 
 # GRADIENT ASCENT UNLEARNING
 
-def gradient_ascent(path,architecture,in_channels,num_classes,remain_loader,test_loader,forget_loader, device, n_epoch_impair,n_epoch_repair, seed):
+def gradient_ascent(path,remain_loader,test_loader,forget_loader, device, n_epoch_impair,n_epoch_repair, seed):
     print("\nGradient Ascent Unlearning:")
+    print("\n")
     utils.set_seed(seed)
-    model,optimizer,criterion = load_model(path,architecture,in_channels,num_classes,device)
+    model,optimizer,criterion = load_model(path,device)
     model.to(device)
     losses = []
     accuracies = []
@@ -156,10 +158,10 @@ def gradient_ascent(path,architecture,in_channels,num_classes,remain_loader,test
 
 # FINE TUNE UNLEARNING
 
-def fine_tuning_unlearning(path,architecture,in_channels,num_classes,device,remain_loader,forget_loader,test_loader,n_epochs,seed):
+def fine_tuning_unlearning(path,device,remain_loader,forget_loader,test_loader,n_epochs,seed):
    print("\nFine Tuning Unlearning:")
    utils.set_seed(seed)
-   model,optimizer,criterion = load_model(path,architecture,in_channels,num_classes,device)
+   model,optimizer,criterion = load_model(path,device)
    model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs)
    return model
 
@@ -205,10 +207,11 @@ def train_knowledge_distillation(optimizer,criterion,teacher, student, train_loa
         print(f"Epoch {epoch+1}/{epochs}, Loss: {running_loss / len(train_loader)}")
     return student
 
-def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,optimizer_bt,optimizer_gt,device,in_channels,num_classes,architecture,seed):
+def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,device,in_channels,num_classes,architecture,seed):
   print("\nStochastic Teacher Unlearning:")
+  print("\n")
   utils.set_seed(seed)
-  model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
+  model,optimizer,criterion, = load_model(path,device)
   model.to(device)
   optimizer_bt = optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
   optimizer_gt = optim.SGD(model.parameters(), lr=0.01,momentum=0.9)
@@ -239,7 +242,7 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
-  def global_unstructured_pruning(model, pruning_ratio):
+def global_unstructured_pruning(model, pruning_ratio):
     all_weights = []
     for param in model.parameters():
         all_weights.append(param.data.view(-1))
@@ -250,14 +253,15 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,o
         param.data[param.data.abs() < threshold] = 0
     return model
 
-  def omp_unlearning(path,architecture,in_channels,num_classes,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs,seed):
-     print("\nOMP Unlearning:")
-     utils.set_seed(seed)
-     model,optimizer,criterion, = load_model(path,architecture,in_channels,num_classes,device)
-     model = global_unstructured_pruning(model,pruning_ratio)
-     print("Pruning Complete:")
-     evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
-     model = fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs)
-     return model
+def omp_unlearning(path,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs,seed):
+    print("\nOMP Unlearning:")
+    print("\n")
+    utils.set_seed(seed)
+    model,optimizer,criterion, = load_model(path,device)
+    model = global_unstructured_pruning(model,pruning_ratio)
+    print("Pruning Complete:")
+    evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
+    model = fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs)
+    return model
 
   # CONSINE OMP PRUNE UNLEARNING

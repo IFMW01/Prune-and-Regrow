@@ -16,36 +16,23 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
         pipeline_on_wav = WavToSpec()
 
     if dataset_pointer == 'SpeechCommands':
+        train_list = SubsetSC("testing") 
+        test_list = SubsetSC("testing")
+        train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
         if unlearnng:
-             train_list = SubsetSC("testing") 
-             test_list = SubsetSC("testing")
-             train_set,test_set = convert_sets_unlearn(train_list,test_list,pipeline_on_wav)
              return train_set,test_set
         else:
-            train_list = SubsetSC("testing") 
-            test_list = SubsetSC("testing")
-            valid_list = SubsetSC("validation")
-            train_set,test_set,valid_set = convert_sets(train_list,test_list,valid_list,pipeline_on_wav)
-            train_loader,valid_loader,test_loader = loaders(train_set,valid_set,test_set,collate_fn_SC)
-
-            return train_loader,valid_loader,test_loader
+            train_loader,test_loader = loaders(train_set,test_set,collate_fn_SC)
+            return train_loader,test_loader
 
     else:
         return
 
-def convert_sets(train_list,test_list,valid_list,pipeline_on_wav):
-    print("Converting datasets")
-    train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
-    test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
-    valid_set = pp.convert_waveform(valid_list,pipeline_on_wav,False)
-    return train_set,test_set,valid_set
-
-def convert_sets_unlearn(train_list,test_list,pipeline_on_wav):
+def convert_sets(train_list,test_list,pipeline_on_wav):
     print("Converting datasets")
     train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
     test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
     return train_set,test_set
-
 
 def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
     if pipeline == 'mel':
@@ -54,13 +41,10 @@ def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
         pipeline_on_wav = WavToSpec()
 
     if dataset_pointer == 'SpeechCommands':
-        labels = np.load('./SpeechCommands/lables.npy')
-        labels = labels.tolist()
-        speech_commands = SubsetSC()
-        all_list = speech_commands.get_subset("all")
+        all_list = SubsetSC("all")
         print("Converting All Set")
         all_set = pp.convert_waveform(all_list,pipeline_on_wav,False)
-        return all_set,labels
+        return all_set
     else:
         return
 
@@ -146,7 +130,7 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(train_set,valid_set,test_set,collate_fn,batch_size=256):
+def loaders(train_set,test_set,collate_fn,batch_size=256):
   train_loader = torch.utils.data.DataLoader(
       train_set,
       batch_size=batch_size,
@@ -156,14 +140,6 @@ def loaders(train_set,valid_set,test_set,collate_fn,batch_size=256):
       collate_fn = collate_fn
   )
 
-  valid_loader = torch.utils.data.DataLoader(
-      valid_set,
-      batch_size=batch_size,
-      shuffle=False,
-      num_workers=2,
-      pin_memory=True,
-      collate_fn = collate_fn
-  )
   test_loader = torch.utils.data.DataLoader(
       test_set,
       batch_size=batch_size,
@@ -173,5 +149,5 @@ def loaders(train_set,valid_set,test_set,collate_fn,batch_size=256):
       pin_memory=True,
       collate_fn = collate_fn
   )
-  return train_loader,valid_loader,test_loader
+  return train_loader,test_loader
     
