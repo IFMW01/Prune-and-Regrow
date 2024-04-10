@@ -30,7 +30,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     test_loss += mia_test_loss
     mia_logit_df = utils.logits(mia_model, train_loader_mia, test_loader_mia,device)
     filename = (f"MAI {seed}.csv")
-    mia_logit_df.to_csv(f"{save_dir}{filename}", index = False)
+    mia_logit_df.to_csv(f"{save_dir}/{filename}", index = False)
     print(f"{filename} saved")
 
   print(f"Average attack test accuracy: {(test_acc/n_shadow_models):.4f}")
