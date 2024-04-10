@@ -49,7 +49,8 @@ def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
         pipeline_on_wav = WavToSpec()
 
     if dataset_pointer == 'SpeechCommands':
-        all_list = SubsetSC("all")
+        print(f"Downloading: {dataset_pointer}")
+        all_list = SubsetSC("testing")
         print("Converting All Set")
         all_set = pp.convert_waveform(all_list,pipeline_on_wav,False)
         return all_set

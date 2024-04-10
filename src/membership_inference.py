@@ -22,7 +22,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
 
     all_processed = ld.load_mia_dataset(dataset_pointer,pipeline)
     train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,i)
-    train_loader_mia,test_loader_mia =  ld.loaders(train_set_mia,test_set_mia)
+    train_loader_mia,test_loader_mia =  ld.loaders(train_set_mia,test_set_mia,dataset_pointer)
     model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device,lr=0.01)
 
     mia_model,mia_test_accuracy,mia_test_loss= tr.train(model, train_loader_mia, test_loader_mia, optimizer, criterion, device, n_shadow_epochs, i)
