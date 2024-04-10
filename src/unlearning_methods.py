@@ -14,11 +14,7 @@ from copy import deepcopy
 
 
 def load_model(path,architecture,in_channels,num_classes,device):
-  if architecture == 'VGGish':
-    model = VGGish(in_channels,num_classes)
-  elif architecture == 'VGG9':
-    model = VGG9(in_channels,num_classes)
-  model.load_state_dict(torch.load(path))
+  model= torch.load(path)
   model.to(device)
   optimizer = optim.SGD(model.parameters(), lr=0.005,momentum=0.9)
   criterion = torch.nn.CrossEntropyLoss()
