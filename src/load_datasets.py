@@ -10,31 +10,39 @@ labels = np.load('./labels/lables.npy')
 labels = labels.tolist()
 
 def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=256,):
+
     if pipeline == 'mel':
         pipeline_on_wav = WavToMel()
     elif pipeline =='spec':
         pipeline_on_wav = WavToSpec()
+
     print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
         train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")
-        train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
-        if unlearnng:
-             return train_set,test_set
-        else:
-            train_loader,test_loader = loaders(train_set,test_set,collate_fn_SC)
-            return train_loader,test_loader
-
     else:
         return
+    
+    train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
+
+    if unlearnng:
+            return train_set,test_set
+    else:
+        train_loader,test_loader = loaders(train_set,test_set,dataset_pointer)
+        return train_loader,test_loader
+
+    
 
 def convert_sets(train_list,test_list,pipeline_on_wav):
+
     print("Converting datasets")
     train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
     test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
+
     return train_set,test_set
 
 def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
+    
     if pipeline == 'mel':
         pipeline_on_wav = WavToMel()
     elif pipeline =='spec':
@@ -130,7 +138,12 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(train_set,test_set,collate_fn,batch_size=256):
+def loaders(train_set,test_set,dataset_pointer,batch_size=256):
+  if dataset_pointer == 'SpeechCommands':
+      collate_fn = collate_fn_SC
+  else:
+      return
+  
   train_loader = torch.utils.data.DataLoader(
       train_set,
       batch_size=batch_size,

@@ -54,6 +54,6 @@ def main(config):
     print("FIN")
 
 if __name__ == "__main__":
-    with open("./config.json", "r") as f:
+    with open("./configs/base_config.json", "r") as f:
         config = json.load(f)
     main(config)

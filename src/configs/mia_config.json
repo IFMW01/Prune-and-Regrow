@@ -1,0 +1,12 @@
+{    
+
+"dataset_pointer": "SpeechCommands",
+"pipeline": "mel",
+"architecture": "VGGish",
+"seeds": [42],
+"n_classes":35,
+"n_inputs":1,
+"n_shadow_models":20,
+"n_shadow_epochs": 1
+
+}

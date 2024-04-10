@@ -48,7 +48,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
     utils.set_seed(seed)
     best_model = None
     best_model_epoch = 0
-    best_test_accuracy = 0,
+    best_test_accuracy = 0
     early_stop_accuracy = 0
 
 
@@ -73,6 +73,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
 
       accuracy = evaluate(model, train_loader, device)
       accuracies.append(accuracy)
+
       test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
       
       if test_accuracy > best_test_accuracy:
@@ -89,10 +90,10 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
       
 
     print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {early_stop_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-    plt.plot(losses)
-    plt.title("Training Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.show()
+    # plt.plot(losses)
+    # plt.title("Training Loss")
+    # plt.xlabel("Epoch")
+    # plt.ylabel("Loss")
+    # plt.show()
 
     return best_model,best_test_accuracy,best_test_loss
