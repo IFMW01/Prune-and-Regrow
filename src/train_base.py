@@ -42,7 +42,7 @@ def main(config):
 
     train_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
-        save_dir = f"TRAIN\{dataset_pointer}\{architecture}\{seed}"
+        save_dir = f"TRAIN/{dataset_pointer}/{architecture}/{seed}"
         utils.set_seed(seed)
         model,optimizer, scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
         utils.create_dir(save_dir)
