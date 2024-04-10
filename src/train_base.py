@@ -45,7 +45,6 @@ def main(config):
         save_dir = f"TRAIN\{dataset_pointer}\{architecture}\{seed}"
         utils.set_seed(seed)
         model,optimizer, scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
-        save_dir = os.path.join(save_dir, f"{seed}")
         utils.create_dir(save_dir)
         print(save_dir)
         save_path = save_dir + '/'
