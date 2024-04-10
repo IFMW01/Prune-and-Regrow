@@ -74,13 +74,6 @@ class SubsetSC(SPEECHCOMMANDS):
             self._walker = [w for w in self._walker if w not in excludes]
         elif subset == "all":
             self._walker = [w for w in self._walker]
-            for x in range(len(self._walker)):
-                self._walker[x] = self._walker[x].replace('SpeechCommands/speech_commands_v0.02/','')
-            filepath = os.path.join(self._path, 'all_list.txt')
-            with open(filepath, 'w') as f:
-                for line in self._walker:
-                    f.write(f"{line}\n")
-            self._walker = self.__add__load_list("all_list.txt")
     
 
 class WavToMel(torch.nn.Module):
