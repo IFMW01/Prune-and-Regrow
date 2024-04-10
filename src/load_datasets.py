@@ -18,7 +18,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
     if not os.path.exists(dataset_pointer):
             print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
-        train_list = SubsetSC("train") 
+        train_list = SubsetSC("training") 
         test_list = SubsetSC("testing")
     else:
         return
