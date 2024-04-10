@@ -18,18 +18,18 @@ def create_membership_inference_dataset(all_processed,seed):
 def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,save_dir):
   test_acc = 0 
   test_loss = float('inf')
-  for i in range(n_shadow_models):
+  for seed in range(n_shadow_models):
 
     all_processed = ld.load_mia_dataset(dataset_pointer,pipeline)
-    train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,i)
+    train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
     train_loader_mia,test_loader_mia =  ld.loaders(train_set_mia,test_set_mia,dataset_pointer)
-    model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device,lr=0.01)
+    model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
 
-    mia_model,mia_test_accuracy,mia_test_loss= tr.train(model, train_loader_mia, test_loader_mia, optimizer, criterion, device, n_shadow_epochs, i)
+    mia_model,mia_test_accuracy,mia_test_loss= tr.train(model, train_loader_mia, test_loader_mia, optimizer, criterion, device, n_shadow_epochs, seed)
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
     mia_logit_df = utils.logits(mia_model, train_loader_mia, test_loader_mia,device)
-    filename = (f"MAI {i}.csv")
+    filename = (f"MAI {seed}.csv")
     mia_logit_df.to_csv(f"{save_dir}{filename}", index = False)
     print(f"{filename} saved")
 
