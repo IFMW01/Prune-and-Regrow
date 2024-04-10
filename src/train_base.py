@@ -51,7 +51,7 @@ def main(config):
         save_path = save_dir + '/'
         results_dict = create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,test_loader,results_dict)
     print(f'Final of all trained models: {results_dict}')
-    with open(f"TRAIN\{dataset_pointer}\{architecture}\base_models.json", 'w') as f:
+    with open(f"TRAIN\{dataset_pointer}\{architecture}\model_results.json", 'w') as f:
         json.dump(results_dict, f)
     print("FIN")
 
