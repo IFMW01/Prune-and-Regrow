@@ -39,15 +39,10 @@ def main(config):
     device = utils.get_device()
     results_dict = {}
 
-    save_dir = 'TRAIN'
-    utils.create_dir(save_dir)
-    save_dir = os.path.join(save_dir, f"{dataset_pointer}")
-    utils.create_dir(save_dir)
-    save_dir = os.path.join(save_dir, f"{architecture}")
-    utils.create_dir(save_dir)
+
     train_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
-        save_dir = os.path.join(f"TRAIN/{dataset_pointer}/{architecture}")
+        save_dir = f"TRAIN\{dataset_pointer}\{architecture}\{seed}"
         utils.set_seed(seed)
         model,optimizer, scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
         save_dir = os.path.join(save_dir, f"{seed}")
@@ -56,6 +51,8 @@ def main(config):
         save_path = save_dir + '/'
         results_dict = create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,test_loader,results_dict)
     print(f'Final of all trained models: {results_dict}')
+    with open(f"TRAIN\{dataset_pointer}\{architecture}\base_models.json", 'w') as f:
+        json.dump(results_dict, f)
     print("FIN")
 
 if __name__ == "__main__":
