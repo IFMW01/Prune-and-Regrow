@@ -14,7 +14,8 @@ from copy import deepcopy
 
 
 def load_model(path,device):
-  model= torch.load(path)
+  model = torch.load(path)
+  
   model.to(device)
   optimizer = optim.SGD(model.parameters(), lr=0.005,momentum=0.9)
   criterion = torch.nn.CrossEntropyLoss()
