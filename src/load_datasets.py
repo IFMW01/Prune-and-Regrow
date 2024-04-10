@@ -14,7 +14,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
         pipeline_on_wav = WavToMel()
     elif pipeline =='spec':
         pipeline_on_wav = WavToSpec()
-
+    print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
         train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")

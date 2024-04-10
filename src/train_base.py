@@ -10,7 +10,7 @@ from vgg import VGGish,VGG9
 
 def create_base_model(model,optimizer,criterion,save_path,device, n_epochs, seed,train_loader,test_loader):
         best_model,acc,loss = tr.train(model, train_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
-        torch.save(best_model, f"{save_path}Model_{acc}_{loss}.pth")
+        torch.save(best_model, f"{save_path}Model_{acc:.2f}_{loss:.2f}.pth")
         df_softmax_outputs = utils.logits(best_model, train_loader, test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
 

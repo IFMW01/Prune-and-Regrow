@@ -76,8 +76,8 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
       test_loss, test_accuracy = evaluate_test(model, test_loader, criterion, device)
       
       if test_accuracy > best_test_accuracy:
-          best_test_accuracy = (round(test_accuracy,2))
-          best_test_loss = (round(test_loss, 3)) 
+          best_test_accuracy = test_accuracy
+          best_test_loss = test_loss
           best_model = deepcopy(model)
           best_model_epoch = epoch
           early_stop_accuracy = accuracy
