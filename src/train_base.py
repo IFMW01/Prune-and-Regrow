@@ -1,15 +1,16 @@
 import torch
 import json
 import os
-import training as tr
+import training 
+from training import Trainer
 import load_datasets as ld
 import utils 
 
 from vgg import VGGish,VGG9
 # from transformer import SimpleViT
 
-def create_base_model(model,optimizer,criterion,save_path,device,n_epochs,seed,train_loader,test_loader,results_dict,n_classes):
-        best_model,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece= tr.train(model,train_loader,test_loader,optimizer,criterion,device,n_epochs,n_classes,seed)
+def create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict):
+        best_model,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece= train.train()
         torch.save(best_model,f"{save_path}Model_{test_acc:.5f}_{test_loss:.5f}.pth")
         df_softmax_outputs = utils.logits(best_model,train_loader,test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
@@ -41,11 +42,12 @@ def main(config):
     for seed in seeds:
         save_dir = f"TRAIN/{dataset_pointer}/{architecture}/{seed}"
         utils.set_seed(seed)
-        model,optimizer,scheduler,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
+        model,optimizer,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
         utils.create_dir(save_dir)
         print(save_dir)
         save_path = save_dir + '/'
-        results_dict = create_base_model(model,optimizer,criterion,save_path,device,n_epochs,seed,train_loader,test_loader,results_dict,n_classes)
+        train = Trainer(model, train_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
+        results_dict = create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict)
     print(f'Final of all trained models: {results_dict}')
     with open(f"TRAIN/{dataset_pointer}/{architecture}/model_results.json",'w') as f:
         json.dump(results_dict,f)
