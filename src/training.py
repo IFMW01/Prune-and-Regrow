@@ -27,7 +27,7 @@ def evaluate(model, dataloader, device):
     return accuracy
 
 def evaluate_test(model, test_loader, criterion,n_classes,device):
-    
+
     metric = MulticlassCalibrationError(num_classes=n_classes, n_bins=15, norm='l1')
     model.eval()
     test_loss = 0.0
@@ -41,7 +41,7 @@ def evaluate_test(model, test_loader, criterion,n_classes,device):
             target = target.to(device)
             output = model(data)
             loss = criterion(output, target)
-            ece += metric(output,target)
+            ece += metric(output,target).item()
             test_loss += loss.item()
             _, predicted = torch.max(output, 1)
             total += target.size(0)
@@ -82,6 +82,7 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
         loss.backward()
         optimizer.step()
         train_ece += metric(output, target)
+        train_ece = train_ece.item()
         epoch_loss += loss.item()
 
       accuracy = evaluate(model, train_loader, device)
@@ -101,15 +102,10 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
 
       epoch_loss /= len(train_loader)
       losses.append(epoch_loss)
-      print(f"Epoch: {epoch}/{n_epoch}\tTrain loss: {epoch_loss:.6f}\tTrain accuracy: {accuracy:.2f}%")
-      print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%')
+      print(f"Epoch: {epoch}/{n_epoch}\tTrain accuracy: {accuracy:.2f}%\tTrain loss: {epoch_loss:.6f}\tTrain ECE {train_ece[0]:.2f}")
+      print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece[0]:.2f}"')
       
 
     print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-    # plt.plot(losses)
-    # plt.title("Training Loss")
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.show()
 
     return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece

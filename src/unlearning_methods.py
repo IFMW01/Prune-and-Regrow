@@ -79,7 +79,7 @@ def fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterio
             loss = criterion(output,target)
             loss.backward()
             optimizer.step()
-            train_ece += metric(output,target)
+            train_ece += metric(output,target).item()
             train_loss += loss.item()
         train_ece /= len(remain_loader) 
         train_loss /= len(remain_loader)

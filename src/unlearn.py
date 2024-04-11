@@ -14,7 +14,6 @@ def unlearn_logits(model,forget_loader,device,save_dir,filename):
     logits = utils.logits_unlearn(model,forget_loader,device)
     logits.to_csv(f'{save_dir}{filename}.csv',index = False)
 
-
 def main(config):
     dataset_pointer = config.get("dataset_pointer", None)
     pipeline = config.get("pipeline", None)
@@ -54,14 +53,16 @@ def main(config):
         forget_loader, remain_loader= ld.loaders(forget_set,remain_set,dataset_pointer)
         results_dict = {}
         for seed in seeds:
-
+            
             model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
             save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_instances_num}/{seed}/"
             utils.create_dir(save_dir)
             print(f"Acessing trained model on seed: {seed}")
             model_path = glob.glob(os.path.join(model_dir, '*.pth'))
             model_path = model_path[0]
+            
             orginal_model,optimizer,criterion = um.load_model(model_path,device)
+            
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
             naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,forget_loader,test_loader, n_epochs,results_dict,n_classes,seed)
@@ -78,6 +79,7 @@ def main(config):
 
             omp_model = um.omp_unlearning(model_path,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs,results_dict,n_classes,seed)
             unlearn_logits(omp_model,forget_loader,device,save_dir,'omp_model')
+
         print("FIN")
 
 if __name__ == "__main__":
