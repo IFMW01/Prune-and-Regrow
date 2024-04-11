@@ -3,14 +3,14 @@
     "dataset_pointer": "SpeechCommands",
     "pipeline": "mel",
     "architecture": "VGGish",
-    "n_epochs": 5,
-    "seeds": [40],
+    "n_epochs": 50,
+    "seeds": [40,41,42],
     "n_classes":35,
     "n_inputs":1,
     "unlearning":true,
     "n_epoch_impair": 1,
-    "n_epoch_repair": 5,
-    "n_epochs_fine_tune": 10,
+    "n_epoch_repair": 24,
+    "n_epochs_fine_tune": 25,
     "forget_instances_num":1,
     "pruning_ratio":95
 }

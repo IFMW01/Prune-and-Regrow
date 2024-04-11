@@ -58,7 +58,7 @@ def main(config):
             model_path = glob.glob(os.path.join(model_dir,'*.pth'))
             model_path = model_path[0]
             
-            orginal_model,optimizer,criterion = um.load_model(model_path,device)
+            orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
             naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,seed)

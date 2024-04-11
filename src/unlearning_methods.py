@@ -58,7 +58,7 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    ga_model,optimizer_ga,criterion = load_model(path,0.01,device)
+    ga_model,optimizer_ga,criterion = load_model(path,0.005,device)
     evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model = ga_train.gradient_ascent()
@@ -131,13 +131,13 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
-  st_model,optimizer_bt,criterion,= load_model(path,0.01,device)
+  st_model,optimizer_bt,criterion,= load_model(path,0.005,device)
 
   stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
   evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
 
   orignial_model = deepcopy(st_model)
-  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher,student=st_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
+  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher,student=st_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=0,ce_loss_weight=1.0,device=device)
   evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
   optimizer_gt = optim.SGD(erased_model.parameters(),lr=0.01,momentum=0.9)
   retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model,student=erased_model,train_loader=remain_loader,epochs=n_repair_epochs,T=1,soft_target_loss_weight=0,ce_loss_weight=1,device=device)
@@ -145,11 +145,11 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   erased_forget_acc = utils.evaluate(erased_model,forget_loader,device)
   print(f"Erased model forget set ACC: {erased_forget_acc}")
 
-  forget_accuracy,forget_loss,forget_ece  = retrained_forget_acc = utils.evaluate_test(retrained_model,forget_loader,n_classes,criterion,device)
+  forget_accuracy,forget_loss,forget_ece  = retrained_forget_acc = utils.evaluate_test(retrained_model,forget_loader,criterion,n_classes,device)
   print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
 
-  train_accuracy,train_loss,train_ece = utils.evaluate_test(retrained_model,remain_loader,n_classes,criterion,device)
-  test_accuracy,test_loss,test_ece = utils.evaluate_test(retrained_model,test_loader,n_classes,criterion,device)
+  train_accuracy,train_loss,train_ece = utils.evaluate_test(retrained_model,remain_loader,criterion,n_classes,device)
+  test_accuracy,test_loss,test_ece = utils.evaluate_test(retrained_model,test_loader,criterion,n_classes,device)
 
   results_dict['Stochastic Teacher Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
   return st_model,results_dict
