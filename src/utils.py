@@ -8,6 +8,8 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import random
+import torchmetrics.classification 
+from torchmetrics.classification import MulticlassCalibrationError
 
 def set_seed(seed):
     random.seed(seed)
@@ -52,8 +54,8 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         model = VGG9()
 
     model.to(device)
-    optimizer_new,optimizer_new = set_hyperparameters(model,lr) 
-    return model,optimizer_new,optimizer_new
+    optimizer,criterion = set_hyperparameters(model,lr) 
+    return model,optimizer,criterion
 
 def logits(model,train_loader,test_loader,device):
     model.to(device)
@@ -105,3 +107,44 @@ def logits_unlearn(model,forget_loader,device):
             df_logit_forget = pd.DataFrame(numpy_logits_forget)
             df_forget = pd.concat([df_forget,df_logit_forget],ignore_index=True)
     return df_forget
+
+def evaluate(model,dataloader,device):
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for data, target in dataloader:
+            data = data.to(device)
+            target = target.to(device)
+            output = self.model(data)
+            _, predicted = torch.max(output, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
+
+    accuracy = 100 * correct / total
+    return accuracy
+
+def evaluate_test(naive_model,forget_loader,criterion,n_classes,device):
+    metric = MulticlassCalibrationError(n_classes, n_bins=15, norm='l1')
+    self.model.eval()
+    test_loss = 0.0
+    correct = 0
+    total = 0
+    ece = 0
+
+    with torch.no_grad():
+        for data, target in self.test_loader:
+            data = data.to(self.device)
+            target = target.to(self.device)
+            output = self.model(data)
+            loss = self.criterion(output, target)
+            ece += metric(output,target).item()
+            test_loss += loss.item()
+            _, predicted = torch.max(output, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
+    ece /= len(self.test_loader)
+    test_loss /= len(self.test_loader)
+    test_accuracy = 100 * correct / total
+    return test_accuracy,test_loss, ece

@@ -33,12 +33,14 @@ def main(config):
     print(f"Architecture: {architecture}")
     print(f"Number of epochs: {n_epochs}")
     print(f"Seeds: {seeds}")
+    print(f"Number of classes: {n_classes}")
+    print(f"Number of inputs: {n_inputs}")
 
     device = utils.get_device()
     results_dict = {}
 
 
-    train_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
+    train_loader,train_eval_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
         save_dir = f"TRAIN/{dataset_pointer}/{architecture}/{seed}"
         utils.set_seed(seed)
@@ -46,7 +48,9 @@ def main(config):
         utils.create_dir(save_dir)
         print(save_dir)
         save_path = save_dir + '/'
-        train = Trainer(model, train_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
+        train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
+        print(train.n_epoch)
+        print(train.n_classes)
         results_dict = create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict)
     print(f'Final of all trained models: {results_dict}')
     with open(f"TRAIN/{dataset_pointer}/{architecture}/model_results.json",'w') as f:

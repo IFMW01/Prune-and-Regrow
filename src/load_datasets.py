@@ -28,8 +28,8 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
     if unlearnng:
             return train_set,test_set
     else:
-        train_loader,test_loader = loaders(train_set,test_set,dataset_pointer)
-        return train_loader,test_loader
+        train_loader,train_eval_loader,test_loader = loaders(train_set,test_set,dataset_pointer)
+        return train_loader,train_eval_loader,test_loader
 
     
 
@@ -133,7 +133,7 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(train_set,test_set,dataset_pointer,batch_size=256):
+def loaders(train_set,test_set,dataset_pointer,train_batch_size=256,eval_batch_size=4096):
   if dataset_pointer == 'SpeechCommands':
       collate_fn = collate_fn_SC
   else:
@@ -141,8 +141,18 @@ def loaders(train_set,test_set,dataset_pointer,batch_size=256):
   
   train_loader = torch.utils.data.DataLoader(
       train_set,
-      batch_size=batch_size,
+      batch_size=train_batch_size,
       shuffle=True,
+      num_workers=2,
+      pin_memory=True,
+      collate_fn = collate_fn
+  )
+
+  train_eval_loader = torch.utils.data.DataLoader(
+      train_set,
+      batch_size=eval_batch_size,
+      shuffle=False,
+      drop_last=False,
       num_workers=2,
       pin_memory=True,
       collate_fn = collate_fn
@@ -150,12 +160,12 @@ def loaders(train_set,test_set,dataset_pointer,batch_size=256):
 
   test_loader = torch.utils.data.DataLoader(
       test_set,
-      batch_size=batch_size,
+      batch_size=eval_batch_size,
       shuffle=False,
       drop_last=False,
       num_workers=2,
       pin_memory=True,
       collate_fn = collate_fn
   )
-  return train_loader,test_loader
+  return train_loader,train_eval_loader,test_loader
     
