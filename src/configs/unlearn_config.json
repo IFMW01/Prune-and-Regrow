@@ -4,7 +4,7 @@
     "pipeline": "mel",
     "architecture": "VGGish",
     "n_epochs": 5,
-    "seeds": [42],
+    "seeds": [40],
     "n_classes":35,
     "n_inputs":1,
     "unlearning":true,

@@ -52,7 +52,7 @@ def main(config):
         print("Creating remain and forget data loaders")
         forget_loader, test_loader= ld.loaders(forget_set,test_set,dataset_pointer)
         forget_loader, remain_loader= ld.loaders(forget_set,remain_set,dataset_pointer)
-
+        results_dict = {}
         for seed in seeds:
 
             model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
@@ -64,19 +64,19 @@ def main(config):
             orginal_model,optimizer,criterion = um.load_model(model_path,device)
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
-            naive_model = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,forget_loader,test_loader, n_epochs,seed)
+            naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,forget_loader,test_loader, n_epochs,results_dict,n_classes,seed)
             unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model')
 
-            gradient_ascent_model = um.gradient_ascent(model_path,architecture,n_inputs,n_classes,remain_loader,test_loader,forget_loader, device, n_epoch_impair,n_epoch_repair, seed)
+            gradient_ascent_model,results_dict = um.gradient_ascent(model_path,architecture,n_inputs,n_classes,remain_loader,test_loader,forget_loader, device, n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
             unlearn_logits(gradient_ascent_model,forget_loader,device,save_dir,'gradient_ascent_model')
 
-            fine_tuning_model = um.fine_tuning_unlearning(model_path,device,remain_loader,forget_loader,test_loader,n_epochs_fine_tune,seed)
+            fine_tuning_model = um.fine_tuning_unlearning(model_path,device,remain_loader,forget_loader,test_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
             unlearn_logits(fine_tuning_model,forget_loader,device,save_dir,'fine_tuning_model')
 
-            stochastic_teacher_model = um.stochastic_teacher_unlearning(model_path,forget_loader,remain_loader,test_loader,device,n_inputs,n_classes,architecture,seed)
+            stochastic_teacher_model = um.stochastic_teacher_unlearning(model_path,forget_loader,remain_loader,test_loader,device,n_inputs,n_classes,architecture,results_dict,seed)
             unlearn_logits(stochastic_teacher_model,forget_loader,device,save_dir,'stochastic_teacher_model')
 
-            omp_model = um.omp_unlearning(model_path,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs,seed)
+            omp_model = um.omp_unlearning(model_path,device,forget_loader,remain_loader,test_loader,pruning_ratio,n_epochs,results_dict,n_classes,seed)
             unlearn_logits(omp_model,forget_loader,device,save_dir,'omp_model')
         print("FIN")
 
