@@ -44,10 +44,10 @@ def naive_unlearning(architecture,in_channels,n_classes,device,remain_loader,for
     print("\n")
     utils.set_seed(seed)
 
-    naive_model,optimizer,scheduler,criterion = utils.initialise_model(architecture,in_channels,n_classes,device)
+    naive_model,optimizer_nu,criterion = utils.initialise_model(architecture,in_channels,n_classes,device)
     evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
 
-    naive_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece = tr.train(naive_model,remain_loader,test_loader,optimizer,criterion,device,n_epochs,seed)
+    naive_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece = tr.train(naive_model,remain_loader,test_loader,optimizer_nu,criterion,device,n_epochs,n_classes,seed)
 
     evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
     forget_accuracy,forget_loss,forget_ece = tr.evaluate_test(naive_model,forget_loader,criterion,n_classes,device)
@@ -57,7 +57,7 @@ def naive_unlearning(architecture,in_channels,n_classes,device,remain_loader,for
     return naive_model,results_dict
   
 def fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epochs,n_classes,device):
-    metric = MulticlassCalibrationError(n_classes=n_classes,n_bins=15,norm='l1')
+    metric = MulticlassCalibrationError(n_classes,n_bins=15,norm='l1')
     print("\nFine Tuning:")
     losses = []
     accuracies = []
@@ -102,52 +102,52 @@ def gradient_ascent(path,remain_loader,test_loader,forget_loader,device,n_epoch_
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    model,optimizer,criterion = load_model(path,device)
-    model.to(device)
+    ga_model,optimizer_ga,criterion = load_model(path,device)
+    ga_model.to(device)
     losses = []
     accuracies = []
-    evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
+    evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
     for epoch in tqdm(range(n_epoch_impair)):
         train_loss = 0.0
-        model.train()
+        ga_model.train()
 
         for batch_idx,(data,target) in enumerate(forget_loader):
             data = data.to(device)
             target = target.to(device)
-            optimizer.zero_grad()
-            output = model(data)
+            optimizer_ga.zero_grad()
+            output = ga_model(data)
             loss = -criterion(output,target)
-            optimizer.zero_grad()
+            optimizer_ga.zero_grad()
             loss.backward()
-            optimizer.step()
+            optimizer_ga.step()
             train_loss += loss.item()
 
         train_loss /= len(forget_loader)
-        train_accuracy = tr.evaluate(model,forget_loader,device)
+        train_accuracy = tr.evaluate(ga_model,forget_loader,device)
         accuracies.append(train_accuracy)
 
         losses.append(train_loss)
 
-        remain_accuracy,remain_loss,remain_ece  = tr.evaluate_test(model,remain_loader,criterion,n_classes,device)
-        test_accuracy,test_loss,test_ece  = tr.evaluate_test(model,test_loader,criterion,n_classes,device)
+        remain_accuracy,remain_loss,remain_ece  = tr.evaluate_test(ga_model,remain_loader,criterion,n_classes,device)
+        test_accuracy,test_loss,test_ece  = tr.evaluate_test(ga_model,test_loader,criterion,n_classes,device)
         print(f"Epoch: {epoch}/{n_epoch_impair}\tForget Loss: {train_loss:.6f}\tForget Accuracy: {train_accuracy:.2f}%")
         print(f'Remain Loss: {remain_loss:.6f},Remain Accuracy: {remain_accuracy:.2f}%')
         print(f'Test Loss: {test_loss:.6f},Test Accuracy: {test_accuracy:.2f}%')
 
-    optimizer,scheduler,criterion = utils.set_hyperparameters(model,lr=0.05)
-    model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece = fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epoch_repair,n_classes,device)
+    optimizer,scheduler,criterion = utils.set_hyperparameters(ga_model,lr=0.05)
+    ga_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece = fine_tuning(ga_model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epoch_repair,n_classes,device)
     results_dict['Gradient Ascent Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-    return model,results_dict
+    return ga_model,results_dict
 
 # FINE TUNE UNLEARNING
 
 def fine_tuning_unlearning(path,device,remain_loader,forget_loader,test_loader,n_epochs,results_dict,n_classes,seed):
    print("\nFine Tuning Unlearning:")
    utils.set_seed(seed)
-   model,optimizer,criterion = load_model(path,device)
-   model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece = fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epochs,n_classes,device)
+   ft_model,optimizer_ft,criterion = load_model(path,device)
+   ft_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece = fine_tuning(ft_model,remain_loader,forget_loader,test_loader,optimizer_ft,criterion,n_epochs,n_classes,device)
    results_dict['Fine Tune Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-   return model,results_dict
+   return ft_model,results_dict
 
 
 # STOCHASTIC TEACHER UNLEARNING
@@ -195,19 +195,19 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,d
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
-  model,optimizer,criterion,= load_model(path,device)
-  model.to(device)
-  optimizer_bt = optim.SGD(model.parameters(),lr=0.001,momentum=0.9)
-  optimizer_gt = optim.SGD(model.parameters(),lr=0.01,momentum=0.9)
+  st_model,optimizer,criterion,= load_model(path,device)
+  st_model.to(device)
+  optimizer_bt = optim.SGD(st_model.parameters(),lr=0.001,momentum=0.9)
+  optimizer_gt = optim.SGD(st_model.parameters(),lr=0.01,momentum=0.9)
 
 
   if architecture =='VGGish':
     stochastic_teacher = VGGish(in_channels,n_classes)
 
-  evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
-  orignial_model = deepcopy(model)
-  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher,student=model,train_loader=forget_loader,epochs=1,T=1,soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
-  evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
+  evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
+  orignial_model = deepcopy(st_model)
+  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher,student=st_model,train_loader=forget_loader,epochs=1,T=1,soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
+  evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
 
   retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model,student=erased_model,train_loader=remain_loader,epochs=1,T=1,soft_target_loss_weight=0,ce_loss_weight=1,device=device)
 
@@ -223,7 +223,7 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,d
   test_accuracy,test_loss,test_ece = tr.evaluate_test(retrained_model,test_loader,n_classes,device)
   print(f"Retrained model test set ACC: {test_accuracy}")
   results_dict['Stochastic Teacher Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-  return model,results_dict
+  return st_model,results_dict
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
@@ -242,12 +242,12 @@ def omp_unlearning(path,device,forget_loader,remain_loader,test_loader,pruning_r
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    model,optimizer,criterion,= load_model(path,device)
-    model = global_unstructured_pruning(model,pruning_ratio)
+    omp_model,optimizer_omp,criterion,= load_model(path,device)
+    omp_model = global_unstructured_pruning(omp_model,pruning_ratio)
     print("Pruning Complete:")
-    evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
-    model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece  = fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epochs,n_classes,device)
+    evaluate_forget_remain_test(omp_model,forget_loader,remain_loader,test_loader,device)
+    omp_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece  = fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer_omp,criterion,n_epochs,n_classes,device)
     results_dict["OMP Unlearning"] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-    return model,results_dict
+    return omp_model,results_dict
 
   # CONSINE OMP PRUNE UNLEARNING

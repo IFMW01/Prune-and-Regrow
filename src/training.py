@@ -102,8 +102,8 @@ def train(model, train_loader, test_loader, optimizer, criterion, device, n_epoc
 
       epoch_loss /= len(train_loader)
       losses.append(epoch_loss)
-      print(f"Epoch: {epoch}/{n_epoch}\tTrain accuracy: {accuracy:.2f}%\tTrain loss: {epoch_loss:.6f}\tTrain ECE {train_ece[0]:.2f}")
-      print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece[0]:.2f}"')
+      print(f"Epoch: {epoch}/{n_epoch}\tTrain accuracy: {accuracy:.2f}%\tTrain loss: {epoch_loss:.6f}\tTrain ECE {train_ece:.2f}")
+      print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
       
 
     print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
