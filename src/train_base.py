@@ -1,8 +1,7 @@
 import torch
 import json
 import os
-import training 
-from training import Trainer
+import Trainer 
 import load_datasets as ld
 import utils 
 

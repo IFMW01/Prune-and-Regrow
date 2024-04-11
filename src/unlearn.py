@@ -4,7 +4,7 @@ import torch.nn as nn
 import json
 import os
 import unlearning_methods as um
-import training as tr
+import Trainer as tr
 import load_datasets as ld
 import membership_inference as mi
 import glob
@@ -49,8 +49,8 @@ def main(config):
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
         forget_set,remain_set = um.create_forget_remain_set(forget_instances_num,train_set)
         print("Creating remain and forget data loaders")
-        forget_loader,test_loader= ld.loaders(forget_set,test_set,dataset_pointer)
-        forget_loader,remain_loader= ld.loaders(forget_set,remain_set,dataset_pointer)
+        remain_loader,remain_eval_loader,test_loader= ld.loaders(forget_set,test_set,dataset_pointer)
+        remain_loader,remain_eval_loader,forget_loader= ld.loaders(forget_set,remain_set,dataset_pointer)
         results_dict = {}
         for seed in seeds:
             
@@ -62,7 +62,6 @@ def main(config):
             model_path = model_path[0]
             
             orginal_model,optimizer,criterion = um.load_model(model_path,device)
-
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
             naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,forget_loader,test_loader,n_epochs,results_dict,seed)

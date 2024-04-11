@@ -133,7 +133,7 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(train_set,test_set,dataset_pointer,train_batch_size=256,eval_batch_size=4096):
+def loaders(train_set,test_set,dataset_pointer,train_batch_size=256,eval_batch_size=8192):
   if dataset_pointer == 'SpeechCommands':
       collate_fn = collate_fn_SC
   else:

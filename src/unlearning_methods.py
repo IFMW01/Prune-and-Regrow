@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import training as tr
+import Trainer as tr
 import random
 import utils
 import numpy as np
@@ -10,133 +10,159 @@ from tqdm import tqdm
 from copy import deepcopy
 import torchmetrics.classification 
 from torchmetrics.classification import MulticlassCalibrationError
+import Trainer
+from Trainer import Trainer
+import Unlearner 
+from Unlearner import Unlearner
+
+class UnlearnTrainer():
+    def __init__(self,path, train_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
+        self.path = model
+        self.train_loader = train_loader
+        self.test_loader = test_loader
+        self.optimizer = optimizer
+        self.criterion = criterion
+        self.device = device
+        self.n_epoch = n_epoch
+        self.n_classes = n_classes
+        self.seed = seed
+        self.metric = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
 
 
-def load_model(path,device):
-  model = torch.load(path)
-  
-  model.to(device)
-  optimizer = optim.SGD(model.parameters(),lr=0.005,momentum=0.9)
-  criterion = torch.nn.CrossEntropyLoss()
-  return model,optimizer,criterion
+    def create_forget_remain_set(forget_instances_num,train_set,seed=42):
+        utils.set_seed(seed)
+        forget_set = []
+        remain_set = train_set
+        for i in range(forget_instances_num):
+            index = random.randint(0,(len(remain_set)-1))
+            forget_set.append(remain_set[i])
+            remain_set.pop(index)
+        return forget_set,remain_set
 
-def create_forget_remain_set(forget_instances_num,train_set,seed=42):
-  utils.set_seed(seed)
-  forget_set = []
-  remain_set = train_set
-  for i in range(forget_instances_num):
-    index = random.randint(0,(len(remain_set)-1))
-    forget_set.append(remain_set[i])
-    remain_set.pop(index)
-  return forget_set,remain_set
+
+    def evaluate(self,dataloader):
+        self.model.eval()
+        model_loss = 0.0
+        correct = 0
+        total = 0
+        ece = 0
+
+        with torch.no_grad():
+            for data, target in self.dataloader:
+                data = data.to(self.device)
+                target = target.to(self.device)
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                ece += self.metric(output,target).item()
+                model_loss += loss.item()
+                _, predicted = torch.max(output, 1)
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
+        ece /= len(dataloader)
+        model_loss /= len(dataloader)
+        accuracy = 100 * correct / total
+        return accuracy,model_loss, ece
+
+    def train(self):
+        
+        utils.set_seed(self.seed)
+        train_ece = 0 
+        test_ece = 0
+        best_model = None
+        best_model_epoch = 0
+        best_test_accuracy = 0
+        best_train_accuracy = 0
+        best_train_loss = 0
+        best_train_ece = 0
+        best_test_ece = 0
+        
+        losses = []
+        accuracies = []
+
+        for epoch in tqdm(range(0, self.n_epoch)):
+            self.model.train()
+            epoch_loss = 0.0
+
+            for batch_idx, (data, target) in enumerate(self.train_loader):
+                data = data.to(self.device)
+                target = target.to(self.device)
+
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                loss.backward()
+                self.optimizer.step()
+
+            train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
+            accuracies.append(train_accuracy)
+            train_ece /= len(self.train_loader)
+            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
+            
+            if test_accuracy > best_test_accuracy:
+                best_test_accuracy = test_accuracy
+                best_test_loss = test_loss
+                best_model = deepcopy(self.model)
+                best_model_epoch = epoch
+                best_train_accuracy = train_accuracy
+                best_train_loss = train_loss
+                best_train_ece = train_ece
+                best_test_ece = test_ece
+                
+            losses.append(train_loss)
+            print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
+            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+    
+        print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
+
+        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece
 
 def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device):
-    forget_set_acc = tr.evaluate(model,forget_loader,device)
+    forget_set_acc = utils.evaluate(model,forget_loader,device)
     print(f"Forget set Accuracy: {forget_set_acc:.2f}%")
-    remain_set_acc = tr.evaluate(model,remain_loader,device)
+    remain_set_acc = utils.evaluate(model,remain_loader,device)
     print(f"Remain set Accuracy: {remain_set_acc:.2f}%")
-    test_set_acc = tr.evaluate(model,test_loader,device)
+    test_set_acc = utils.evaluate(model,test_loader,device)
     print(f"Test set Accuracy: {test_set_acc:.2f}")
 
+def load_model(path,device):
+    model = torch.load(path)
+    model.to(device)
+    optimizer = optim.SGD(model.parameters(),lr=0.005,momentum=0.9)
+    criterion = torch.nn.CrossEntropyLoss()
+    return model,optimizer,criterion
+
 # NAIVE  UNLEARNING
-def naive_unlearning(architecture,in_channels,n_classes,device,remain_loader,forget_loader,test_loader,n_epochs,results_dict,seed):
+def naive_unlearning(architecture,in_channels,n_classes,device,remain_loader,remain_eval_loader,forget_loader,test_loader,n_epochs,results_dict,seed):
     print("\nNaive Unlearning:")
     print("\n")
     utils.set_seed(seed)
-
     naive_model,optimizer_nu,criterion = utils.initialise_model(architecture,in_channels,n_classes,device)
-    evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
-
-    naive_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece = tr.train(naive_model,remain_loader,test_loader,optimizer_nu,criterion,device,n_epochs,n_classes,seed)
-
-    evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
-    forget_accuracy,forget_loss,forget_ece = tr.evaluate_test(naive_model,forget_loader,criterion,n_classes,device)
-
-    results_dict['Naive Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+    train_naive = Trainer(naive_model, remain_loader, remain_eval_loader, test_loader, optimizer_nu, criterion, device, n_epochs,n_classes,seed)
+    naive_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece = train_naive.train()
+    forget_accuracy,forget_loss,forget_ece = train_naive.evaluate(naive_model,forget_loader,device)
+    results_dict['Naive Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
 
     return naive_model,results_dict
-  
-def fine_tuning(model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epochs,n_classes,device):
-    metric = MulticlassCalibrationError(n_classes,n_bins=15,norm='l1')
-    print("\nFine Tuning:")
-    losses = []
-    accuracies = []
-    train_ece = 0
-    test_ece = 0
-    forget_ece = 0
-    model.to(device)
-    evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device)
-    for epoch in tqdm(range(1,n_epochs + 1)):
-        model.train()
-        train_loss = 0.0
 
-        for batch_idx,(data,target) in enumerate(remain_loader):
-            data = data.to(device)
-            target = target.to(device)
-
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output,target)
-            loss.backward()
-            optimizer.step()
-            train_ece += metric(output,target).item()
-            train_loss += loss.item()
-        train_ece /= len(remain_loader) 
-        train_loss /= len(remain_loader)
-        train_accuracy = tr.evaluate(model,remain_loader,device)
-        accuracies.append(train_accuracy)
-
-        losses.append(train_loss)
-
-        test_accuracy,test_loss,test_ece = tr.evaluate_test(model,test_loader,criterion,n_classes,device)
-        forget_accuracy,forget_loss,forget_ece  = tr.evaluate_test(model,forget_loader,criterion,n_classes,device)
-        print(f"Epoch: {epoch}/{n_epochs}\tRemain Loss: {train_loss:.6f}\tRemain Accuracy: {train_accuracy:.2f}%\tRemain ECE: {train_ece:.2f}")
-        print(f"Test Loss:{test_loss:.6f}\tTest Accuracy: {test_accuracy:.2f}%\tTest ECE: {test_ece:.2f}")
-        print(f"Forget Loss: {forget_loss:.6f}\tForget Accuracy: {forget_accuracy:.2f}%\tForget ECE {forget_ece:.2F}")
-    
-    return model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece
 
 # GRADIENT ASCENT UNLEARNING
 
-def gradient_ascent(path,remain_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
+def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
     ga_model,optimizer_ga,criterion = load_model(path,device)
     ga_model.to(device)
-    losses = []
-    accuracies = []
     evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
-    for epoch in tqdm(range(n_epoch_impair)):
-        train_loss = 0.0
-        ga_model.train()
+    ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    ga_model = ga_train.gradient_ascent()
 
-        for batch_idx,(data,target) in enumerate(forget_loader):
-            data = data.to(device)
-            target = target.to(device)
-            optimizer_ga.zero_grad()
-            output = ga_model(data)
-            loss = -criterion(output,target)
-            optimizer_ga.zero_grad()
-            loss.backward()
-            optimizer_ga.step()
-            train_loss += loss.item()
+    optimizer_ft,scheduler,criterion = utils.set_hyperparameters(ga_model,lr=0.05)
+    ga_fine_tune = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    ga_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= ga_fine_tune.fine_tune()
+    forget_accuracy,forget_loss,forget_ece = ga_fine_tune.evaluate(forget_loader)
 
-        train_loss /= len(forget_loader)
-        train_accuracy = tr.evaluate(ga_model,forget_loader,device)
-        accuracies.append(train_accuracy)
-
-        losses.append(train_loss)
-
-        remain_accuracy,remain_loss,remain_ece  = tr.evaluate_test(ga_model,remain_loader,criterion,n_classes,device)
-        test_accuracy,test_loss,test_ece  = tr.evaluate_test(ga_model,test_loader,criterion,n_classes,device)
-        print(f"Epoch: {epoch}/{n_epoch_impair}\tForget Loss: {train_loss:.6f}\tForget Accuracy: {train_accuracy:.2f}%")
-        print(f'Remain Loss: {remain_loss:.6f},Remain Accuracy: {remain_accuracy:.2f}%')
-        print(f'Test Loss: {test_loss:.6f},Test Accuracy: {test_accuracy:.2f}%')
-
-    optimizer,scheduler,criterion = utils.set_hyperparameters(ga_model,lr=0.05)
-    ga_model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece = fine_tuning(ga_model,remain_loader,forget_loader,test_loader,optimizer,criterion,n_epoch_repair,n_classes,device)
-    results_dict['Gradient Ascent Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+    results_dict['Gradient Ascent Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return ga_model,results_dict
 
 # FINE TUNE UNLEARNING
@@ -211,16 +237,16 @@ def stochastic_teacher_unlearning(path,forget_loader,remain_loader,test_loader,d
 
   retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model,student=erased_model,train_loader=remain_loader,epochs=1,T=1,soft_target_loss_weight=0,ce_loss_weight=1,device=device)
 
-  erased_forget_acc = tr.evaluate(erased_model,forget_loader,device)
+  erased_forget_acc = utils.evaluate(erased_model,forget_loader,device)
   print(f"Erased model forget set ACC: {erased_forget_acc}")
 
-  forget_accuracy,forget_loss,forget_ece  = retrained_forget_acc = tr.evaluate_test(retrained_model,forget_loader,n_classes,device)
+  forget_accuracy,forget_loss,forget_ece  = retrained_forget_acc = utils.evaluate_test(retrained_model,forget_loader,n_classes,device)
   print(f"Retrained model forget set ACC: {retrained_forget_acc}")
 
-  train_accuracy,train_loss,train_ece = tr.evaluate_test(retrained_model,remain_loader,n_classes,device)
+  train_accuracy,train_loss,train_ece = utils.evaluate_test(retrained_model,remain_loader,n_classes,device)
   print(f"Retrained model remain set ACC: {train_accuracy}")
 
-  test_accuracy,test_loss,test_ece = tr.evaluate_test(retrained_model,test_loader,n_classes,device)
+  test_accuracy,test_loss,test_ece = utils.evaluate_test(retrained_model,test_loader,n_classes,device)
   print(f"Retrained model test set ACC: {test_accuracy}")
   results_dict['Stochastic Teacher Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
   return st_model,results_dict
