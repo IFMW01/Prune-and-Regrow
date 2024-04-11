@@ -135,7 +135,7 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   st_model,optimizer,criterion,= load_model(path,device)
   optimizer_bt = optim.SGD(st_model.parameters(),lr=0.001,momentum=0.9)
 
-  stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,seed)
+  stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
   evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
 
   orignial_model = deepcopy(st_model)
