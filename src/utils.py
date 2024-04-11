@@ -117,7 +117,7 @@ def evaluate(model,dataloader,device):
         for data, target in dataloader:
             data = data.to(device)
             target = target.to(device)
-            output = self.model(data)
+            output = model(data)
             _, predicted = torch.max(output, 1)
             total += target.size(0)
             correct += (predicted == target).sum().item()
@@ -125,26 +125,26 @@ def evaluate(model,dataloader,device):
     accuracy = 100 * correct / total
     return accuracy
 
-def evaluate_test(naive_model,forget_loader,criterion,n_classes,device):
+def evaluate_test(model,test_loader,criterion,n_classes,device):
     metric = MulticlassCalibrationError(n_classes, n_bins=15, norm='l1')
-    self.model.eval()
+    model.eval()
     test_loss = 0.0
     correct = 0
     total = 0
     ece = 0
 
     with torch.no_grad():
-        for data, target in self.test_loader:
-            data = data.to(self.device)
-            target = target.to(self.device)
-            output = self.model(data)
-            loss = self.criterion(output, target)
+        for data, target in test_loader:
+            data = data.to(device)
+            target = target.to(device)
+            output = model(data)
+            loss = criterion(output, target)
             ece += metric(output,target).item()
             test_loss += loss.item()
             _, predicted = torch.max(output, 1)
             total += target.size(0)
             correct += (predicted == target).sum().item()
-    ece /= len(self.test_loader)
-    test_loss /= len(self.test_loader)
+    ece /= len(test_loader)
+    test_loss /= len(test_loader)
     test_accuracy = 100 * correct / total
     return test_accuracy,test_loss, ece

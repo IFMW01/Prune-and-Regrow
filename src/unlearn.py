@@ -44,10 +44,10 @@ def main(config):
         return
     else:
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
-        forget_set,remain_set = um.create_forget_remain_set(forget_instances_num,train_set)
+        remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
         print("Creating remain and forget data loaders")
-        remain_loader,remain_eval_loader,test_loader= ld.loaders(forget_set,test_set,dataset_pointer)
-        remain_loader,remain_eval_loader,forget_loader= ld.loaders(forget_set,remain_set,dataset_pointer)
+        remain_loader,remain_eval_loader,test_loader= ld.loaders(remain_set,test_set,dataset_pointer)
+        remain_loader,remain_eval_loader,forget_loader= ld.loaders(remain_set,forget_set,dataset_pointer)
         results_dict = {}
         for seed in seeds:
             

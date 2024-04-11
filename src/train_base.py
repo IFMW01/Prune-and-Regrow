@@ -53,7 +53,7 @@ def main(config):
         print(train.n_classes)
         results_dict = create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict)
     print(f'Final of all trained models: {results_dict}')
-    with open(f"TRAIN/{dataset_pointer}/{architecture}/model_results.json",'w') as f:
+    with open(f"TRAIN/{dataset_pointer}/{architecture}/training_results.json",'w') as f:
         json.dump(results_dict,f)
     print("FIN")
 

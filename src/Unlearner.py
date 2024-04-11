@@ -7,7 +7,7 @@ from torchmetrics.classification import MulticlassCalibrationError
 
 class Unlearner():
     def __init__(self,model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed):
-        self.model = None
+        self.model = model
         self.remain_loader = remain_loader
         self.remain_eval_loader = remain_eval_loader
         self.forget_loader = forget_loader
@@ -62,10 +62,9 @@ class Unlearner():
                 train_loss += loss.item()
 
  
-            foget_accuracy,forget_loss,forget_ece = utils.evaluate(self.forget_loader)
-
-            remain_accuracy,remain_loss,remain_ece  = utils.evaluate_test(self.remain_loader)
-            test_accuracy,test_loss,test_ece  = utils.evaluate_test(self.test_loader)
+            foget_accuracy,forget_loss,forget_ece = self.evaluate(self.forget_loader)
+            remain_accuracy,remain_loss,remain_ece  = self.evaluate(self.remain_eval_loader)
+            test_accuracy,test_loss,test_ece  = self.evaluate(self.test_loader)
             print(f"Epoch: {epoch}/{self.n_epoch_impair}\tForget accuracy: {foget_accuracy:.2f}%\tForget loss: {forget_loss:.6f}")
             print(f'Remain accuracy: {remain_accuracy:.2f}%\tRemain loss: {remain_loss:.6f}\tRemain ECE: {remain_ece:.6f}')
             print(f'Test accuracy: {test_accuracy:.2f}%\tTest loss: {test_loss:.6f}\tTest ECE: {test_ece:.6f}')
@@ -80,11 +79,11 @@ class Unlearner():
         losses = []
         accuracies = []
 
-        for epoch in tqdm(range(0, self.n_epoch)):
+        for epoch in tqdm(range(0, self.n_epoch_repair)):
             self.model.train()
             epoch_loss = 0.0
 
-            for batch_idx, (data, target) in enumerate(self.train_loader):
+            for batch_idx, (data, target) in enumerate(self.remain_loader):
                 data = data.to(self.device)
                 target = target.to(self.device)
                 self.optimizer.zero_grad()
@@ -93,9 +92,8 @@ class Unlearner():
                 loss.backward()
                 self.optimizer.step()
 
-            train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
+            train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
             accuracies.append(train_accuracy)
-            train_ece /= len(self.train_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
                 
             losses.append(train_loss)

@@ -73,7 +73,6 @@ class Trainer():
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
             accuracies.append(train_accuracy)
-            train_ece /= len(self.train_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
             
             if test_accuracy > best_test_accuracy:
