@@ -1,12 +1,7 @@
-import torch.optim as optim
-import torch
-import torch.nn as nn
 import json
 import os
 import unlearning_methods as um
-import Trainer as tr
 import load_datasets as ld
-import membership_inference as mi
 import glob
 import utils 
 
@@ -39,6 +34,8 @@ def main(config):
     print(f"Number of impair epochs: {n_epoch_impair}")
     print(f"Number of repair epochs: {n_epoch_repair}")
     print(f"Number of fine tuning epochs: {n_epochs_fine_tune}")
+    print(f"Number of forget instances epochs: {forget_instances_num}")
+    print(f"Pruning ratio: {pruning_ratio}")
 
     device = utils.get_device()
     model_dir = f'TRAIN/{dataset_pointer}/{architecture}'

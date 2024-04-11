@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import load_datasets as ld
-import training as tr
 import json
 import os
 import utils

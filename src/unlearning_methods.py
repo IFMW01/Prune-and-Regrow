@@ -1,120 +1,26 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import Trainer as tr
 import random
 import utils
 import numpy as np
-from vgg import VGGish,VGG9
-from tqdm import tqdm
-from copy import deepcopy
-import torchmetrics.classification 
-from torchmetrics.classification import MulticlassCalibrationError
 import Trainer
-from Trainer import Trainer
 import Unlearner 
+from copy import deepcopy
+from Trainer import Trainer
 from Unlearner import Unlearner
 
-class UnlearnTrainer():
-    def __init__(self,path, train_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
-        self.path = model
-        self.train_loader = train_loader
-        self.test_loader = test_loader
-        self.optimizer = optimizer
-        self.criterion = criterion
-        self.device = device
-        self.n_epoch = n_epoch
-        self.n_classes = n_classes
-        self.seed = seed
-        self.metric = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
 
 
-    def create_forget_remain_set(forget_instances_num,train_set,seed=42):
-        utils.set_seed(seed)
-        forget_set = []
-        remain_set = train_set
-        for i in range(forget_instances_num):
-            index = random.randint(0,(len(remain_set)-1))
-            forget_set.append(remain_set[i])
-            remain_set.pop(index)
-        return forget_set,remain_set
-
-
-    def evaluate(self,dataloader):
-        self.model.eval()
-        model_loss = 0.0
-        correct = 0
-        total = 0
-        ece = 0
-
-        with torch.no_grad():
-            for data, target in self.dataloader:
-                data = data.to(self.device)
-                target = target.to(self.device)
-                output = self.model(data)
-                loss = self.criterion(output, target)
-                ece += self.metric(output,target).item()
-                model_loss += loss.item()
-                _, predicted = torch.max(output, 1)
-                total += target.size(0)
-                correct += (predicted == target).sum().item()
-        ece /= len(dataloader)
-        model_loss /= len(dataloader)
-        accuracy = 100 * correct / total
-        return accuracy,model_loss, ece
-
-    def train(self):
-        
-        utils.set_seed(self.seed)
-        train_ece = 0 
-        test_ece = 0
-        best_model = None
-        best_model_epoch = 0
-        best_test_accuracy = 0
-        best_train_accuracy = 0
-        best_train_loss = 0
-        best_train_ece = 0
-        best_test_ece = 0
-        
-        losses = []
-        accuracies = []
-
-        for epoch in tqdm(range(0, self.n_epoch)):
-            self.model.train()
-            epoch_loss = 0.0
-
-            for batch_idx, (data, target) in enumerate(self.train_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
-
-                self.optimizer.zero_grad()
-                output = self.model(data)
-                loss = self.criterion(output, target)
-                loss.backward()
-                self.optimizer.step()
-
-            train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
-            accuracies.append(train_accuracy)
-            train_ece /= len(self.train_loader)
-            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
-            
-            if test_accuracy > best_test_accuracy:
-                best_test_accuracy = test_accuracy
-                best_test_loss = test_loss
-                best_model = deepcopy(self.model)
-                best_model_epoch = epoch
-                best_train_accuracy = train_accuracy
-                best_train_loss = train_loss
-                best_train_ece = train_ece
-                best_test_ece = test_ece
-                
-            losses.append(train_loss)
-            print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
-            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
-    
-        print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-
-        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece
+def create_forget_remain_set(forget_instances_num,train_set,seed=42):
+    utils.set_seed(seed)
+    forget_set = []
+    remain_set = train_set
+    for i in range(forget_instances_num):
+        index = random.randint(0,(len(remain_set)-1))
+        forget_set.append(remain_set[i])
+        remain_set.pop(index)
+    return forget_set,remain_set
 
 def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device):
     forget_set_acc = utils.evaluate(model,forget_loader,device)
