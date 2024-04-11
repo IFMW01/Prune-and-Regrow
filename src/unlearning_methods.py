@@ -127,7 +127,7 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
         print(f"Epoch {epoch+1}/{epochs},Loss: {running_loss / len(train_loader)}")
     return student
 
-def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,device,n_inputs,n_classes,architecture,results_dict,seed):
+def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,device,n_inputs,n_classes,architecture,results_dict,n_impair_epochs,n_repair_epochs,seed):
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
@@ -138,10 +138,10 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
 
   orignial_model = deepcopy(st_model)
-  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher,student=st_model,train_loader=forget_loader,epochs=1,T=1,soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
+  erased_model = train_knowledge_distillation(optimizer_bt,criterion,teacher=stochastic_teacher,student=st_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=0.5,ce_loss_weight=0.5,device=device)
   evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
   optimizer_gt = optim.SGD(erased_model.parameters(),lr=0.01,momentum=0.9)
-  retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model,student=erased_model,train_loader=remain_loader,epochs=1,T=1,soft_target_loss_weight=0,ce_loss_weight=1,device=device)
+  retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model,student=erased_model,train_loader=remain_loader,epochs=n_repair_epochs,T=1,soft_target_loss_weight=0,ce_loss_weight=1,device=device)
 
   erased_forget_acc = utils.evaluate(erased_model,forget_loader,device)
   print(f"Erased model forget set ACC: {erased_forget_acc}")

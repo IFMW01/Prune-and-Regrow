@@ -67,13 +67,13 @@ def main(config):
             gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
             unlearn_logits(gradient_ascent_model,forget_loader,device,save_dir,'gradient_ascent_model')
 
-            fine_tuning_model,results_dict = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed)
+            fine_tuning_model,results_dict = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
             unlearn_logits(fine_tuning_model,forget_loader,device,save_dir,'fine_tuning_model')
 
-            stochastic_teacher_model,results_dict = um.stochastic_teacher_unlearning(model_path,remain_loader,test_loader,forget_loader,device,n_inputs,n_classes,architecture,results_dict,seed)
+            stochastic_teacher_model,results_dict = um.stochastic_teacher_unlearning(model_path,remain_loader,test_loader,forget_loader,device,n_inputs,n_classes,architecture,results_dict,n_epoch_impair,n_epoch_repair,seed)
             unlearn_logits(stochastic_teacher_model,forget_loader,device,save_dir,'stochastic_teacher_model')
 
-            omp_model,results_dict = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,pruning_ratio,n_epochs,results_dict,n_classes,seed)
+            omp_model,results_dict = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,pruning_ratio,n_epochs_fine_tune,results_dict,n_classes,seed)
             unlearn_logits(omp_model,forget_loader,device,save_dir,'omp_model')
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')

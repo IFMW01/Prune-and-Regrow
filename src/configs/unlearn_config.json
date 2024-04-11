@@ -8,8 +8,8 @@
     "n_classes":35,
     "n_inputs":1,
     "unlearning":true,
-    "n_epoch_impair": 2,
-    "n_epoch_repair": 4,
+    "n_epoch_impair": 1,
+    "n_epoch_repair": 5,
     "n_epochs_fine_tune": 10,
     "forget_instances_num":1,
     "pruning_ratio":95
