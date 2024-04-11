@@ -50,8 +50,8 @@ def main(config):
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
         forget_set, remain_set = um.create_forget_remain_set(forget_instances_num,train_set)
         print("Creating remain and forget data loaders")
-        forget_loader, test_loader= ld.loaders(forget_set,test_set,ld.collate_fn_SC)
-        forget_loader, remain_loader= ld.loaders(forget_set,remain_set,ld.collate_fn_SC)
+        forget_loader, test_loader= ld.loaders(forget_set,test_set,dataset_pointer)
+        forget_loader, remain_loader= ld.loaders(forget_set,remain_set,dataset_pointer)
 
         for seed in seeds:
 
@@ -61,7 +61,7 @@ def main(config):
             print(f"Acessing trained model on seed: {seed}")
             model_path = glob.glob(os.path.join(model_dir, '*.pth'))
             model_path = model_path[0]
-            orginal_model,optimizer,criterion = um.load_model(model_path,architecture,n_inputs,n_classes,device)
+            orginal_model,optimizer,criterion = um.load_model(model_path,device)
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
             naive_model = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,forget_loader,test_loader, n_epochs,seed)

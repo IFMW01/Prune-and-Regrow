@@ -42,38 +42,10 @@ def naive_unlearning(architecture,in_channels,num_classes,device,remain_loader,f
     print("\n")
     utils.set_seed(seed)
     naive_model,optimizer,scheduler,criterion = utils.initialise_model(architecture,in_channels,num_classes,device)
-    naive_model.to(device)
-    losses = []
-    accuracies = []
+    evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
+    naive_model,best_test_accuracy,best_test_loss = tr.train(naive_model, remain_loader, test_loader, optimizer, criterion, device, n_epochs, seed)
     evaluate_forget_remain_test(naive_model,forget_loader,remain_loader,test_loader,device)
 
-    for epoch in tqdm(range(1, n_epochs + 1)):
-        naive_model.train()
-        epoch_loss = 0.0
-
-        for batch_idx, (data, target) in enumerate(remain_loader):
-            data = data.to(device)
-            target = target.to(device)
-
-            optimizer.zero_grad()
-            output = naive_model(data)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-
-            epoch_loss += loss.item()
-
-        epoch_loss /= len(remain_loader)
-        accuracy = tr.evaluate(naive_model, remain_loader, device)
-        accuracies.append(accuracy)
-
-        losses.append(epoch_loss)
-
-        test_loss, test_accuracy = tr.evaluate_test(naive_model, test_loader, criterion, device)
-        forget_loss, forget_accuracy = tr.evaluate_test(naive_model, forget_loader, criterion, device)
-        print(f"Epoch: {epoch}/{n_epochs}\tRemain Loss: {epoch_loss:.6f}\tRemain Accuracy: {accuracy:.2f}%")
-        print(f'Test Loss: {test_loss:.6f}, Test Accuracy: {test_accuracy:.2f}%')
-        print(f'Forget Loss: {forget_loss:.6f}, Forget Accuracy: {forget_accuracy:.2f}%')
     return naive_model
   
 def fine_tuning(model, remain_loader,forget_loader,test_loader,optimizer,criterion, device, n_epochs):

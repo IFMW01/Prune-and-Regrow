@@ -18,7 +18,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=25
     if not os.path.exists(dataset_pointer):
             print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
-        train_list = SubsetSC("training") 
+        train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")
     else:
         return
@@ -51,7 +51,7 @@ def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
     if dataset_pointer == 'SpeechCommands':
         if not os.path.exists(dataset_pointer):
             print(f"Downloading: {dataset_pointer}")
-        all_list = SubsetSC("all")
+        all_list = SubsetSC("testing")
         print("Converting All Set")
         all_set = pp.convert_waveform(all_list,pipeline_on_wav,False)
         return all_set
