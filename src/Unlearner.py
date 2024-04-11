@@ -97,7 +97,7 @@ class Unlearner():
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
                 
             losses.append(train_loss)
-            print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
+            print(f"Epoch: {epoch}/{self.n_epoch_repair}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
         return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss, test_ece
