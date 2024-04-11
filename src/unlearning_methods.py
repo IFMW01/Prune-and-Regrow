@@ -30,10 +30,10 @@ def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,de
     test_set_acc = utils.evaluate(model,test_loader,device)
     print(f"Test set Accuracy: {test_set_acc:.2f}")
 
-def load_model(path,device):
+def load_model(path,lr,device):
     model = torch.load(path)
     model.to(device)
-    optimizer = optim.SGD(model.parameters(),lr=0.005,momentum=0.9)
+    optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
     criterion = torch.nn.CrossEntropyLoss()
     return model,optimizer,criterion
 
@@ -58,13 +58,13 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    ga_model,optimizer_ga,criterion = load_model(path,device)
+    ga_model,optimizer_ga,criterion = load_model(path,0.01,device)
     evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model = ga_train.gradient_ascent()
 
     print("\nFine tuning gradient ascent model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(ga_model,lr=0.05)
+    optimizer_ft,criterion = utils.set_hyperparameters(ga_model,lr=0.01)
     ga_fine_tune = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= ga_fine_tune.fine_tune()
     forget_accuracy,forget_loss,forget_ece = ga_fine_tune.evaluate(forget_loader)
@@ -77,7 +77,7 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
 def fine_tuning_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
    print("\nFine Tuning Unlearning:")
    utils.set_seed(seed)
-   ft_model,optimizer_ft,criterion = load_model(path,device)
+   ft_model,optimizer_ft,criterion = load_model(path,0.01,device)
    ft_train = Unlearner(ft_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,0,n_epochs,n_classes,seed)
    ft_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece = ft_train.fine_tune()
    forget_accuracy,forget_loss,forget_ece= ft_train.evaluate(forget_loader)
@@ -131,8 +131,7 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
-  st_model,optimizer,criterion,= load_model(path,device)
-  optimizer_bt = optim.SGD(st_model.parameters(),lr=0.001,momentum=0.9)
+  st_model,optimizer_bt,criterion,= load_model(path,0.01,device)
 
   stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
   evaluate_forget_remain_test(st_model,forget_loader,remain_loader,test_loader,device)
@@ -172,7 +171,7 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    omp_model,optimizer_omp,criterion,= load_model(path,device)
+    omp_model,optimizer_omp,criterion,= load_model(path,0.01,device)
     omp_model = global_unstructured_pruning(omp_model,pruning_ratio)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_loader,remain_loader,test_loader,device)
