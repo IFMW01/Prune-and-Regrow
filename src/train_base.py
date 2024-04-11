@@ -2,6 +2,7 @@ import torch
 import json
 import os
 import Trainer 
+from Trainer import Trainer
 import load_datasets as ld
 import utils 
 

@@ -9,7 +9,7 @@ from torchaudio.datasets import SPEECHCOMMANDS
 labels = np.load('./labels/lables.npy')
 labels = labels.tolist()
 
-def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool,batch_size=256,):
+def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
 
     if pipeline == 'mel':
         pipeline_on_wav = WavToMel()
@@ -41,7 +41,7 @@ def convert_sets(train_list,test_list,pipeline_on_wav):
 
     return train_set,test_set
 
-def load_mia_dataset(dataset_pointer :str,pipeline:str,batch_size=256):
+def load_mia_dataset(dataset_pointer :str,pipeline:str):
     
     if pipeline == 'mel':
         pipeline_on_wav = WavToMel()
@@ -133,7 +133,7 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(train_set,test_set,dataset_pointer,train_batch_size=256,eval_batch_size=8192):
+def loaders(train_set,test_set,dataset_pointer,train_batch_size=256,eval_batch_size=16384):
   if dataset_pointer == 'SpeechCommands':
       collate_fn = collate_fn_SC
   else:
