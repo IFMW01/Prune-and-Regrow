@@ -283,7 +283,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     base_model,optimizer,criterion,= load_model(path,0.01,device)
     mininimum_sparsity = find_min_sparsity(path,device)
     print(f"Best prining ration found at: {mininimum_sparsity}% sparsity")
-    consine_model = global_prune_with_masks(base_model, mininimum_sparsity)
+    consine_model = global_prune_without_masks(base_model, mininimum_sparsity)
 
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_loader,test_loader,device)
@@ -305,10 +305,10 @@ def kurtosis_of_kurtoses(model):
   for mod in model.modules():
       if hasattr(mod, "weight"):
           if isinstance(mod.weight, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.weight.detach().numpy().flatten(), fisher=False))
+              kurtosis.append(stats.kurtosis(mod.weight.cpu().detach().numpy().flatten(), fisher=False))
       if hasattr(mod, "bias"):
           if isinstance(mod.bias, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.bias.detach().numpy().flatten(),  fisher=False))
+              kurtosis.append(stats.kurtosis(mod.bias.cpu().detach().numpy().flatten(),  fisher=False))
   kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
   return kurtosis_kurtosis
 
@@ -316,6 +316,7 @@ def unsafe_kk_unlearning(path,device,remain_loader,remain_eval_loader,test_loade
     print("KK Unlearning")
     mininimum_sparsity = find_min_sparsity(path,device)
     base_model,optimizer,criterion,= load_model(path,0.01,device)
+    base_model.torch.device('cpu')
     kk = kurtosis_of_kurtoses(base_model)
     if kk < torch.exp(torch.Tensor([1])):
         prune_modifier = 1/torch.log2(torch.Tensor([kk]))
@@ -323,7 +324,8 @@ def unsafe_kk_unlearning(path,device,remain_loader,remain_eval_loader,test_loade
         prune_modifier = 1/torch.log(torch.Tensor([kk]))
     unsafe_prune = mininimum_sparsity/prune_modifier.item()
     print(f"\n Unsafe prune sparsity: {unsafe_prune}")
-    kk_model = global_prune_with_masks(base_model, unsafe_prune)
+    kk_model = global_prune_without_masks(base_model, unsafe_prune)
+    kk_model.to(device)
     print(f"\nModel accuracies post kk pruning:")
     evaluate_forget_remain_test(kk_model,forget_loader,remain_loader,test_loader,device)
     print("\nFine tuning kk model:")
