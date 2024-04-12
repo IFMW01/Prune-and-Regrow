@@ -6,8 +6,8 @@ import utils
 import numpy as np
 import Trainer
 import Unlearner 
-import torch.nn.utils.prune as prune
 from torch.nn.utils import parameters_to_vector as Params2Vec
+import torch.nn.utils.prune as prune
 from copy import deepcopy
 from Trainer import Trainer
 from Unlearner import Unlearner
@@ -197,6 +197,20 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
 
   # CONSINE OMP PRUNE UNLEARNING
 
+def vectorise_model(model):
+    """Convert Paramaters to Vector form."""
+    return Params2Vec(model.parameters())
+
+def cosine_similarity(base_weights, model_weights):
+    """Calculate the cosine similairty between two vectors """
+    return torch.nan_to_num(torch.clip(torch.dot(
+        base_weights, model_weights
+    ) / (
+        torch.linalg.norm(base_weights)
+        * torch.linalg.norm(model_weights)
+    ),-1, 1),0)
+
+
 def global_prune_without_masks(model, amount):
     """Global Unstructured Pruning of model."""
     parameters_to_prune = []
@@ -220,7 +234,6 @@ def global_prune_without_masks(model, amount):
         if hasattr(mod, "bias_orig"):
             if isinstance(mod.bias_orig, torch.nn.Parameter):
                 prune.remove(mod, "bias")
-    return model
 
 def global_prune_with_masks(model, amount):
     """Global Unstructured Pruning of model."""
@@ -238,21 +251,6 @@ def global_prune_with_masks(model, amount):
         pruning_method=prune.L1Unstructured,
         amount=amount,
     )
-    return model
-     
-
-def vectorise_model(model):
-    """Convert Paramaters to Vector form."""
-    return Params2Vec(model.parameters())
-
-def cosine_similarity(base_weights, model_weights):
-    """Calculate the cosine similairty between two vectors """
-    return torch.nan_to_num(torch.clip(torch.dot(
-        base_weights, model_weights
-    ) / (
-        torch.linalg.norm(base_weights)
-        * torch.linalg.norm(model_weights)
-    ),-1, 1),0)
 
 def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
     print("\Consine Unlearning:")
@@ -275,8 +273,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     for i in d:
         dists.append(torch.dist(i, torch.Tensor([1, 1])))
     min = torch.argmin(torch.Tensor(dists))
-
-    print(f"Best prining ration found at: {prune_rate[min]}% sparsity")
+    print(f"Best prining ration found at: {min}% sparsity")
     consine_model = global_prune_with_masks(base_model, float(prune_rate[min]))
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_loader,test_loader,device)
@@ -290,5 +287,3 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
     results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return consine_model,results_dict
-
-# UNLEARNING PRUNING WITH OR WITHOUT MASKING
