@@ -48,6 +48,8 @@ def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain
     naive_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece = train_naive.train()
     forget_accuracy,forget_loss,forget_ece = train_naive.evaluate(forget_loader)
     print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+    print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+    print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
     results_dict['Naive Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
 
     return naive_model,results_dict
@@ -70,6 +72,8 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     ga_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= ga_fine_tune.fine_tune()
     forget_accuracy,forget_loss,forget_ece = ga_fine_tune.evaluate(forget_loader)
     print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+    print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+    print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
     results_dict['Gradient Ascent Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return ga_model,results_dict
 
@@ -83,6 +87,8 @@ def fine_tuning_unlearning(path,device,remain_loader,remain_eval_loader,test_loa
    ft_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece = ft_train.fine_tune()
    forget_accuracy,forget_loss,forget_ece= ft_train.evaluate(forget_loader)
    print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+   print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+   print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
    results_dict['Fine Tune Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
    return ft_model,results_dict
 
@@ -147,12 +153,13 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   print(f"Erased model forget set ACC: {erased_forget_acc}")
 
   forget_accuracy,forget_loss,forget_ece  = retrained_forget_acc = utils.evaluate_test(retrained_model,forget_loader,criterion,n_classes,device)
-  print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
-
-  train_accuracy,train_loss,train_ece = utils.evaluate_test(retrained_model,remain_loader,criterion,n_classes,device)
+  remain_accuracy,remain_loss,remain_ece = utils.evaluate_test(retrained_model,remain_loader,criterion,n_classes,device)
   test_accuracy,test_loss,test_ece = utils.evaluate_test(retrained_model,test_loader,criterion,n_classes,device)
+  print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+  print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+  print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
 
-  results_dict['Stochastic Teacher Unlearning'] = [train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+  results_dict['Stochastic Teacher Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
   return st_model,results_dict
 
   # ONE-SHOT MAGNITUTE UNLEARNING
@@ -182,6 +189,8 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     omp_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= omp_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = omp_train.evaluate(forget_loader)
     print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+    print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+    print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
     results_dict["OMP Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return omp_model,results_dict
 
@@ -200,7 +209,9 @@ def cosine_similarity(base_weights, model_weights):
         * torch.linalg.norm(model_weights)
     ),-1, 1),0)
 
-def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,pruning_ratio,n_epochs,results_dict,n_classes,seed):
+def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
+    print("\Consine Unlearning:")
+    print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
     base_model,optimizer,criterion,= load_model(path,0.01,device)
@@ -221,14 +232,15 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     min = torch.argmin(torch.Tensor(dists))
     print(f"Best prining ration found at: {min}% sparsity")
     consine_model = global_unstructured_pruning(base_model, float(prune_rate[min]))
+    print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_loader,test_loader,device)
+    print("\nFine tuning cosine model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,lr=0.01)
-    cosine_train = Unlearner(omp_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
-    cosine_train
-    omp_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= cosine_train.fine_tune()
-
-    prune_acc, prune_loss = evaluate(testloader,prune_net)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(prune_net.parameters(), lr=0.001, momentum=0.9)
-    train(trainloader,1,prune_net)
-    finetune_acc, finetune_acc_loss =  evaluate(testloader,prune_net)
+    cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
+    consine_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= cosine_train.fine_tune()
+    forget_accuracy,forget_loss,forget_ece = cosine_train.evaluate(forget_loader)
+    print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+    print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+    print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
+    results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+    return consine_model,results_dict
