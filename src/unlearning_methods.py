@@ -349,12 +349,12 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     print("\nFine tuning cosine model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,lr=0.01)
     kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
-    kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= cosine_train.fine_tune()
+    kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= kk_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_loader)
     print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
     print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
     print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
-    results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+    results_dict["Kurtosis Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return kk_model,results_dict
 
 
