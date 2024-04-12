@@ -7,7 +7,6 @@ import numpy as np
 import Trainer
 import Unlearner 
 import torch.nn.utils.prune as prune
-import scipy.stats as stats
 from torch.nn.utils import parameters_to_vector as Params2Vec
 from copy import deepcopy
 from Trainer import Trainer
@@ -255,8 +254,9 @@ def cosine_similarity(base_weights, model_weights):
         * torch.linalg.norm(model_weights)
     ),-1, 1),0)
 
-
-def find_min_sparsity(path,device):
+def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
+    print("\Consine Unlearning:")
+    print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
     base_model,optimizer,criterion,= load_model(path,0.01,device)
@@ -269,22 +269,15 @@ def find_min_sparsity(path,device):
         prune_model_vec = vectorise_model(prune_model)
         cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
  
-    cosine_v_prune = torch.vstack((torch.Tensor(cosine_sim), prune_rate)).T
+    c = torch.vstack((torch.Tensor(cosine_sim), prune_rate))
+    d = c.T
     dists = []
-    for i in cosine_v_prune:
+    for i in d:
         dists.append(torch.dist(i, torch.Tensor([1, 1])))
-    mininimum_sparsity = torch.argmin(torch.Tensor(dists))
+    min = torch.argmin(torch.Tensor(dists))
 
-    return float(prune_rate[mininimum_sparsity])
-
-def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
-    print("\Consine Unlearning:")
-    print("\n")
-    base_model,optimizer,criterion,= load_model(path,0.01,device)
-    mininimum_sparsity = find_min_sparsity(path,device)
-    print(f"Best prining ration found at: {mininimum_sparsity}% sparsity")
-    consine_model = global_prune_without_masks(base_model, mininimum_sparsity)
-
+    print(f"Best prining ration found at: {prune_rate[min]}% sparsity")
+    consine_model = global_prune_with_masks(base_model, float(prune_rate[min]))
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_loader,test_loader,device)
     print("\nFine tuning cosine model:")
@@ -297,48 +290,5 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
     results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return consine_model,results_dict
-
-# KK UNLEARNING (KIM K FOR SHORT)
-
-def kurtosis_of_kurtoses(model):
-  kurtosis = []
-  for mod in model.modules():
-      if hasattr(mod, "weight"):
-          if isinstance(mod.weight, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.weight.cpu().detach().numpy().flatten(), fisher=False))
-      if hasattr(mod, "bias"):
-          if isinstance(mod.bias, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.bias.cpu().detach().numpy().flatten(),  fisher=False))
-  kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
-  return kurtosis_kurtosis
-
-def unsafe_kk_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
-    print("KK Unlearning")
-    mininimum_sparsity = find_min_sparsity(path,device)
-    base_model,optimizer,criterion,= load_model(path,0.01,device)
-    base_model.torch.device('cpu')
-    kk = kurtosis_of_kurtoses(base_model)
-    if kk < torch.exp(torch.Tensor([1])):
-        prune_modifier = 1/torch.log2(torch.Tensor([kk]))
-    else:
-        prune_modifier = 1/torch.log(torch.Tensor([kk]))
-    unsafe_prune = mininimum_sparsity/prune_modifier.item()
-    print(f"\n Unsafe prune sparsity: {unsafe_prune}")
-    kk_model = global_prune_without_masks(base_model, unsafe_prune)
-    kk_model.to(device)
-    print(f"\nModel accuracies post kk pruning:")
-    evaluate_forget_remain_test(kk_model,forget_loader,remain_loader,test_loader,device)
-    print("\nFine tuning kk model:")
-    optimizer_kk,criterion = utils.set_hyperparameters(kk_model,lr=0.01)
-    kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_kk, criterion, device,0,n_epochs,n_classes,seed)
-    kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= kk_train.fine_tune()
-    forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_loader)
-    print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
-    print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
-    print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
-    results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-    return kk_model,results_dict
-
-
 
 # UNLEARNING PRUNING WITH OR WITHOUT MASKING
