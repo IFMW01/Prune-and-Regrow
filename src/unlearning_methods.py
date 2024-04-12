@@ -6,6 +6,7 @@ import utils
 import numpy as np
 import Trainer
 import Unlearner 
+import scipy.stats as stats
 from torch.nn.utils import parameters_to_vector as Params2Vec
 import torch.nn.utils.prune as prune
 from copy import deepcopy
@@ -234,6 +235,7 @@ def global_prune_without_masks(model, amount):
         if hasattr(mod, "bias_orig"):
             if isinstance(mod.bias_orig, torch.nn.Parameter):
                 prune.remove(mod, "bias")
+    return model
 
 def global_prune_with_masks(model, amount):
     """Global Unstructured Pruning of model."""
@@ -251,6 +253,19 @@ def global_prune_with_masks(model, amount):
         pruning_method=prune.L1Unstructured,
         amount=amount,
     )
+    return model
+
+def kurtosis_of_kurtoses(model):
+  kurtosis = []
+  for mod in model.modules():
+      if hasattr(mod, "weight"):
+          if isinstance(mod.weight, torch.nn.Parameter):
+              kurtosis.append(stats.kurtosis(mod.weight.cpu().detach().numpy().flatten(), fisher=False))
+      if hasattr(mod, "bias"):
+          if isinstance(mod.bias, torch.nn.Parameter):
+              kurtosis.append(stats.kurtosis(mod.bias.cpu().detach().numpy().flatten(),  fisher=False))
+  kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
+  return kurtosis_kurtosis
 
 def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
     print("\Consine Unlearning:")
@@ -259,7 +274,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     cosine_sim = []
     base_model,optimizer,criterion,= load_model(path,0.01,device)
     base_vec = vectorise_model(base_model)
-
+    evaluate_forget_remain_test(base_model,forget_loader,remain_loader,test_loader,device)
     for pruning_ratio in prune_rate:
         pruning_ratio = float(pruning_ratio)
         prune_model,optimizer,criterion,= load_model(path,0.01,device)
@@ -273,8 +288,17 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     for i in d:
         dists.append(torch.dist(i, torch.Tensor([1, 1])))
     min = torch.argmin(torch.Tensor(dists))
-    print(f"Best prining ration found at: {min}% sparsity")
-    consine_model = global_prune_with_masks(base_model, float(prune_rate[min]))
+
+    # kurtosis_of_kurtoses_model = kurtosis_of_kurtoses(base_model)
+    # if kurtosis_of_kurtoses_model < torch.exp(torch.Tensor([1])):
+    #     prune_modifier = 1/torch.log2(torch.Tensor([kurtosis_of_kurtoses_model]))
+    # else:
+    #     prune_modifier = 1/torch.log(torch.Tensor([kurtosis_of_kurtoses_model]))
+    # safe_prune = prune_rate[min]*prune_modifier.item()
+
+    print(f"Percentage Prune: {min:.2f}")
+    consine_model = global_prune_without_masks(base_model, float(prune_rate[min]))
+
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_loader,test_loader,device)
     print("\nFine tuning cosine model:")
@@ -287,3 +311,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
     results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return consine_model,results_dict
+
+
+
+
