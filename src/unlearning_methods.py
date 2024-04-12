@@ -312,6 +312,52 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return consine_model,results_dict
 
+def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
+    print("\Consine Unlearning:")
+    print("\n")
+    prune_rate = torch.linspace(0,1,101)
+    cosine_sim = []
+    base_model,optimizer,criterion,= load_model(path,0.01,device)
+    base_vec = vectorise_model(base_model)
+    evaluate_forget_remain_test(base_model,forget_loader,remain_loader,test_loader,device)
+    for pruning_ratio in prune_rate:
+        pruning_ratio = float(pruning_ratio)
+        prune_model,optimizer,criterion,= load_model(path,0.01,device)
+        prune_model = global_prune_without_masks(prune_model,pruning_ratio)
+        prune_model_vec = vectorise_model(prune_model)
+        cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
+ 
+    c = torch.vstack((torch.Tensor(cosine_sim), prune_rate))
+    d = c.T
+    dists = []
+    for i in d:
+        dists.append(torch.dist(i, torch.Tensor([1, 1])))
+    min = torch.argmin(torch.Tensor(dists))
+
+    kurtosis_of_kurtoses_model = kurtosis_of_kurtoses(base_model)
+    if kurtosis_of_kurtoses_model < torch.exp(torch.Tensor([1])):
+        prune_modifier = 1/torch.log2(torch.Tensor([kurtosis_of_kurtoses_model]))
+    else:
+        prune_modifier = 1/torch.log(torch.Tensor([kurtosis_of_kurtoses_model]))
+    unsafe_prune = prune_rate[min]/prune_modifier.item()
+
+    print(f"Percentage Prune: {min:.2f}")
+    kk_model = global_prune_without_masks(base_model, float(unsafe_prune[min]))
+
+    print(f"\nModel accuracies post consine pruning:")
+    evaluate_forget_remain_test(kk_model,forget_loader,remain_loader,test_loader,device)
+    print("\nFine tuning cosine model:")
+    optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,lr=0.01)
+    kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
+    kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= cosine_train.fine_tune()
+    forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_loader)
+    print(f"Forget accuracy:{forget_accuracy}:.2f%\tForget loss:{forget_loss}:.2f\tForget ECE:{forget_ece}:.2f")
+    print(f"Remain accuracy:{remain_accuracy}:.2f%\Remain loss:{remain_loss}:.2f\Remain ECE:{remain_ece}:.2f")
+    print(f"Test accuracy:{test_accuracy}:.2f%\Test loss:{test_loss}:.2f\Test ECE:{test_ece}:.2f")
+    results_dict["Cosine Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+    return kk_model,results_dict
+
+
 
 
 

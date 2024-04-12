@@ -79,8 +79,8 @@ def main(config):
             cosine_model,results_dict = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
             unlearn_logits(cosine_model,forget_loader,device,save_dir,'cosine_model')
 
-            # kk_model,results_dict = um.unsafe_kk_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
-            # unlearn_logits(kk_model,forget_loader,device,save_dir,'cosine_model')
+            kk_model,results_dict = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
+            unlearn_logits(kk_model,forget_loader,device,save_dir,'cosine_model')
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
             with open(f"{save_dir}/unlearning_results.json",'w') as f:
