@@ -6,6 +6,7 @@ import utils
 import numpy as np
 import Trainer
 import Unlearner 
+from torch.nn.utils import parameters_to_vector as Params2Vec
 from copy import deepcopy
 from Trainer import Trainer
 from Unlearner import Unlearner
@@ -171,8 +172,9 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    omp_model,optimizer_omp,criterion,= load_model(path,0.01,device)
+    omp_model,opimizer,criterion,= load_model(path,0.01,device)
     omp_model = global_unstructured_pruning(omp_model,pruning_ratio)
+    optimizer_omp,criterion = utils.set_hyperparameters(omp_model,lr=0.01)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_loader,remain_loader,test_loader,device)
     print("\nFine tuning pruned model:")
@@ -184,3 +186,49 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     return omp_model,results_dict
 
   # CONSINE OMP PRUNE UNLEARNING
+
+def vectorise_model(model):
+    """Convert Paramaters to Vector form."""
+    return Params2Vec(model.parameters())
+
+def cosine_similarity(base_weights, model_weights):
+    """Calculate the cosine similairty between two vectors """
+    return torch.nan_to_num(torch.clip(torch.dot(
+        base_weights, model_weights
+    ) / (
+        torch.linalg.norm(base_weights)
+        * torch.linalg.norm(model_weights)
+    ),-1, 1),0)
+
+def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,pruning_ratio,n_epochs,results_dict,n_classes,seed):
+    prune_rate = torch.linspace(0,1,101)
+    cosine_sim = []
+    base_model,optimizer,criterion,= load_model(path,0.01,device)
+    base_vec = vectorise_model(base_model)
+
+    for pruning_ratio in prune_rate:
+        pruning_ratio = float(pruning_ratio)
+        prune_model,optimizer,criterion,= load_model(path,0.01,device)
+        prune_model = global_unstructured_pruning(prune_model,pruning_ratio)
+        prune_model_vec = vectorise_model(prune_model)
+        cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
+ 
+    c = torch.vstack((torch.Tensor(cosine_sim), prune_rate))
+    d = c.T
+    dists = []
+    for i in d:
+        dists.append(torch.dist(i, torch.Tensor([1, 1])))
+    min = torch.argmin(torch.Tensor(dists))
+    print(f"Best prining ration found at: {min}% sparsity")
+    consine_model = global_unstructured_pruning(base_model, float(prune_rate[min]))
+    evaluate_forget_remain_test(consine_model,forget_loader,remain_loader,test_loader,device)
+    optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,lr=0.01)
+    cosine_train = Unlearner(omp_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
+    cosine_train
+    omp_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= cosine_train.fine_tune()
+
+    prune_acc, prune_loss = evaluate(testloader,prune_net)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(prune_net.parameters(), lr=0.001, momentum=0.9)
+    train(trainloader,1,prune_net)
+    finetune_acc, finetune_acc_loss =  evaluate(testloader,prune_net)

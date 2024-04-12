@@ -148,3 +148,12 @@ def evaluate_test(model,test_loader,criterion,n_classes,device):
     test_loss /= len(test_loader)
     test_accuracy = 100 * correct / total
     return test_accuracy,test_loss, ece
+
+
+
+
+
+
+
+
+     

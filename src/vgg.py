@@ -26,7 +26,8 @@ class VGGish(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(4096, num_classes))
+            nn.Linear(4096, num_classes)),
+            nn.Softmax(dim=1)
 
     def forward(self, x):
         x = self.features(x)
@@ -63,6 +64,7 @@ class VGG9(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(),
             nn.Linear(4096, num_classes),
+            nn.Softmax(dim=1)
         )
 
     def forward(self, x):
