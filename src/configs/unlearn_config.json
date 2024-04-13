@@ -10,7 +10,7 @@
     "unlearning":true,
     "n_epoch_impair": 2,
     "n_epoch_repair": 24,
-    "n_epochs_fine_tune": 25,
+    "n_epochs_fine_tune": 10,
     "forget_instances_num":1,
-    "pruning_ratio":95
+    "pruning_ratio":0.05
 }

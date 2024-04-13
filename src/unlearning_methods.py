@@ -182,7 +182,7 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     print("\n")
     utils.set_seed(seed)
     omp_model,opimizer,criterion,= load_model(path,0.01,device)
-    omp_model = global_unstructured_pruning(omp_model,pruning_ratio)
+    omp_model = global_prune_with_masks(omp_model,pruning_ratio)
     optimizer_omp,criterion = utils.set_hyperparameters(omp_model,lr=0.01)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_loader,remain_loader,test_loader,device)
