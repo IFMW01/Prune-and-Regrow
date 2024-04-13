@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import load_datasets as ld
+import Trainer
+from Trainer import Trainer
 import json
 import os
 import utils
@@ -21,13 +23,13 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
 
     all_processed = ld.load_mia_dataset(dataset_pointer,pipeline)
     train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-    train_loader_mia,train_eval_loader_mia,test_loader_mia =  ld.loaders(train_set_mia,test_set_mia,dataset_pointer)
-    model,optimizer,scheduler,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
-
-    mia_model,mia_test_accuracy,mia_test_loss= tr.train(model, train_loader_mia, test_loader_mia, optimizer, criterion, device, n_shadow_epochs, seed)
+    train_loader,train_eval_loader,test_loader=  ld.loaders(train_set_mia,test_set_mia,dataset_pointer)
+    model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
+    trainer = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_shadow_epochs,n_classes,seed)
+    mia_model,mia_test_accuracy,mia_test_loss= trainer.train()
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
-    mia_logit_df = utils.logits(mia_model, train_loader_mia, test_loader_mia,device)
+    mia_logit_df = utils.logits(mia_model, train_eval_loader, test_loader,device)
     filename = (f"MAI {seed}.csv")
     mia_logit_df.to_csv(f"{save_dir}/{filename}", index = False)
     print(f"{filename} saved")

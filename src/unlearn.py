@@ -4,6 +4,7 @@ import unlearning_methods as um
 import load_datasets as ld
 import glob
 import utils 
+import math
 
 def unlearn_logits(model,forget_loader,device,save_dir,filename):
     logits = utils.logits_unlearn(model,forget_loader,device)
@@ -21,7 +22,7 @@ def main(config):
     n_epoch_impair = config.get("n_epoch_impair",None)
     n_epoch_repair = config.get("n_epoch_repair",None)
     n_epochs_fine_tune = config.get("n_epochs_fine_tune",None)
-    forget_instances_num = config.get("forget_instances_num",None)
+    forget_percentage = config.get("forget_percentage",None)
     pruning_ratio = config.get("pruning_ratio",None)
     
     print("Received arguments from config file:")
@@ -44,6 +45,7 @@ def main(config):
         return
     else:
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
+        forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
         remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
         print("Creating remain and forget data loaders")
         remain_loader,remain_eval_loader,test_loader= ld.loaders(remain_set,test_set,dataset_pointer)
@@ -52,7 +54,7 @@ def main(config):
         for seed in seeds:
             
             model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
-            save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_instances_num}/{seed}/"
+            save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_percentage}/{seed}/"
             utils.create_dir(save_dir)
             print(f"Acessing trained model on seed: {seed}")
             model_path = glob.glob(os.path.join(model_dir,'*.pth'))

@@ -339,10 +339,10 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
         prune_modifier = 1/torch.log2(torch.Tensor([kurtosis_of_kurtoses_model]))
     else:
         prune_modifier = 1/torch.log(torch.Tensor([kurtosis_of_kurtoses_model]))
-    unsafe_prune = prune_rate[min]/prune_modifier.item()
+    unsafe_prune = prune_rate[min]+0.1
 
     print(f"Percentage Prune: {min:.2f}")
-    kk_model = global_prune_without_masks(base_model, float(unsafe_prune[min]))
+    kk_model = global_prune_without_masks(base_model, float(unsafe_prune))
 
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(kk_model,forget_loader,remain_loader,test_loader,device)
