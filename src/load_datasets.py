@@ -143,7 +143,7 @@ def loaders(dataset,dataset_pointer,batch_size=256):
   
   dataset_loader = torch.utils.data.DataLoader(
       dataset,
-      batch_size=dataset,
+      batch_size=batch_size,
       shuffle=True,
       num_workers=2,
       pin_memory=True,
