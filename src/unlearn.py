@@ -5,10 +5,24 @@ import load_datasets as ld
 import glob
 import utils 
 import math
+import random
+import numpy as np
 
 def unlearn_logits(model,forget_loader,device,save_dir,filename):
     logits = utils.logits_unlearn(model,forget_loader,device)
     logits.to_csv(f'{save_dir}{filename}.csv',index = False)
+
+def randomise_lables(data_set,dataset_pointer):
+    if dataset_pointer == 'SpeechCommands':
+        lables = np.load('src/labels/speech_commands_labels.npy')
+        for i in range(len(data_set)):
+            label_index = lables.index(data_set[i][[4]])
+            current_label = label_index
+            while current_label == label_index:
+                current_label = random.randint(0, len(lables))
+            data_set[i][4] = lables[current_label]
+    
+    return data_set
 
 def main(config):
     dataset_pointer = config.get("dataset_pointer",None)
@@ -54,6 +68,8 @@ def main(config):
         remain_loader = ld.loaders(remain_set,dataset_pointer)
         remain_eval_loader = ld.loaders(remain_set,dataset_pointer,16384)
         forget_loader = ld.loaders(forget_set,dataset_pointer)
+        forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
+        forget_rand_lables_loader = ld.loaders(forget_rand_lables,dataset_pointer)
         test_loader = ld.loaders(test_set,dataset_pointer,16384)
         results_dict = {}
         for seed in seeds:

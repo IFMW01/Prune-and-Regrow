@@ -6,7 +6,7 @@ import librosa
 import numpy as np
 from torchaudio.datasets import SPEECHCOMMANDS
 
-labels = np.load('./labels/lables.npy')
+labels = np.load('./labels/speech_commands_labels.npy')
 labels = labels.tolist()
 
 def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):

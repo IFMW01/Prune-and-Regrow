@@ -100,3 +100,30 @@ class Unlearner():
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
         return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss, test_ece
+    
+    def amnesiac(self):
+        
+        utils.set_seed(self.seed)
+        train_ece = 0 
+        test_ece = 0
+
+        for epoch in tqdm(range(0, self.n_epoch_impair)):
+            self.model.train()
+            epoch_loss = 0.0
+
+            for batch_idx, (data, target) in enumerate(self.forget_loader):
+                data = data.to(self.device)
+                target = target.to(self.device)
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                loss.backward()
+                self.optimizer.step()
+
+            train_accuracy,train_loss,train_ece = self.evaluate(self.forget_loader)
+            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
+                
+            print(f"Epoch: {epoch}/{self.n_epoch_repair}\t Forget random labels accuracy: {train_accuracy:.2f}%\Forget random labels loss: {train_loss:.6f}\Forget random labels ECE {train_ece:.2f}")
+            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+
+        return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss, test_ece
