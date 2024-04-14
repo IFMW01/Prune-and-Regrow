@@ -25,9 +25,8 @@ class Trainer():
         correct = 0
         total = 0
         ece = 0
-
-        with torch.no_grad():
-            for data, target in dataloader:
+        for data, target in dataloader:
+            with torch.no_grad():
                 data = data.to(self.device)
                 target = target.to(self.device)
                 output = self.model(data)

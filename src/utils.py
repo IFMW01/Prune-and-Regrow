@@ -112,9 +112,8 @@ def evaluate(model,dataloader,device):
     model.eval()
     correct = 0
     total = 0
-
-    with torch.no_grad():
-        for data, target in dataloader:
+    for data, target in dataloader:
+        with torch.no_grad():
             data = data.to(device)
             target = target.to(device)
             output = model(data)
@@ -133,8 +132,8 @@ def evaluate_test(model,test_loader,criterion,n_classes,device):
     total = 0
     ece = 0
 
-    with torch.no_grad():
-        for data, target in test_loader:
+    for data, target in test_loader:
+        with torch.no_grad():
             data = data.to(device)
             target = target.to(device)
             output = model(data)
