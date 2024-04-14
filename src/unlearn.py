@@ -72,8 +72,9 @@ def main(config):
         forget_rand_lables_loader = ld.loaders(forget_rand_lables,dataset_pointer)
         test_loader = ld.loaders(test_set,dataset_pointer,16384)
         results_dict = {}
+
         for seed in seeds:
-            
+    
             model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
             save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_percentage}/{seed}/"
             utils.create_dir(save_dir)
@@ -103,7 +104,10 @@ def main(config):
             unlearn_logits(cosine_model,forget_loader,device,save_dir,'cosine_model')
 
             kk_model,results_dict = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
-            unlearn_logits(kk_model,forget_loader,device,save_dir,'cosine_model')
+            unlearn_logits(kk_model,forget_loader,device,save_dir,'kk_model')
+
+            am_model,results_dict = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
+            unlearn_logits(am_model,forget_loader,device,save_dir,'amnesiac_model')
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
             with open(f"{save_dir}/unlearning_results.json",'w') as f:
