@@ -21,7 +21,7 @@ def create_forget_remain_set(forget_instances_num,train_set,seed=42):
     remain_set = train_set
     for i in range(forget_instances_num):
         index = random.randint(0,(len(remain_set)-1))
-        forget_set.append(remain_set[i])
+        forget_set.append(remain_set[index])
         remain_set.pop(index)
     return remain_set,forget_set
 
