@@ -47,6 +47,9 @@ def main(config):
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
         forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
         remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
+        print(f"len remain: {remain_set}")
+        print(f"len remain: {forget_set}")
+        
         print("Creating remain and forget data loaders")
         remain_loader,remain_eval_loader,test_loader= ld.loaders(remain_set,test_set,dataset_pointer)
         remain_loader,remain_eval_loader,forget_loader= ld.loaders(remain_set,forget_set,dataset_pointer)
