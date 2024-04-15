@@ -21,14 +21,16 @@ random.seed(seed)
 def audioMNIST_train_test():
     dataset = load()
     train_set, test_set = train_test_split(dataset,random_state=seed, test_size=0.20,shuffle=True)
-    train_set = torch.tensor(train_set)
-    test_set = torch.tensor(test_set)
+    print(type(train_set))
+    print(train_set[0])
+    # train_set = torch.tensor(tuple(train_set)) 
+    # test_set = torch.tensor(tuple(test_set))  
     return train_set,test_set
     
 def audioMNIST_all():
     dataset= load()
     random.shuffle(dataset)
-    dataset = torch.tensor(dataset)
+    dataset = torch.as_tensor(dataset)  
     return dataset
 
 def load():
@@ -57,11 +59,12 @@ def load():
                     gender = 1
                 samplerate, data = wavfile.read(str(wav_file))
                 data = librosa.resample(data.astype(float),orig_sr=samplerate,target_sr=16000)
-                dataset.append([data,int(speaker_id),gender,label])
+                # data = torch.tensor(data)
+                dataset.append((data,int(speaker_id),gender,label))
                 del data
     repository_path = './AudioMNIST'
     shutil.rmtree(repository_path)
-    return dataset
+    return tuple(dataset)
 
 def write_metadata(filepath,metadata):
   with open(f'{filepath}', 'w', newline='') as file:

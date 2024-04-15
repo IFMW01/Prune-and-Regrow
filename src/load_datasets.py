@@ -19,6 +19,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
             print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
         train_list = SubsetSC("testing") 
+        print(train_list[0])
         test_list = SubsetSC("testing")
         labels = np.load('./labels/speech_commands_labels.npy')
     elif dataset_pointer == 'audioMNIST':

@@ -3,11 +3,12 @@ import torch.nn as nn
 import torchaudio
 from tqdm import tqdm
 
-def pad_datum(max,datum,dataset_pointer):
+def pad_datum(max,datum_0,dataset_pointer):
     if dataset_pointer == 'SpeechCommands':
-      pad_datum =nn.ConstantPad1d((0, max - datum[0].shape[1]), 0)(datum[0])
+      pad_datum =nn.ConstantPad1d((0, max - datum_0.shape[1]), 0)(datum_0)
     elif dataset_pointer == 'audioMNIST':
-      pad_datum =nn.ConstantPad1d((0, max - datum[0].shape[0]), 0)(datum[0])
+      datum_0 = torch.Tensor(datum_0)
+      pad_datum =nn.ConstantPad1d((0, max - datum_0.shape[0]), 0)(datum_0)
     return pad_datum
 
 def convert_waveform(dataset,dataset_pointer,pipeline,resample:bool,orig_freq=16000,new_freq=8000):
@@ -21,15 +22,16 @@ def convert_waveform(dataset,dataset_pointer,pipeline,resample:bool,orig_freq=16
     datum_0 = datum[0]
     if dataset_pointer == 'SpeechCommands':
           if datum[0].shape[1]<max:
-            datum_0 = pad_datum(max,datum,dataset_pointer)
+            datum_0 = pad_datum(max,datum_0,dataset_pointer)
     elif dataset_pointer == 'audioMNIST':
       if datum[0].shape[0]<max:
-            datum_0 = pad_datum(max,datum,dataset_pointer)
+            datum_0 = pad_datum(max,datum_0,dataset_pointer)
     if pipeline:
         if resample:
-            converted_datset.append(pipeline(resample_transform(datum_0)),datum[1], datum[2],datum[3], datum[4])
+            converted_datset.append(pipeline(resample_transform(datum_0)),*datum[1:])
         else:   
-            converted_datset.append(((pipeline(datum_0)),datum[1], datum[2],datum[3], datum[4]))
+            converted_datset.append((pipeline(datum_0)),*datum[1:])
     else:
-      converted_datset.append(((datum_0),datum[1], datum[2],datum[3], datum[4]))
+      converted_datset.append((datum_0),*datum[1:])
   return converted_datset
+
