@@ -25,7 +25,7 @@ def write_metadata(filepath,metadata):
 
 def audioMNIST_train_test():
     utils.set_seed(seed)
-    git_clone_command = ['git', 'clone', 'git clone https://github.com/soerenab/AudioMNIST.git']
+    git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
     subprocess.run(git_clone_command, check=True)
     with open('./AudioMNIST/data/audioMNIST_meta.txt', 'r') as file:
         dict_str = file.read()
