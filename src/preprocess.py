@@ -7,7 +7,6 @@ def pad_datum(max,datum_0,dataset_pointer):
     if dataset_pointer == 'SpeechCommands':
       pad_datum =nn.ConstantPad1d((0, max - datum_0.shape[1]), 0)(datum_0)
     elif dataset_pointer == 'audioMNIST':
-      datum_0 = torch.Tensor(datum_0)
       pad_datum =nn.ConstantPad1d((0, max - datum_0.shape[0]), 0)(datum_0)
     return pad_datum
 
@@ -24,14 +23,15 @@ def convert_waveform(dataset,dataset_pointer,pipeline,resample:bool,orig_freq=16
           if datum[0].shape[1]<max:
             datum_0 = pad_datum(max,datum_0,dataset_pointer)
     elif dataset_pointer == 'audioMNIST':
+      datum_0 = torch.Tensor(datum_0)
       if datum[0].shape[0]<max:
             datum_0 = pad_datum(max,datum_0,dataset_pointer)
     if pipeline:
         if resample:
-            converted_datset.append(pipeline(resample_transform(datum_0)),*datum[1:])
+            converted_datset.append((pipeline(resample_transform(datum_0)),*datum[1:]))
         else:   
-            converted_datset.append((pipeline(datum_0)),*datum[1:])
+            converted_datset.append(((pipeline(datum_0)),*datum[1:]))
     else:
-      converted_datset.append((datum_0),*datum[1:])
+      converted_datset.append(((datum_0),*datum[1:]))
   return converted_datset
 
