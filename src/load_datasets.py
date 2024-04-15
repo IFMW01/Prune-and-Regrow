@@ -7,11 +7,10 @@ import numpy as np
 import processAudioMNIST as AudioMNIST
 from torchaudio.datasets import SPEECHCOMMANDS
 
-labels = np.load('./labels/speech_commands_labels.npy')
-labels = labels.tolist()
+
 
 def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
-
+    global labels
     if pipeline == 'mel':
         pipeline_on_wav = WavToMel()
     elif pipeline =='spec':
@@ -21,8 +20,12 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if dataset_pointer == 'SpeechCommands':
         train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")
+        labels = np.load('./labels/speech_commands_labels.npy')
+        labels = labels.tolist()
     elif dataset_pointer == 'AUDIOMNSIST':
         train_list,test_list = AudioMNIST.audioMNIST()
+        labels = np.load('./labels/audiomnist_labels.npy')
+        labels = labels.tolist()
 
     train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
 
