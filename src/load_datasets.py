@@ -21,11 +21,11 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")
         labels = np.load('./labels/speech_commands_labels.npy')
-        labels = labels.tolist()
     elif dataset_pointer == 'audioMNIST':
         train_list,test_list = AudioMNIST.audioMNIST_train_test()
         labels = np.load('./labels/audiomnist_labels.npy')
-        labels = labels.tolist()
+        
+    labels = labels.tolist()
 
     train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
 
