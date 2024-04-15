@@ -40,8 +40,8 @@ def audioMNIST_train_test():
             for wav_file in wav_files:
                 file_path = os.path.basename(wav_file)
                 last_part = file_path.split("_")
-                label = last_part[0]
-                speaker_id = last_part[1]
+                label = int(last_part[0])
+                speaker_id = int(last_part[1])
                 gender = dictionary[f'{speaker_id}']['gender']
                 if gender == 'male':
                     gender = 0
@@ -49,7 +49,7 @@ def audioMNIST_train_test():
                     gender = 1
                 samplerate, data = wavfile.read(str(wav_file))
                 data = librosa.resample(data.astype(float),orig_sr=samplerate,target_sr=16000)
-                dataset.append([data,file_path,speaker_id,gender,label])
+                dataset.append([data,speaker_id,gender,label])
                 del data
     repository_path = './AudioMNIST'
     shutil.rmtree(repository_path)
@@ -76,8 +76,8 @@ def audioMNIST_all():
             for wav_file in wav_files:
                 file_path = os.path.basename(wav_file)
                 last_part = file_path.split("_")
-                label = last_part[0]
-                speaker_id = last_part[1]
+                label = int(last_part[0])
+                speaker_id = int(last_part[1])
                 gender = dictionary[f'{speaker_id}']['gender']
                 if gender == 'male':
                     gender = 0
@@ -85,7 +85,7 @@ def audioMNIST_all():
                     gender = 1
                 samplerate, data = wavfile.read(str(wav_file))
                 data = librosa.resample(data.astype(float),orig_sr=samplerate,target_sr=16000)
-                dataset.append([data,file_path,speaker_id,gender,label])
+                dataset.append([data,speaker_id,gender,label])
                 del data
     repository_path = './AudioMNIST'
     shutil.rmtree(repository_path)
