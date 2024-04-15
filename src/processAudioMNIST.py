@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import IPython.display as ipd
 import utils
 import shutil
+import torch
+from tqdm import tqdm
 from scipy.io import wavfile
 from sklearn.model_selection import train_test_split
 from joblib import dump
@@ -52,11 +54,12 @@ def audioMNIST_train_test():
     repository_path = './AudioMNIST'
     shutil.rmtree(repository_path)
     train_set, test_set = train_test_split(dataset,random_state=seed, test_size=0.20,shuffle=True)
-    return train_set,test_set
+    return torch.tensor(train_set),torch.tensor(test_set)
+    
 
 def audioMNIST_all():
     utils.set_seed(seed)
-    git_clone_command = ['git', 'clone', 'git clone https://github.com/soerenab/AudioMNIST.git']
+    git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
     subprocess.run(git_clone_command, check=True)
     with open('./AudioMNIST/data/audioMNIST_meta.txt', 'r') as file:
         dict_str = file.read()

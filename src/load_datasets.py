@@ -27,22 +27,22 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         
     labels = labels.tolist()
 
-    train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
+    train_set,test_set = convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav)
 
     if unlearnng:
             return train_set,test_set
     else:
-        train_loader = train_loader(train_set,dataset_pointer)
-        train_eval_loader = test_loader(train_set,dataset_pointer)
-        test_loader = test_loader(test_set,dataset_pointer)
+        train_loader = trainset_loader(train_set,dataset_pointer)
+        train_eval_loader = testset_loader(train_set,dataset_pointer)
+        test_loader = testset_loader(test_set,dataset_pointer)
         return train_loader,train_eval_loader,test_loader
 
 
-def convert_sets(train_list,test_list,pipeline_on_wav):
+def convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav):
 
     print("Converting datasets")
-    train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
-    test_set = pp.convert_waveform(test_list,pipeline_on_wav,False)
+    train_set = pp.convert_waveform(train_list,dataset_pointer,pipeline_on_wav,False)
+    test_set = pp.convert_waveform(test_list,dataset_pointer,pipeline_on_wav,False)
 
     return train_set,test_set
 
@@ -139,7 +139,7 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def train_loader(dataset,dataset_pointer,batch_size=256):
+def trainset_loader(dataset,dataset_pointer,batch_size=256):
   if dataset_pointer == 'SpeechCommands' or 'audioMNIST':
       collate_fn = collate_fn_SC
   else:
@@ -156,7 +156,7 @@ def train_loader(dataset,dataset_pointer,batch_size=256):
 
   return dataset_loader
 
-def test_loader(dataset,dataset_pointer,batch_size=16384):
+def testset_loader(dataset,dataset_pointer,batch_size=16384):
   if dataset_pointer == 'SpeechCommands' or 'audioMNIST':
       collate_fn = collate_fn_SC
   else:
