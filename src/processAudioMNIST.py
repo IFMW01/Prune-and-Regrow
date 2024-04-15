@@ -31,7 +31,7 @@ def audioMNIST_all():
     dataset = torch.tensor(dataset)
     return dataset
 
-def load(audioMNIST):
+def load():
     utils.set_seed(seed)
     git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
     subprocess.run(git_clone_command, check=True)
