@@ -22,8 +22,8 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         test_list = SubsetSC("testing")
         labels = np.load('./labels/speech_commands_labels.npy')
         labels = labels.tolist()
-    elif dataset_pointer == 'AUDIOMNSIST':
-        train_list,test_list = AudioMNIST.audioMNIST()
+    elif dataset_pointer == 'audioMNIST':
+        train_list,test_list = AudioMNIST.audioMNIST_train_test()
         labels = np.load('./labels/audiomnist_labels.npy')
         labels = labels.tolist()
 
@@ -37,7 +37,6 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         test_loader = test_loader(test_set,dataset_pointer)
         return train_loader,train_eval_loader,test_loader
 
-    
 
 def convert_sets(train_list,test_list,pipeline_on_wav):
 
@@ -58,11 +57,12 @@ def load_mia_dataset(dataset_pointer :str,pipeline:str):
         if not os.path.exists(dataset_pointer):
             print(f"Downloading: {dataset_pointer}")
         all_list = SubsetSC("all")
-        print("Converting All Set")
-        all_set = pp.convert_waveform(all_list,pipeline_on_wav,False)
-        return all_set
-    else:
-        return
+    elif dataset_pointer == 'audioMNIST':
+        all_list = AudioMNIST.audioMNIST_all()
+
+    print("Converting All Set")
+    all_set = pp.convert_waveform(all_list,pipeline_on_wav,False)
+    return all_set
 
 class SubsetSC(SPEECHCOMMANDS):
     def __init__(self,subset: str = None):

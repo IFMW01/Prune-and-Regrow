@@ -15,12 +15,15 @@ def unlearn_logits(model,forget_loader,device,save_dir,filename):
 def randomise_lables(data_set,dataset_pointer):
     if dataset_pointer == 'SpeechCommands':
         lables = np.load('src/labels/speech_commands_labels.npy')
-        for i in range(len(data_set)):
-            label_index = lables.index(data_set[i][[4]])
-            current_label = label_index
-            while current_label == label_index:
-                current_label = random.randint(0, len(lables))
-            data_set[i][4] = lables[current_label]
+    elif dataset_pointer == 'audioMNIST':
+        lables = np.load('src/labels/speech_commands_labels.npy')
+    labels = labels.tolist()
+    for i in range(len(data_set)):
+        label_index = lables.index(data_set[i][[(len(data_set[i])-1)]])
+        current_label = label_index
+        while current_label == label_index:
+            current_label = random.randint(0, len(lables))
+        data_set[i][(len(data_set[i])-1)] = lables[current_label]
     
     return data_set
 
