@@ -4,6 +4,7 @@ import preprocess as pp
 import torch
 import librosa
 import numpy as np
+import processAudioMNIST as AudioMNIST
 from torchaudio.datasets import SPEECHCOMMANDS
 
 labels = np.load('./labels/speech_commands_labels.npy')
@@ -20,17 +21,17 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if dataset_pointer == 'SpeechCommands':
         train_list = SubsetSC("testing") 
         test_list = SubsetSC("testing")
-    else:
-        return
-    
+    elif dataset_pointer == 'AUDIOMNSIST':
+        train_list,test_list = AudioMNIST.audioMNIST()
+
     train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
 
     if unlearnng:
             return train_set,test_set
     else:
-        train_loader = loaders(train_set,dataset_pointer)
-        train_eval_loader = loaders(train_set,dataset_pointer,16384)
-        test_loader = loaders(test_set,dataset_pointer,16384)
+        train_loader = train_loader(train_set,dataset_pointer)
+        train_eval_loader = test_loader(train_set,dataset_pointer)
+        test_loader = test_loader(test_set,dataset_pointer)
         return train_loader,train_eval_loader,test_loader
 
     
@@ -135,8 +136,25 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
-def loaders(dataset,dataset_pointer,batch_size=256):
-  if dataset_pointer == 'SpeechCommands':
+def train_loader(dataset,dataset_pointer,batch_size=256):
+  if dataset_pointer == 'SpeechCommands' or 'audioMNIST':
+      collate_fn = collate_fn_SC
+  else:
+      return
+
+  dataset_loader = torch.utils.data.DataLoader(
+      dataset,
+      batch_size=batch_size,
+      shuffle=True,
+      num_workers=2,
+      pin_memory=True,
+      collate_fn = collate_fn
+  )
+
+  return dataset_loader
+
+def test_loader(dataset,dataset_pointer,batch_size=16384):
+  if dataset_pointer == 'SpeechCommands' or 'audioMNIST':
       collate_fn = collate_fn_SC
   else:
       return
@@ -144,7 +162,7 @@ def loaders(dataset,dataset_pointer,batch_size=256):
   dataset_loader = torch.utils.data.DataLoader(
       dataset,
       batch_size=batch_size,
-      shuffle=True,
+      shuffle=False,
       num_workers=2,
       pin_memory=True,
       collate_fn = collate_fn

@@ -65,12 +65,12 @@ def main(config):
         print(f"len remain: {len(forget_set)}")
         
         print("Creating remain and forget data loaders")
-        remain_loader = ld.loaders(remain_set,dataset_pointer)
-        remain_eval_loader = ld.loaders(remain_set,dataset_pointer,16384)
-        forget_loader = ld.loaders(forget_set,dataset_pointer)
+        remain_loader = ld.train_loader(remain_set,dataset_pointer)
+        remain_eval_loader = ld.test_loader(remain_set,dataset_pointer)
+        forget_loader = ld.train_loader(forget_set,dataset_pointer)
         forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
-        forget_rand_lables_loader = ld.loaders(forget_rand_lables,dataset_pointer)
-        test_loader = ld.loaders(test_set,dataset_pointer,16384)
+        forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
+        test_loader = ld.test_loader(test_set,dataset_pointer)
         results_dict = {}
 
         for seed in seeds:
