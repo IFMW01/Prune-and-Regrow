@@ -54,7 +54,9 @@ def audioMNIST_train_test():
     repository_path = './AudioMNIST'
     shutil.rmtree(repository_path)
     train_set, test_set = train_test_split(dataset,random_state=seed, test_size=0.20,shuffle=True)
-    return torch.tensor(train_set),torch.tensor(test_set)
+    train_set = torch.tensor(train_set)
+    test_set = torch.tensor(test_set)
+    return train_set,test_set
     
 
 def audioMNIST_all():
@@ -88,5 +90,6 @@ def audioMNIST_all():
     repository_path = './AudioMNIST'
     shutil.rmtree(repository_path)
     random.shuffle(dataset)
+    dataset = torch.tensor(dataset)
     return dataset
 
