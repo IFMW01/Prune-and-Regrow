@@ -7,6 +7,10 @@ import utils
 import math
 import random
 import numpy as np
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+from processAudioMNIST import AudioMNISTDataset
+import processAudioMNIST as AudioMNIST
 
 def unlearn_logits(model,forget_loader,device,save_dir,filename):
     logits = utils.logits_unlearn(model,forget_loader,device)
@@ -68,12 +72,22 @@ def main(config):
         print(f"len remain: {len(forget_set)}")
         
         print("Creating remain and forget data loaders")
-        remain_loader = ld.train_loader(remain_set,dataset_pointer)
-        remain_eval_loader = ld.test_loader(remain_set,dataset_pointer)
-        forget_loader = ld.train_loader(forget_set,dataset_pointer)
-        forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
-        forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
-        test_loader = ld.test_loader(test_set,dataset_pointer)
+        if dataset_pointer == 'SpeechCommands':
+          remain_loader = ld.train_loader(remain_set,dataset_pointer)
+          remain_eval_loader = ld.test_loader(remain_set,dataset_pointer)
+          forget_loader = ld.train_loader(forget_set,dataset_pointer)
+          forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
+          forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
+          test_loader = ld.test_loader(test_set,dataset_pointer)
+        elif dataset_pointer == 'audioMNIST':
+          remain_data = AudioMNISTDataset(remain_set)
+          forget_data = AudioMNISTDataset(forget_set)
+          test_data = AudioMNISTDataset(test_set)
+          remain_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
+          remain_eval_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
+          forget_loader = DataLoader(forget_data, batch_size=256, shuffle=True, num_workers=2)
+          test_loader = DataLoader(test_data, batch_size=256, shuffle=False, num_workers=2)
+
         results_dict = {}
 
         for seed in seeds:

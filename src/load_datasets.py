@@ -28,14 +28,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         train_set,test_set = convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav)
     elif dataset_pointer == 'audioMNIST':
         all_list = AudioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
-        train_set, test_set = AudioMNIST.audioMNIST_train_test(all_list,pipeline,dataset_pointer,42)
+        train_set, test_set = AudioMNIST.train_test(all_list,pipeline,dataset_pointer,42)
 
     if unlearnng:
         return train_set,test_set
     
     if dataset_pointer == 'audioMNIST':
-        train_data = AudioMNISTDataset(train_set, f"./{pipeline}/{dataset_pointer}")
-        test_data = AudioMNISTDataset(test_set, f'./{pipeline}/{dataset_pointer}')
+        train_data = AudioMNISTDataset(train_set)
+        test_data = AudioMNISTDataset(test_set)
         train_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
         train_eval_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
         test_loader = DataLoader(test_data, batch_size=256, shuffle=True, num_workers=2)
