@@ -47,7 +47,7 @@ def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
     
 def train_test(all_data,pipeline,dataset_pointer,seed):
   temp_dir = f'./{pipeline}/{dataset_pointer}'
-  if os.path.isdir(temp_dir):
+  if os.path.isfile(f'{temp_dir}/train.csv') or os.path.isfile(f'{temp_dir}/test.csv'):
     train = pd.read_csv(f'{temp_dir}/train.csv')
     test = pd.read_csv(f'{temp_dir}/test.csv')
   else:
