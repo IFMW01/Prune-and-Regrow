@@ -140,11 +140,22 @@ def collate_fn_SC(batch):
     tensors = torch.stack(tensors)
     return tensors, targets
 
+def collate_fn_MNIST(batch):
+    tensors, targets = [], []
+
+    for waveform, _, label, *_ in batch:
+        waveform = waveform[None,:,:]
+        tensors += [waveform]
+        targets += [label_to_index(label)]
+    targets = torch.stack(targets)
+    tensors = torch.stack(tensors)
+    return tensors, targets
+
 def trainset_loader(dataset,dataset_pointer,batch_size=256):
-  if dataset_pointer == 'SpeechCommands' or 'audioMNIST':
+  if dataset_pointer == 'SpeechCommands':
       collate_fn = collate_fn_SC
-  else:
-      return
+  elif dataset_pointer =='audioMNIST':
+      collate_fn = collate_fn_MNIST
 
   dataset_loader = torch.utils.data.DataLoader(
       dataset,

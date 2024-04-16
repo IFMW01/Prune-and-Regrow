@@ -359,26 +359,26 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     results_dict["Kurtosis Unlearning"] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return kk_model,results_dict
 
-# AMNESIAC UNLEARNING 
+# Random Label Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
 
-def amnesiac_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
-    am_model,optimizer_ft,criterion = load_model(path,0.01,device)
-    am_train = Unlearner(am_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-    am_model,rand_forget_accuracy,rand_forget_loss,rand_forget_ece,test_accuracy,test_loss, test_ece=  am_train.amnesiac()
+def random_label_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
+    randl_model,optimizer_ft,criterion = load_model(path,0.01,device)
+    randl_train = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    randl_model,rand_forget_accuracy,rand_forget_loss,rand_forget_ece,test_accuracy,test_loss, test_ece=  randl_train.amnesiac()
     print("Performed Amnesiac Unlearning")
-    evaluate_forget_remain_test(am_model,forget_loader,remain_loader,test_loader,device)
+    evaluate_forget_remain_test(randl_model,forget_loader,remain_loader,test_loader,device)
 
     print("\nFine tuning amnesiac model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(am_model,lr=0.01)
-    am_fine_tune = Unlearner(am_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-    am_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= am_fine_tune.fine_tune()
-    forget_accuracy,forget_loss,forget_ece = am_fine_tune.evaluate(forget_loader)
+    optimizer_ft,criterion = utils.set_hyperparameters(randl_model,lr=0.01)
+    randl_fine_tune = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    randl_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece= randl_fine_tune.fine_tune()
+    forget_accuracy,forget_loss,forget_ece = randl_fine_tune.evaluate(forget_loader)
     
     print(f"Forget accuracy:{forget_accuracy:.2f}%\tForget loss:{forget_loss:.2f}\tForget ECE:{forget_ece:.2f}")
     print(f"Remain accuracy:{remain_accuracy:.2f}%\tRemain loss:{remain_loss:.2f}\tRemain ECE:{remain_ece:.2f}")
     print(f"Test accuracy:{test_accuracy:.2f}%\tTest loss:{test_loss:.2f}\tTest ECE:{test_ece:.2f}")
     results_dict['Amnesiac Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-    return am_model,results_dict
+    return randl_model,results_dict
 
 
 
