@@ -46,7 +46,7 @@ def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
     return all_data
     
 def train_test(all_data,pipeline,dataset_pointer,seed):
-  temp_dir = f'./{pipeline}/{dataset_pointer}'
+  temp_dir = f'./{pipeline}'
   if os.path.isfile(f'{temp_dir}/train.csv') or os.path.isfile(f'{temp_dir}/test.csv'):
     train = pd.read_csv(f'{temp_dir}/train.csv')
     test = pd.read_csv(f'{temp_dir}/test.csv')
@@ -54,8 +54,8 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
     test = test.values.flatten().tolist()
   else:
     train, test = train_test_split(all_data, test_size=0.2, random_state=seed)
-    train_path = f'./{pipeline}/{dataset_pointer}/train.csv'
-    test_path = f'./{pipeline}/{dataset_pointer}/test.csv'
+    train_path = f'./{pipeline}/train.csv'
+    test_path = f'./{pipeline}/test.csv'
     pd.DataFrame(train).to_csv(f'{train_path}', index=False)
     pd.DataFrame(test).to_csv(f'{test_path}', index=False)
     print(type(train))
