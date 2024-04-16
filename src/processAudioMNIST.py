@@ -56,6 +56,7 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
     test_path = f'./{pipeline}/{dataset_pointer}/test.csv'
     pd.DataFrame(train).to_csv(f'{train_path}', index=False)
     pd.DataFrame(test).to_csv(f'{test_path}', index=False)
+    print(type(train))
   return train, test
 
 class AudioMNISTDataset(Dataset):
