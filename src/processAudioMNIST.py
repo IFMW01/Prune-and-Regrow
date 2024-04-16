@@ -1,73 +1,128 @@
-import subprocess
-import os
 import glob
-import random
-import csv
 import librosa
-import numpy as np
-import matplotlib.pyplot as plt
-import IPython.display as ipd
-import utils
-import shutil
+import os
 import torch
-from tqdm import tqdm
-from scipy.io import wavfile
+import soundfile as sf
+import utils
+import torch.nn as nn
+import subprocess
+import shutil
+import random
+import pandas as pd
+from torch.utils.data import Dataset
+from load_datasets import WavToMel, WavToSpec
 from sklearn.model_selection import train_test_split
-from joblib import dump
-from joblib import load
-seed = 42
-random.seed(seed)
 
-def audioMNIST_train_test():
-    dataset = load()
-    train_set, test_set = train_test_split(dataset,random_state=seed, test_size=0.20,shuffle=True)
-    print(type(train_set))
-    print(train_set[0])
-    # train_set = torch.tensor(tuple(train_set)) 
-    # test_set = torch.tensor(tuple(test_set))  
-    return train_set,test_set
+def audio2spec(audio):
+  return audio
+
+def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
+  os.makedirs(destination_folder, exist_ok=True) 
+  for idx, data in enumerate(data_folder):
+    audio, samplerate = sf.read(data)
+    audio = librosa.resample(audio.astype(float),orig_sr=samplerate,target_sr=downsample)
+    audio = torch.tensor(audio)
+    audio = nn.ConstantPad1d((0, downsample - audio.shape[0]), 0)(audio)
+    if pipeline:
+        audio = pipeline(audio)
+    label =torch.tensor(int(os.path.basename(data)[0]))
+    data_dict  = {"feature": audio, "label": label}
+    torch.save(data_dict, os.path.join(destination_folder, f"{idx}.pth"), )
+      
+
+def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
+    utils.set_seed(42)
+    data_folder = './AudioMNIST/data'
+    temp_dir = f'./{pipeline}/{dataset_pointer}'
+    if not os.path.isdir(data_folder):
+        git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
+        subprocess.run(git_clone_command, check=True)
     
-def audioMNIST_all():
-    dataset= load()
-    random.shuffle(dataset)
-    dataset = torch.as_tensor(dataset)  
-    return dataset
+    if pipeline:
+        if not os.path.isdir(temp_dir):
+            convert_to_spectograms(data_folder,temp_dir,pipeline_on_wav)
+    
+    # repository_path = './AudioMNIST'
+    # shutil.rmtree(repository_path)
+     
+    all_data = glob.glob('./{pipeline}/{dataset_pointer}/*.pth')
+    return all_data
+    
+def train_test(all_data,pipeline,dataset_pointer,seed):
+       train, test = train_test_split(all_data, test_size=0.2, random_state=seed)
+       train_path = f'./{pipeline}/{dataset_pointer}/train.csv'
+       test_path = f'./{pipeline}/{dataset_pointer}/test.csv'
+       pd.DataFrame(train).to_csv(f'{train_path}', index=False)
+       pd.DataFrame(test).to_csv(f'{test_path}', index=False)
+       return train, test
 
-def load():
-    utils.set_seed(seed)
-    git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
-    subprocess.run(git_clone_command, check=True)
-    with open('./AudioMNIST/data/audioMNIST_meta.txt', 'r') as file:
-        dict_str = file.read()
-        dictionary = eval(dict_str)
+class AudioMNISTDataset(Dataset):
+  def __init__(self, annotations,data_folder):
+    self.audio_files = pd.read_csv(annotations, header=None)[0].values[1:]
+    self.data_folder = data_folder
 
-    root_directory = './AudioMNIST/data/'
-    dataset = []
-    for dirpath, dirnames, filenames in os.walk(root_directory):
-        wav_files = glob.glob(os.path.join(dirpath, '*.wav'))
+  def __len__(self):
+    return len(self.audio_files)
+  
+  def __getitem__(self, idx):
+    """Get the item at idx and apply the transforms."""
+    audio_path = os.path.join(self.data_folder, self.audio_files[idx])
+    data = torch.load(audio_path)
+    return data["feature"], data["label"]
+
+# def audioMNIST_train_test():
+#     dataset = load()
+#     train_set, test_set = train_test_split(dataset,random_state=seed, test_size=0.20,shuffle=True)
+#     print(type(train_set))
+#     print(train_set[0])
+#     # train_set = torch.tensor(tuple(train_set)) 
+#     # test_set = torch.tensor(tuple(test_set))  
+#     return train_set,test_set
+    
+# def audioMNIST_all():
+#     dataset= load()
+#     random.shuffle(dataset)
+#     dataset = torch.as_tensor(dataset)  
+#     return dataset
+
+# def load():
+#     utils.set_seed(seed)
+
+#     with open('./AudioMNIST/data/audioMNIST_meta.txt', 'r') as file:
+#         dict_str = file.read()
+#         dictionary = eval(dict_str)
+
+#     root_directory = './AudioMNIST/data/'
+#     dataset = []
+#     for dirpath, dirnames, filenames in os.walk(root_directory):
+#         wav_files = glob.glob(os.path.join(dirpath, '*.wav'))
         
-        if wav_files:
-            for wav_file in wav_files:
-                file_path = os.path.basename(wav_file)
-                last_part = file_path.split("_")
-                label = int(last_part[0])
-                speaker_id = last_part[1]
-                gender = dictionary[f'{speaker_id}']['gender']
-                if gender == 'male':
-                    gender = 0
-                else:
-                    gender = 1
-                samplerate, data = wavfile.read(str(wav_file))
-                data = librosa.resample(data.astype(float),orig_sr=samplerate,target_sr=16000)
-                # data = torch.tensor(data)
-                dataset.append((data,int(speaker_id),gender,label))
-                del data
-    repository_path = './AudioMNIST'
-    shutil.rmtree(repository_path)
-    return tuple(dataset)
+#         if wav_files:
+#             for wav_file in wav_files:
+#                 file_path = os.path.basename(wav_file)
+#                 print(file_path)
+#                 last_part = file_path.split("_")
+#                 print(last_part)
+#                 label = int(last_part[0][-1])
+#                 print(label)
+#                 break
+#                 speaker_id = last_part[1]
+#                 gender = dictionary[f'{speaker_id}']['gender']
+#                 if gender == 'male':
+#                     gender = 0
+#                 else:
+#                     gender = 1
+#                 samplerate, data = wavfile.read(str(wav_file))
+#                 data = librosa.resample(data.astype(float),orig_sr=samplerate,target_sr=16000)
+#                 # data = torch.tensor(data)
+#                 dataset.append((data,int(speaker_id),gender,label))
+#                 del data
+#     repository_path = './AudioMNIST'
+#     shutil.rmtree(repository_path)
+#     return tuple(dataset)
 
-def write_metadata(filepath,metadata):
-  with open(f'{filepath}', 'w', newline='') as file:
-    for path in metadata:
-        file.write("%s\n" % list)
+# def write_metadata(filepath,metadata):
+#   with open(f'{filepath}', 'w', newline='') as file:
+#     for path in metadata:
+#         file.write("%s\n" % list)
 

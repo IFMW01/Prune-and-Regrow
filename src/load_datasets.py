@@ -4,6 +4,9 @@ import preprocess as pp
 import torch
 import librosa
 import numpy as np
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+from processAudioMNIST import AudioMNISTDataset
 import processAudioMNIST as AudioMNIST
 from torchaudio.datasets import SPEECHCOMMANDS
 
@@ -19,24 +22,29 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
             print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
         train_list = SubsetSC("testing") 
-        print(train_list[0])
         test_list = SubsetSC("testing")
         labels = np.load('./labels/speech_commands_labels.npy')
+        labels = labels.tolist()
+        train_set,test_set = convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav)
     elif dataset_pointer == 'audioMNIST':
-        train_list,test_list = AudioMNIST.audioMNIST_train_test()
-        labels = np.load('./labels/audiomnist_labels.npy')
-        
-    labels = labels.tolist()
-
-    train_set,test_set = convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav)
+        all_list = AudioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
+        train_set, test_set = AudioMNIST.audioMNIST_train_test(all_list,pipeline,dataset_pointer,42)
 
     if unlearnng:
-            return train_set,test_set
+        return train_set,test_set
+    
+    if dataset_pointer == 'audioMNIST':
+        train_data = AudioMNISTDataset(train_set, f"./{pipeline}/{dataset_pointer}")
+        test_data = AudioMNISTDataset(test_set, f'./{pipeline}/{dataset_pointer}')
+        train_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
+        train_eval_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
+        test_loader = DataLoader(test_data, batch_size=256, shuffle=True, num_workers=2)
     else:
         train_loader = trainset_loader(train_set,dataset_pointer)
         train_eval_loader = testset_loader(train_set,dataset_pointer)
         test_loader = testset_loader(test_set,dataset_pointer)
-        return train_loader,train_eval_loader,test_loader
+        
+    return train_loader,train_eval_loader,test_loader
 
 
 def convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav):
@@ -143,10 +151,10 @@ def collate_fn_SC(batch):
 def collate_fn_MNIST(batch):
     tensors, targets = [], []
 
-    for waveform, _, label, *_ in batch:
+    for waveform,_,_, label, in batch:
         waveform = waveform[None,:,:]
         tensors += [waveform]
-        targets += [label_to_index(label)]
+        targets += [torch.tensor(label)]
     targets = torch.stack(targets)
     tensors = torch.stack(tensors)
     return tensors, targets
@@ -168,11 +176,11 @@ def trainset_loader(dataset,dataset_pointer,batch_size=256):
 
   return dataset_loader
 
-def testset_loader(dataset,dataset_pointer,batch_size=16384):
-  if dataset_pointer == 'SpeechCommands' or 'audioMNIST':
+def testset_loader(dataset,dataset_pointer,batch_size=4096):
+  if dataset_pointer == 'SpeechCommands':
       collate_fn = collate_fn_SC
-  else:
-      return
+  elif dataset_pointer =='audioMNIST':
+      collate_fn = collate_fn_MNIST
   
   dataset_loader = torch.utils.data.DataLoader(
       dataset,
