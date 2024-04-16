@@ -50,6 +50,8 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
   if os.path.isfile(f'{temp_dir}/train.csv') or os.path.isfile(f'{temp_dir}/test.csv'):
     train = pd.read_csv(f'{temp_dir}/train.csv')
     test = pd.read_csv(f'{temp_dir}/test.csv')
+    train.tolist()
+    test.tolist()
   else:
     train, test = train_test_split(all_data, test_size=0.2, random_state=seed)
     train_path = f'./{pipeline}/{dataset_pointer}/train.csv'
