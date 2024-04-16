@@ -43,11 +43,11 @@ def load_model(path,lr,device):
     return model,optimizer,criterion
 
 # NAIVE  UNLEARNING
-def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,forget_instances_num,seed):
+def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,seed):
     print("\nNaive Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    naive_model,optimizer_nu,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device,(0.01*(256/forget_instances_num)))
+    naive_model,optimizer_nu,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
     train_naive = Trainer(naive_model, remain_loader, remain_eval_loader, test_loader, optimizer_nu, criterion, device, n_epochs,n_classes,seed)
     naive_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece = train_naive.train()
     forget_accuracy,forget_loss,forget_ece = train_naive.evaluate(forget_loader)
@@ -61,11 +61,11 @@ def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain
 
 # GRADIENT ASCENT UNLEARNING
 
-def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
+def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,seed):
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    ga_model,optimizer_ga,criterion = load_model(path,0.005,device)
+    ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
     evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model = ga_train.gradient_ascent()
