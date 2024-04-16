@@ -102,10 +102,10 @@ def main(config):
             orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
-            naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,forget_instances_num,seed)
+            naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,seed)
             unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model')
 
-            gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
+            gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,seed)
             unlearn_logits(gradient_ascent_model,forget_loader,device,save_dir,'gradient_ascent_model')
 
             fine_tuning_model,results_dict = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)

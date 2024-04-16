@@ -1,9 +1,9 @@
 
 {
-    "dataset_pointer": "audioMNSIT",
+    "dataset_pointer": "audioMNIST",
     "pipeline": "mel",
     "architecture": "VGGish",
-    "n_epochs": 50,
+    "n_epochs": 20,
     "seeds": [40],
     "n_classes":10,
     "n_inputs":1,
