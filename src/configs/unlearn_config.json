@@ -1,11 +1,11 @@
 
 {
-    "dataset_pointer": "SpeechCommands",
+    "dataset_pointer": "audioMNSIT",
     "pipeline": "mel",
     "architecture": "VGGish",
     "n_epochs": 50,
     "seeds": [40],
-    "n_classes":35,
+    "n_classes":10,
     "n_inputs":1,
     "unlearning":true,
     "n_epoch_impair": 2,

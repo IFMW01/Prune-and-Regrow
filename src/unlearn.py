@@ -102,7 +102,7 @@ def main(config):
             orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
             unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
 
-            naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,seed)
+            naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,forget_instances_num,seed)
             unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model')
 
             gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
@@ -123,8 +123,8 @@ def main(config):
             kk_model,results_dict = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
             unlearn_logits(kk_model,forget_loader,device,save_dir,'kk_model')
 
-            am_model,results_dict = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
-            unlearn_logits(am_model,forget_loader,device,save_dir,'amnesiac_model')
+            randl_model,results_dict = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
+            unlearn_logits(randl_model,forget_loader,device,save_dir,'randl_model')
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
             with open(f"{save_dir}/unlearning_results.json",'w') as f:
