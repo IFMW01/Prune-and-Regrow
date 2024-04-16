@@ -34,11 +34,10 @@ def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
     if os.path.isdir(f'{temp_dir}'):
         all_data = glob.glob(f'{temp_dir}/*.pth')   
     else:
-      all_data = glob.glob(f'{data_folder}*.wav')
       if not os.path.isdir('./AudioMNIST'):
           git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
           subprocess.run(git_clone_command, check=True)
-      
+      all_data = glob.glob(f'{data_folder}*.wav')
       if pipeline:
           convert_to_spectograms(all_data,temp_dir,pipeline_on_wav)
           all_data = glob.glob(f'{temp_dir}/*.pth')   
