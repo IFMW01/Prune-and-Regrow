@@ -4,12 +4,14 @@ import unlearning_methods as um
 import load_datasets as ld
 import glob
 import utils 
+import torch
 import math
 import random
 import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from processAudioMNIST import AudioMNISTDataset
+from processAudioMNIST import AudioMNISTDataset_randl
 import processAudioMNIST as AudioMNIST
 
 def unlearn_logits(model,forget_loader,device,save_dir,filename):
@@ -18,17 +20,15 @@ def unlearn_logits(model,forget_loader,device,save_dir,filename):
 
 def randomise_lables(data_set,dataset_pointer):
     if dataset_pointer == 'SpeechCommands':
-        lables = np.load('src/labels/speech_commands_labels.npy')
-    elif dataset_pointer == 'audioMNIST':
-        lables = np.load('src/labels/speech_commands_labels.npy')
-    labels = labels.tolist()
-    for i in range(len(data_set)):
-        label_index = lables.index(data_set[i][[(len(data_set[i])-1)]])
-        current_label = label_index
-        while current_label == label_index:
-            current_label = random.randint(0, len(lables))
-        data_set[i][(len(data_set[i])-1)] = lables[current_label]
-    
+        labels = np.load('./labels/speech_commands_labels.npy')
+        labels = labels.tolist()
+        for i in range(len(data_set)):
+          print(data_set[i])
+          label_index = labels.index(data_set[i][(len(data_set[i])-1)])
+          current_label = label_index
+          while current_label == label_index:
+              print(current_label)
+              current_label = random.randint(0, len(labels))
     return data_set
 
 def main(config):
@@ -69,7 +69,7 @@ def main(config):
         forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
         remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
         print(f"len remain: {len(remain_set)}")
-        print(f"len remain: {len(forget_set)}")
+        print(f"len forget: {len(forget_set)}")
         
         print("Creating remain and forget data loaders")
         if dataset_pointer == 'SpeechCommands':
@@ -83,12 +83,12 @@ def main(config):
           remain_data = AudioMNISTDataset(remain_set)
           forget_data = AudioMNISTDataset(forget_set)
           test_data = AudioMNISTDataset(test_set)
-          forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
+          forget_randl_data = AudioMNISTDataset_randl(forget_set)
           remain_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
-          remain_eval_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
+          remain_eval_loader = DataLoader(remain_data, batch_size=4096, shuffle=True, num_workers=2)
+          test_loader = DataLoader(test_data, batch_size=4096, shuffle=False, num_workers=2)
           forget_loader = DataLoader(forget_data, batch_size=256, shuffle=True, num_workers=2)
-          test_loader = DataLoader(test_data, batch_size=256, shuffle=False, num_workers=2)
-          forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
+          forget_randl_loader = DataLoader(forget_randl_data, batch_size=256, shuffle=False, num_workers=2)
 
         results_dict = {}
 
@@ -125,7 +125,7 @@ def main(config):
             kk_model,results_dict = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
             unlearn_logits(kk_model,forget_loader,device,save_dir,'kk_model')
 
-            randl_model,results_dict = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
+            randl_model,results_dict = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
             unlearn_logits(randl_model,forget_loader,device,save_dir,'randl_model')
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
