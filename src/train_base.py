@@ -10,11 +10,11 @@ from vgg import VGGish,VGG9
 # from transformer import SimpleViT
 
 def create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict):
-        best_model,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece= train.train()
+        best_model,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece,best_epoch= train.train()
         torch.save(best_model,f"{save_path}Model_{test_acc:.5f}_{test_loss:.5f}.pth")
         df_softmax_outputs = utils.logits(best_model,train_loader,test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
-        results_dict[f'{seed}'] = [train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece]
+        results_dict[f'{seed}'] = [best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece]
         return results_dict
 
 
