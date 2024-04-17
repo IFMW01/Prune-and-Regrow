@@ -83,10 +83,12 @@ def main(config):
           remain_data = AudioMNISTDataset(remain_set)
           forget_data = AudioMNISTDataset(forget_set)
           test_data = AudioMNISTDataset(test_set)
+          forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
           remain_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
           remain_eval_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
           forget_loader = DataLoader(forget_data, batch_size=256, shuffle=True, num_workers=2)
           test_loader = DataLoader(test_data, batch_size=256, shuffle=False, num_workers=2)
+          forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
 
         results_dict = {}
 

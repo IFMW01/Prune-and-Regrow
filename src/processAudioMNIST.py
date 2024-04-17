@@ -53,7 +53,7 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
     train = (train.values.flatten().tolist())
     test = test.values.flatten().tolist()
   else:
-    train, test = train_test_split(all_data, test_size=0.2, random_state=seed)
+    train, test = train_test_split(all_data, test_size=0.2, random_state=seed,shuffle=True)
     train_path = f'./{pipeline}/train.csv'
     test_path = f'./{pipeline}/test.csv'
     pd.DataFrame(train).to_csv(f'{train_path}', index=False)
