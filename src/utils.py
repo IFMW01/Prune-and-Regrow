@@ -75,7 +75,7 @@ def logits(model,train_loader,test_loader,device):
         with torch.no_grad():
             logits_train = model(data)
             logits_train_softmax = F.softmax(logits_train,dim=1)
-            loss = F.cross_entropy(logits_train_softmax, target,reduction ='none')
+            loss = F.cross_entropy(logits_train, target,reduction ='none')
             numpy_train_loss = loss.cpu().numpy()
             train_loss = pd.DataFrame(numpy_train_loss)
             df_train_loss = pd.concat([df_train_loss,train_loss],ignore_index=True)
@@ -93,7 +93,7 @@ def logits(model,train_loader,test_loader,device):
         with torch.no_grad():
             logits_test = model(data)
             logit_test_softmax =  F.softmax(logits_test,dim=1)
-            loss = F.cross_entropy(logit_test_softmax, target,reduction ='none')
+            loss = F.cross_entropy(logits_test, target,reduction ='none')
             numpy_test_loss = loss.cpu().numpy()
             test_loss = pd.DataFrame(numpy_test_loss)
             df_test_loss = pd.concat([df_test_loss,test_loss],ignore_index=True)
@@ -123,7 +123,7 @@ def logits_unlearn(model,forget_loader,device):
         with torch.no_grad():
             logits = model(data)
             logit_softmax =  F.softmax(logits,dim=1)
-            loss = F.cross_entropy(logit_softmax, target,reduction ='none')
+            loss = F.cross_entropy(logits, target,reduction ='none')
             numpy_loss = loss.cpu().numpy()
             forget_loss = pd.DataFrame(numpy_loss)
             df_forget_loss = pd.concat([df_forget_loss,forget_loss],ignore_index=True)
