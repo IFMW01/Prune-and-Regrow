@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import random
 import torchmetrics.classification 
+import torch.nn.functional as F
 from torchmetrics.classification import MulticlassCalibrationError
 
 def set_seed(seed):
@@ -61,20 +62,30 @@ def logits(model,train_loader,test_loader,device):
     model.to(device)
 
     model.eval()
-    df_train = pd.DataFrame()
-    df_test = pd.DataFrame()
-    df_all = pd.DataFrame()
+    df_train_logits = pd.DataFrame()
+    df_test_logits = pd.DataFrame()
+    df_all_logits = pd.DataFrame()
+    df_train_loss = pd.DataFrame()
+    df_test_loss = pd.DataFrame()
+    df_all_loss = pd.DataFrame()
 
     # Process training set
     for batch_idx,(data,target) in enumerate(tqdm(train_loader)):
         data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits_train = model(data)
-            logits_softmax = nn.Softmax(dim=1)(logits_train)
-            numpy_logits_train = logits_softmax.cpu().numpy()
-            df_logit_train = pd.DataFrame(numpy_logits_train)
-            df_train = pd.concat([df_train,df_logit_train],ignore_index=True)
-    df_train['label'] = 0
+            logits_train_softmax = nn.Softmax(dim=1)(logits_train)
+            loss = F.cross_entropy(logits_train_softmax, target)
+            numpy_train_loss = loss.cpu().numpy()
+            train_loss = pd.DataFrame(numpy_train_loss)
+            df_train_loss = pd.concat([df_train_loss,train_loss],ignore_index=True)
+    
+            numpy_train_logits = logits_train_softmax.cpu().numpy()
+            train_logits = pd.DataFrame(numpy_train_logits)
+            df_train_logits = pd.concat([df_train_logits,train_logits],ignore_index=True)
+
+    df_train_loss['label'] = 0    
+    df_train_logits['label'] = 0
 
     # Process test set
     for data,target in test_loader:
@@ -82,31 +93,46 @@ def logits(model,train_loader,test_loader,device):
         with torch.no_grad():
             logits_test = model(data)
             logit_test_softmax = nn.Softmax(dim=1)(logits_test)
+            loss = F.cross_entropy(logits_softmax, target)
+            numpy_test_loss = loss.cpu().numpy()
+            test_loss = pd.DataFrame(numpy_test_loss)
+            df_test_loss = pd.concat([df_test_loss,test_loss],ignore_index=True)
+
             numpy_logits_test = logit_test_softmax.cpu().numpy()
             df_logit_test = pd.DataFrame(numpy_logits_test)
-            df_test = pd.concat([df_test,df_logit_test],ignore_index=True)
-    df_test['label'] = 1
+            df_test_logits = pd.concat([df_test_logits,df_logit_test],ignore_index=True)
+    df_test_logits['label'] = 1
+    df_test_loss['label'] = 1  
 
-    df_all = pd.concat([df_train,df_test],ignore_index=True)
+    df_all_logits = pd.concat([df_train_logits,df_test_logits],ignore_index=True)
+    df_all_loss = pd.concat([df_train_loss,df_test_loss],ignore_index=True)
 
-    return df_all
+    return df_all_logits,df_all_loss
 
 def logits_unlearn(model,forget_loader,device):
     model.to(device)
 
     model.eval()
-    df_forget = pd.DataFrame()
+    df_forget_logit = pd.DataFrame()
+    df_forget_loss = pd.DataFrame()
 
     # Process training set
     for batch_idx,(data,target) in enumerate(tqdm(forget_loader)):
         data,target = data.to(device),target.to(device)
         with torch.no_grad():
-            logits_train = model(data)
-            logits_softmax = nn.Softmax(dim=1)(logits_train)
-            numpy_logits_forget = logits_softmax.cpu().numpy()
-            df_logit_forget = pd.DataFrame(numpy_logits_forget)
-            df_forget = pd.concat([df_forget,df_logit_forget],ignore_index=True)
-    return df_forget
+            logits = model(data)
+            logit_softmax = nn.Softmax(dim=1)(logits)
+            loss = F.cross_entropy(logit_softmax, target)
+            numpy_loss = loss.cpu().numpy()
+            forget_loss = pd.DataFrame(numpy_loss)
+            df_forget_loss = pd.concat([df_forget_loss,forget_loss],ignore_index=True)
+
+            numpy_logits = logit_softmax.cpu().numpy()
+            forget_logit = pd.DataFrame(numpy_logits)
+            df_forget_logit = pd.concat([df_forget_logit,forget_logit],ignore_index=True)
+    df_forget_loss['label'] = 1
+    df_forget_logit['label'] = 1  
+    return df_forget_logit,df_forget_loss
 
 def evaluate(model,dataloader,device):
     model.eval()

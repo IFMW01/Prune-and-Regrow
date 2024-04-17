@@ -55,12 +55,7 @@ def convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav):
 
     return train_set,test_set
 
-def load_mia_dataset(dataset_pointer :str,pipeline:str):
-    
-    if pipeline == 'mel':
-        pipeline_on_wav = WavToMel()
-    elif pipeline =='spec':
-        pipeline_on_wav = WavToSpec()
+def load_mia_dataset(dataset_pointer :str,pipeline_on_wav):
 
     if dataset_pointer == 'SpeechCommands':
         if not os.path.exists(dataset_pointer):

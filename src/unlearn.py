@@ -14,9 +14,11 @@ from processAudioMNIST import AudioMNISTDataset
 from processAudioMNIST import AudioMNISTDataset_randl
 import processAudioMNIST as AudioMNIST
 
-def unlearn_logits(model,forget_loader,device,save_dir,filename):
-    logits = utils.logits_unlearn(model,forget_loader,device)
-    logits.to_csv(f'{save_dir}{filename}.csv',index = False)
+def unlearn_logits(model,forget_loader,device,save_dir,filename_logits,filename_loss):
+    logits,loss = utils.logits_unlearn(model,forget_loader,device)
+
+    logits.to_csv(f'{save_dir}{filename_logits}.csv',index = False)
+    loss.to_csv(f'{save_dir}{filename_loss}.csv',index = False)
 
 def randomise_lables(data_set,dataset_pointer):
     if dataset_pointer == 'SpeechCommands':
@@ -77,8 +79,8 @@ def main(config):
           remain_loader = ld.train_loader(remain_set,dataset_pointer)
           remain_eval_loader = ld.test_loader(remain_set,dataset_pointer)
           forget_loader = ld.train_loader(forget_set,dataset_pointer)
-          forget_rand_lables = randomise_lables(forget_set,dataset_pointer)
-          forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
+          forget_randl_data = randomise_lables(forget_set,dataset_pointer)
+          forget_randl_loader = ld.train_loader(forget_randl_data,dataset_pointer)
           test_loader = ld.test_loader(test_set,dataset_pointer)
         elif dataset_pointer == 'audioMNIST':
           forget_randl_set = forget_set
@@ -104,31 +106,31 @@ def main(config):
             model_path = model_path[0]
             
             orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
-            unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model')
+            unlearn_logits(orginal_model,forget_loader,device,save_dir,'orginal_model_logits','orginal_model_loss')
 
             naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,seed)
-            unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model')
+            unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model_logits','naive_model_loss')
 
             gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,seed)
-            unlearn_logits(gradient_ascent_model,forget_loader,device,save_dir,'gradient_ascent_model')
+            unlearn_logits(gradient_ascent_model,forget_loader,device,save_dir,'gradient_ascent_model_logits','gradient_ascent_model_loss')
 
             fine_tuning_model,results_dict = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
-            unlearn_logits(fine_tuning_model,forget_loader,device,save_dir,'fine_tuning_model')
+            unlearn_logits(fine_tuning_model,forget_loader,device,save_dir,'fine_tuning_model_logits','fine_tuning_model_loss')
 
             stochastic_teacher_model,results_dict = um.stochastic_teacher_unlearning(model_path,remain_loader,test_loader,forget_loader,device,n_inputs,n_classes,architecture,results_dict,n_epoch_impair,n_epoch_repair,seed)
-            unlearn_logits(stochastic_teacher_model,forget_loader,device,save_dir,'stochastic_teacher_model')
+            unlearn_logits(stochastic_teacher_model,forget_loader,device,save_dir,'stochastic_teacher_model_logits','stochastic_teacher_model_loss')
 
             omp_model,results_dict = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,pruning_ratio,n_epochs_fine_tune,results_dict,n_classes,seed)
-            unlearn_logits(omp_model,forget_loader,device,save_dir,'omp_model')
+            unlearn_logits(omp_model,forget_loader,device,save_dir,'omp_model_logits','omp_model_loss')
 
             cosine_model,results_dict = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
-            unlearn_logits(cosine_model,forget_loader,device,save_dir,'cosine_model')
+            unlearn_logits(cosine_model,forget_loader,device,save_dir,'cosine_model_logits','cosine_model_loss')
 
             kk_model,results_dict = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
-            unlearn_logits(kk_model,forget_loader,device,save_dir,'kk_model')
+            unlearn_logits(kk_model,forget_loader,device,save_dir,'kk_model_logits','kk_model_loss')
 
             randl_model,results_dict = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
-            unlearn_logits(randl_model,forget_loader,device,save_dir,'randl_model')
+            unlearn_logits(randl_model,forget_loader,device,save_dir,'randl_model_logits','randl_model_loss')
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
             with open(f"{save_dir}/unlearning_results.json",'w') as f:

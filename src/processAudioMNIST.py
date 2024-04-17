@@ -71,6 +71,24 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
   print("No Matching")
   return train, test
 
+def load_mia_dataset(pipeline,pipeline_on_wav,dataset_pointer,seed):
+    data_folder = './AudioMNIST/data/*/'
+    temp_dir = f'./{pipeline}/{dataset_pointer}'
+    if os.path.isdir(f'{temp_dir}'):
+        all_data = glob.glob(f'{temp_dir}/*.pth')   
+    else:
+      if not os.path.isdir('./AudioMNIST'):
+          git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
+          subprocess.run(git_clone_command, check=True)
+      all_data = glob.glob(f'{data_folder}*.wav')
+      if pipeline:
+          convert_to_spectograms(all_data,temp_dir,pipeline_on_wav)
+          all_data = glob.glob(f'{temp_dir}/*.pth')   
+      repository_path = './AudioMNIST'
+      shutil.rmtree(repository_path)
+    
+    return all_data
+
 class AudioMNISTDataset(Dataset):
   def __init__(self, annotations):
     self.audio_files = annotations
