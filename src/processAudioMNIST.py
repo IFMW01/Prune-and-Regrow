@@ -65,7 +65,7 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
   
   return train, test
 
-def load_mia_dataset(pipeline,pipeline_on_wav,dataset_pointer,seed):
+def load_mia_dataset(pipeline,pipeline_on_wav,dataset_pointer):
     data_folder = './AudioMNIST/data/*/'
     temp_dir = f'./{pipeline}/{dataset_pointer}'
     if os.path.isdir(f'{temp_dir}'):

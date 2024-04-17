@@ -8,7 +8,6 @@ import processAudioMNIST as pAudioMNIST
 from torch.utils.data import DataLoader
 from Trainer import Trainer
 from processAudioMNIST import AudioMNISTDataset
-from torch
 
 
 def create_membership_inference_dataset(all_processed,seed):
@@ -39,7 +38,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
        
     model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
     trainer = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_shadow_epochs,n_classes,seed)
-    mia_model,mia_test_accuracy,mia_test_loss= trainer.train()
+    mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,test_ece,best_epoch = trainer.train()
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
     mia_logit_df,mia_loss_df = utils.logits(mia_model, train_eval_loader, test_loader,device)
@@ -50,7 +49,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     print(f"{filename_logit} and {mia_loss_df} saved")
 
   print(f"Average attack test accuracy: {(test_acc/n_shadow_models):.4f}")
-  print(f"Average attack test loss: {(test_acc/n_shadow_models):.4f}")
+  print(f"Average attack test loss: {(test_loss/n_shadow_models):.4f}")
 
 def main(config):
     dataset_pointer = config.get("dataset_pointer", None)
