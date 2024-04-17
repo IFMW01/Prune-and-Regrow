@@ -55,14 +55,20 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
     train = pd.read_csv(f'{temp_dir}/train.csv')
     test = pd.read_csv(f'{temp_dir}/test.csv')
     train = (train.values.flatten().tolist())
-    test = test.values.flatten().tolist()
+    test = (test.values.flatten().tolist())
   else:
     train, test = train_test_split(all_data, test_size=0.2, random_state=seed,shuffle=True)
     train_path = f'./{pipeline}/train.csv'
     test_path = f'./{pipeline}/test.csv'
     pd.DataFrame(train).to_csv(f'{train_path}', index=False)
     pd.DataFrame(test).to_csv(f'{test_path}', index=False)
-    print(type(train))
+  
+  for i in range(len(train)):
+    for j in range(len(test)):
+      if train[i] == test[j]:
+        print("SAME ELEMENT")
+        break
+  print("No Matching")
   return train, test
 
 class AudioMNISTDataset(Dataset):

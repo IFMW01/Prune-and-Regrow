@@ -70,7 +70,8 @@ def main(config):
         remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
         print(f"len remain: {len(remain_set)}")
         print(f"len forget: {len(forget_set)}")
-        
+        print(remain_set)
+        print(forget_set)
         print("Creating remain and forget data loaders")
         if dataset_pointer == 'SpeechCommands':
           remain_loader = ld.train_loader(remain_set,dataset_pointer)
@@ -80,10 +81,11 @@ def main(config):
           forget_rand_lables_loader = ld.train_loader(forget_rand_lables,dataset_pointer)
           test_loader = ld.test_loader(test_set,dataset_pointer)
         elif dataset_pointer == 'audioMNIST':
+          forget_randl_set = forget_set
           remain_data = AudioMNISTDataset(remain_set)
           forget_data = AudioMNISTDataset(forget_set)
           test_data = AudioMNISTDataset(test_set)
-          forget_randl_data = AudioMNISTDataset_randl(forget_set)
+          forget_randl_data = AudioMNISTDataset_randl(forget_randl_set)
           remain_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
           remain_eval_loader = DataLoader(remain_data, batch_size=4096, shuffle=True, num_workers=2)
           test_loader = DataLoader(test_data, batch_size=4096, shuffle=False, num_workers=2)

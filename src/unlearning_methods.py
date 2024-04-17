@@ -21,10 +21,8 @@ def create_forget_remain_set(forget_instances_num,train_set,seed=42):
     utils.set_seed(seed)
     forget_set = []
     remain_set = train_set
-    for i in range(forget_instances_num):
-        index = random.randint(0,(len(remain_set)-1))
-        forget_set.append(remain_set[index])
-        remain_set.pop(index)
+    forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
+    remain_set = list(set(remain_set) - set(forget_set))
     return remain_set,forget_set
 
 def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device):
