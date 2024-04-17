@@ -63,12 +63,6 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
     pd.DataFrame(train).to_csv(f'{train_path}', index=False)
     pd.DataFrame(test).to_csv(f'{test_path}', index=False)
   
-  for i in range(len(train)):
-    for j in range(len(test)):
-      if train[i] == test[j]:
-        print("SAME ELEMENT")
-        break
-  print("No Matching")
   return train, test
 
 def load_mia_dataset(pipeline,pipeline_on_wav,dataset_pointer,seed):

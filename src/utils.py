@@ -74,8 +74,8 @@ def logits(model,train_loader,test_loader,device):
         data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits_train = model(data)
-            logits_train_softmax = nn.Softmax(dim=1)(logits_train)
-            loss = F.cross_entropy(logits_train_softmax, target)
+            logits_train_softmax = F.softmax(logits_train,dim=1)
+            loss = F.cross_entropy(logits_train_softmax, target,reduction ='none')
             numpy_train_loss = loss.cpu().numpy()
             train_loss = pd.DataFrame(numpy_train_loss)
             df_train_loss = pd.concat([df_train_loss,train_loss],ignore_index=True)
@@ -92,8 +92,8 @@ def logits(model,train_loader,test_loader,device):
         data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits_test = model(data)
-            logit_test_softmax = nn.Softmax(dim=1)(logits_test)
-            loss = F.cross_entropy(logits_softmax, target)
+            logit_test_softmax =  F.softmax(logits_test,dim=1)
+            loss = F.cross_entropy(logit_test_softmax, target,reduction ='none')
             numpy_test_loss = loss.cpu().numpy()
             test_loss = pd.DataFrame(numpy_test_loss)
             df_test_loss = pd.concat([df_test_loss,test_loss],ignore_index=True)
@@ -106,7 +106,8 @@ def logits(model,train_loader,test_loader,device):
 
     df_all_logits = pd.concat([df_train_logits,df_test_logits],ignore_index=True)
     df_all_loss = pd.concat([df_train_loss,df_test_loss],ignore_index=True)
-
+    print(type(df_all_logits))
+    print(type(df_all_loss))
     return df_all_logits,df_all_loss
 
 def logits_unlearn(model,forget_loader,device):
@@ -121,8 +122,8 @@ def logits_unlearn(model,forget_loader,device):
         data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits = model(data)
-            logit_softmax = nn.Softmax(dim=1)(logits)
-            loss = F.cross_entropy(logit_softmax, target)
+            logit_softmax =  F.softmax(logits,dim=1)
+            loss = F.cross_entropy(logit_softmax, target,reduction ='none')
             numpy_loss = loss.cpu().numpy()
             forget_loss = pd.DataFrame(numpy_loss)
             df_forget_loss = pd.concat([df_forget_loss,forget_loss],ignore_index=True)

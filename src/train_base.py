@@ -12,8 +12,9 @@ from vgg import VGGish,VGG9
 def create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict):
         best_model,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece,best_epoch= train.train()
         torch.save(best_model,f"{save_path}Model_{test_acc:.5f}_{test_loss:.5f}.pth")
-        df_softmax_outputs = utils.logits(best_model,train_loader,test_loader,device)
+        df_softmax_outputs,df_loss_outputs = utils.logits(best_model,train_loader,test_loader,device)
         df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
+        df_loss_outputs.to_csv(f'{save_path}loss_outputs.csv',index = False)
         results_dict[f'{seed}'] = [best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece]
         return results_dict
 
@@ -46,11 +47,8 @@ def main(config):
         utils.set_seed(seed)
         model,optimizer,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
         utils.create_dir(save_dir)
-        print(save_dir)
         save_path = save_dir + '/'
         train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
-        print(train.n_epoch)
-        print(train.n_classes)
         results_dict = create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict)
     print(f'Final of all trained models: {results_dict}')
     with open(f"TRAIN/{dataset_pointer}/{architecture}/training_results.json",'w') as f:
