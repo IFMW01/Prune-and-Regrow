@@ -70,10 +70,8 @@ def main(config):
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
         forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
         remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
-        print(f"len remain: {len(remain_set)}")
-        print(f"len forget: {len(forget_set)}")
-        print(remain_set)
-        print(forget_set)
+        print(f"Remain instances: {len(remain_set)}")
+        print(f"Forget instances: {len(forget_set)}")
         print("Creating remain and forget data loaders")
         if dataset_pointer == 'SpeechCommands':
           remain_loader = ld.train_loader(remain_set,dataset_pointer)
