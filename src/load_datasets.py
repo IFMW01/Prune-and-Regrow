@@ -4,7 +4,6 @@ import preprocess as pp
 import torch
 import librosa
 import numpy as np
-from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from processAudioMNIST import AudioMNISTDataset
 import processAudioMNIST as AudioMNIST
