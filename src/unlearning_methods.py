@@ -17,12 +17,18 @@ from torch.nn.utils import parameters_to_vector as Params2Vec
 
 
 
-def create_forget_remain_set(forget_instances_num,train_set,seed=42):
+def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed=42):
     utils.set_seed(seed)
     forget_set = []
     remain_set = train_set
-    forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
-    remain_set = list(set(remain_set) - set(forget_set))
+    if dataset_pointer == 'CIFAR10':
+        total_instances = len(remain_set)
+        random_indices = np.random.choice(total_instances, forget_instances_num, replace=False)
+        forget_set = [remain_set[i] for i in random_indices]
+        remain_set = [instance for i, instance in enumerate(remain_set) if i not in random_indices]
+    else:
+        forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
+        remain_set = list(set(remain_set) - set(forget_set))
     return remain_set,forget_set
 
 def evaluate_forget_remain_test(model,forget_loader,remain_loader,test_loader,device):
@@ -64,7 +70,7 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     print("\n")
     utils.set_seed(seed)
     if dataset_pointer == 'CIFAR10':
-        ga_model,optimizer_ga,criterion = load_model(path,0.01,device)
+        ga_model,optimizer_ga,criterion = load_model(path,0.1,device)
     else:
         ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
     evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
@@ -89,12 +95,12 @@ def fine_tuning_unlearning(path,device,remain_loader,remain_eval_loader,test_loa
    utils.set_seed(seed)
    ft_model,optimizer_ft,criterion = load_model(path,0.01,device)
    ft_train = Unlearner(ft_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,0,n_epochs,n_classes,seed)
-   ft_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece = ft_train.fine_tune()
+   ft_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,best_epoch = ft_train.fine_tune()
    forget_accuracy,forget_loss,forget_ece= ft_train.evaluate(forget_loader)
    print(f"Forget accuracy:{forget_accuracy:.2f}%\tForget loss:{forget_loss:.2f}\tForget ECE:{forget_ece:.2f}")
    print(f"Remain accuracy:{remain_accuracy:.2f}%\tRemain loss:{remain_loss:.2f}\tRemain ECE:{remain_ece:.2f}")
    print(f"Test accuracy:{test_accuracy:.2f}%\tTest loss:{test_loss:.2f}\tTest ECE:{test_ece:.2f}")
-   results_dict['Fine Tune Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+   results_dict['Fine Tune Unlearning'] = [best_epoch,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
    return ft_model,results_dict
 
 

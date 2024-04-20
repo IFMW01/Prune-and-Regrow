@@ -90,7 +90,7 @@ class Unlearner():
                 loss.backward()
                 self.optimizer.step()
 
-            train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
+            train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
 
             if test_accuracy > best_test_accuracy:

@@ -75,17 +75,17 @@ def main(config):
     else:
         train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
         forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
-        remain_set,forget_set = um.create_forget_remain_set(forget_instances_num,train_set)
+        remain_set,forget_set = um.create_forget_remain_set(dataset_pointer,forget_instances_num,train_set)
         print(f"Remain instances: {len(remain_set)}")
         print(f"Forget instances: {len(forget_set)}")
         print("Creating remain and forget data loaders")
-        if dataset_pointer == 'SpeechCommands' or 'CIFAR10':
-          remain_loader = ld.train_loader(remain_set,dataset_pointer)
-          remain_eval_loader = ld.test_loader(remain_set,dataset_pointer)
-          forget_loader = ld.train_loader(forget_set,dataset_pointer)
+        if dataset_pointer == 'SpeechCommands':
+          remain_loader = ld.trainset_loader(remain_set,dataset_pointer)
+          remain_eval_loader = ld.testset_loader(remain_set,dataset_pointer)
+          forget_loader = ld.trainset_loader(forget_set,dataset_pointer)
           forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-          forget_randl_loader = ld.train_loader(forget_randl_data,dataset_pointer)
-          test_loader = ld.test_loader(test_set,dataset_pointer)
+          forget_randl_loader = ld.trainset_loader(forget_randl_data,dataset_pointer)
+          test_loader = ld.testset_loader(test_set,dataset_pointer)
         elif dataset_pointer == 'CIFAR10':
           forget_randl_data = randomise_lables(forget_set,dataset_pointer)
           remain_loader = torch.utils.data.DataLoader(remain_set, batch_size=256,
@@ -127,7 +127,7 @@ def main(config):
             naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,seed)
             unlearn_logits(naive_model,forget_loader,device,save_dir,'naive_model_logits','naive_model_loss')
 
-            gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,seed)
+            gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,dataset_pointer,seed)
             unlearn_logits(gradient_ascent_model,forget_loader,device,save_dir,'gradient_ascent_model_logits','gradient_ascent_model_loss')
 
             fine_tuning_model,results_dict = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
