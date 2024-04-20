@@ -59,11 +59,14 @@ def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain
 
 # GRADIENT ASCENT UNLEARNING
 
-def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,seed):
+def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,dataset_pointer,seed):
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
+    if dataset_pointer == 'CIFAR10':
+        ga_model,optimizer_ga,criterion = load_model(path,0.01,device)
+    else:
+        ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
     evaluate_forget_remain_test(ga_model,forget_loader,remain_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model = ga_train.gradient_ascent()
