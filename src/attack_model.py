@@ -10,7 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-def attack_models_gbc(num_models,x_train,y_train,x_test,y_test,attack_model,device):
+def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,device):
   for i in range(num_models):
     utils.set_seed(i)
     if attack_model == 'xgb':
@@ -106,17 +106,17 @@ def main(config):
 
     print("Logit Attack Models")
     attack_model = 'xgb'
-    attack_models_gbc(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
     attack_model = 'tabnet'
-    attack_models_gbc(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
     print("Softmax Attack Models")
     attack_model = 'xgb'
-    attack_models_gbc(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
     attack_model = 'tabnet'   
-    attack_models_gbc(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
     print("FIN")
 
 if __name__ == "__main__":
-    with open("./configs/mia_config.json", "r") as f:
+    with open("./configs/attack_config.json", "r") as f:
         config = json.load(f)
     main(config)
