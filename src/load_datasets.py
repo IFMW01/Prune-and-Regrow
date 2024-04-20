@@ -4,6 +4,9 @@ import preprocess as pp
 import torch
 import librosa
 import numpy as np
+import torch
+import torchvision
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from processAudioMNIST import AudioMNISTDataset
 import processAudioMNIST as AudioMNIST
@@ -28,6 +31,13 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     elif dataset_pointer == 'audioMNIST':
         all_list = AudioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
         train_set, test_set = AudioMNIST.train_test(all_list,pipeline,dataset_pointer,42)
+    elif dataset_pointer == 'CIFAR10':
+        transform = transforms.Compose([transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        train_set = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                                download=True, transform=transform)
+        test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                            download=True, transform=transform)
 
     if unlearnng:
         return train_set,test_set
@@ -36,8 +46,16 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         train_data = AudioMNISTDataset(train_set)
         test_data = AudioMNISTDataset(test_set)
         train_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
-        train_eval_loader = DataLoader(train_data, batch_size=256, shuffle=True, num_workers=2)
-        test_loader = DataLoader(test_data, batch_size=256, shuffle=True, num_workers=2)
+        train_eval_loader = DataLoader(train_data, batch_size=4096, shuffle=False, num_workers=2)
+        test_loader = DataLoader(test_data, batch_size=4096, shuffle=False, num_workers=2)
+    elif dataset_pointer == 'CIFAR10':
+        train_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
+                                                shuffle=True, num_workers=2)
+        train_eval_loader = torch.utils.data.DataLoader(train_set, batch_size=4096,
+                                                shuffle=False, num_workers=2)
+        test_loader = torch.utils.data.DataLoader(test_set, batch_size=4096,
+                                                shuffle=False, num_workers=2)
+
     else:
         train_loader = trainset_loader(train_set,dataset_pointer)
         train_eval_loader = testset_loader(train_set,dataset_pointer)
