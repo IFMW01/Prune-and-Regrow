@@ -25,12 +25,18 @@ def randomise_lables(data_set,dataset_pointer):
         labels = np.load('./labels/speech_commands_labels.npy')
         labels = labels.tolist()
         for i in range(len(data_set)):
-          print(data_set[i])
           label_index = labels.index(data_set[i][(len(data_set[i])-1)])
           current_label = label_index
           while current_label == label_index:
-              print(current_label)
               current_label = random.randint(0, len(labels))
+    elif dataset_pointer == 'CIFAR10':
+        labels = np.load('./labels/cifar10_labels.npy')
+        labels = labels.tolist()
+        for i in range(len(data_set)):
+          label = data_set[i][1]
+          current_label = label
+          while current_label == label:
+              current_label = random.randint(0, len(labels))        
     return data_set
 
 def main(config):
@@ -73,13 +79,25 @@ def main(config):
         print(f"Remain instances: {len(remain_set)}")
         print(f"Forget instances: {len(forget_set)}")
         print("Creating remain and forget data loaders")
-        if dataset_pointer == 'SpeechCommands':
+        if dataset_pointer == 'SpeechCommands' or 'CIFAR10':
           remain_loader = ld.train_loader(remain_set,dataset_pointer)
           remain_eval_loader = ld.test_loader(remain_set,dataset_pointer)
           forget_loader = ld.train_loader(forget_set,dataset_pointer)
           forget_randl_data = randomise_lables(forget_set,dataset_pointer)
           forget_randl_loader = ld.train_loader(forget_randl_data,dataset_pointer)
           test_loader = ld.test_loader(test_set,dataset_pointer)
+        elif dataset_pointer == 'CIFAR10':
+          forget_randl_data = randomise_lables(forget_set,dataset_pointer)
+          remain_loader = torch.utils.data.DataLoader(remain_set, batch_size=256,
+                                                shuffle=True, num_workers=2)
+          remain_eval_loader = torch.utils.data.DataLoader(remain_set, batch_size=4096,
+                                                shuffle=False, num_workers=2)
+          forget_loader = torch.utils.data.DataLoader(forget_set, batch_size=4096,
+                                                shuffle=True, num_workers=2)
+          test_loader = torch.utils.data.DataLoader(test_set, batch_size=4096,
+                                                shuffle=False, num_workers=2)
+          forget_randl_loader = torch.utils.data.DataLoader(forget_randl_data, batch_size=4096,
+                                                shuffle=True, num_workers=2)
         elif dataset_pointer == 'audioMNIST':
           forget_randl_set = forget_set
           remain_data = AudioMNISTDataset(remain_set)
@@ -87,11 +105,11 @@ def main(config):
           test_data = AudioMNISTDataset(test_set)
           forget_randl_data = AudioMNISTDataset_randl(forget_randl_set)
           remain_loader = DataLoader(remain_data, batch_size=256, shuffle=True, num_workers=2)
-          remain_eval_loader = DataLoader(remain_data, batch_size=4096, shuffle=True, num_workers=2)
+          remain_eval_loader = DataLoader(remain_data, batch_size=4096, shuffle=False, num_workers=2)
           test_loader = DataLoader(test_data, batch_size=4096, shuffle=False, num_workers=2)
           forget_loader = DataLoader(forget_data, batch_size=256, shuffle=True, num_workers=2)
           forget_randl_loader = DataLoader(forget_randl_data, batch_size=256, shuffle=False, num_workers=2)
-
+        
         results_dict = {}
 
         for seed in seeds:
