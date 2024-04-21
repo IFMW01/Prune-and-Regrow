@@ -4,13 +4,14 @@ import os
 import utils
 import json
 import glob
+import numpy as np
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,device):
+def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
   for i in range(num_models):
     utils.set_seed(i)
     if attack_model == 'xgb':
@@ -29,24 +30,28 @@ def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,device):
         }
         model = XGBClassifier(**params)
         model.fit(x_train, y_train)
+        save_name = f'xgboost_model_{i}.model'
+        save_path = f"{save_dir}/{save_name}"
+        model.save_model(save_path)
     elif attack_model == 'tabnet':
-       y_train = LabelEncoder.fit_transform(y_train)
-       y_test = LabelEncoder.transform(y_test)
-       x_train = x_train
-       x_test = x_test
+      if not isinstance(x_train, np.ndarray):
+        x_train = x_train.values
+        x_test = x_test.values
 
-       model = TabNetClassifier(  n_d = 32,
-       n_a = 32)
-       model.fit(x_train, y_train,
-        eval_set=[(x_train, y_train),(x_test, y_test)],
-        max_epochs = 100,
-        patience =100
-        )
+      model = TabNetClassifier(  n_d = 32,
+      n_a = 32)
+      model.fit(x_train, y_train,
+      eval_set=[(x_train, y_train),(x_test, y_test)],
+      max_epochs = 100,
+      patience =100
+      )
+      save_name = f'tabnet_model_{i}.json'
+      save_path = f"{save_dir}/{save_name}"
+      torch.save(model, save_path)
        
     print(f"ATTACK MODEL: {i} STATS")
     modelstats(model,x_train,x_test,y_train,y_test)
-    save_path = f"xgboost_model_{i}.json"
-    model.save_model(save_path)
+
 
 def modelstats(model,x_train,x_test,y_train,y_test):
   y_pred_train = model.predict(x_train)
@@ -76,16 +81,16 @@ def modelstats(model,x_train,x_test,y_train,y_test):
 
 def create_mia_datasets(data_directory):
     df = pd.DataFrame()
-    list_of_files = glob.glob(f'{data_directory}*.csv')
+    list_of_files = glob.glob(f'{data_directory}/*.csv')
     for  data_path in list_of_files:
         df = pd.concat([df,pd.read_csv(data_path)],ignore_index=True)
     df.to_csv(f'{data_directory}_all.csv',index = False)
-
     df_lables = df['label']
-    df.drop(['label'], axis=1)
+    df = df.drop(['label'], axis=1)
 
-    x_train,y_train,x_test,y_test= train_test_split(df,df_lables, test_size=0.2, random_state=42,shuffle=True)
-
+    x_train,x_test,y_train,y_test= train_test_split(df,df_lables, test_size=0.2, random_state=42,shuffle=True)
+    print(x_train)
+    print(y_train)
     return x_train,y_train,x_test,y_test
 
 def main(config):
@@ -100,20 +105,26 @@ def main(config):
         return
     logit_dir = dataset_dir + '/Logits'
     softmax_dir = dataset_dir + '/Softmax'
+    logit_attack = logit_dir +"/Attack"
+    softmax_attack = softmax_dir +"/Attack"
+    utils.create_dir(logit_attack)
+    utils.create_dir(softmax_attack)
+
+    print(logit_dir)
 
     x_train_logits,y_train_logits,x_test_logits,y_test_logits = create_mia_datasets(logit_dir)
     x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(softmax_dir)
 
     print("Logit Attack Models")
     attack_model = 'xgb'
-    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
     attack_model = 'tabnet'
-    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
-    print("Softmax Attack Models")
+    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
+    print("Loss Attack Models")
     attack_model = 'xgb'
-    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
     attack_model = 'tabnet'   
-    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,device)
+    attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
     print("FIN")
 
 if __name__ == "__main__":

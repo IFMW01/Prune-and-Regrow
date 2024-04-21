@@ -11,12 +11,12 @@ from processAudioMNIST import AudioMNISTDataset
 
 
 def create_membership_inference_dataset(all_processed,seed):
-  train_set, test_set = train_test_split(all_processed,train_size = 0.5, test_size=0.1, random_state=seed,shuffle=True)
+  train_set, test_set = train_test_split(all_processed,train_size = 0.5, test_size=0.2, random_state=seed,shuffle=True)
   return train_set,test_set
 
 def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,softmax_dir):
   test_acc = 0 
-  test_loss = float('inf')
+  test_loss = 0
   if pipeline == 'mel':
     pipeline_on_wav = WavToMel()
   elif pipeline == 'spec':
@@ -41,12 +41,13 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,test_ece,best_epoch = trainer.train()
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
+    print(f'test loss {mia_test_loss}')
     mia_logit_df,mia_loss_df = utils.logits(mia_model, train_eval_loader, test_loader,device)
     filename_logit = (f"MAI_logit_{seed}.csv")
     filename_loss = (f"MAI_loss_{seed}.csv")
     mia_logit_df.to_csv(f"{logit_dir}/{filename_logit}", index = False)
     mia_loss_df.to_csv(f"{softmax_dir}/{filename_loss}", index = False)
-    print(f"{filename_logit} and {mia_loss_df} saved")
+    print(f"{filename_logit} and {filename_loss} saved")
 
   print(f"Average attack test accuracy: {(test_acc/n_shadow_models):.4f}")
   print(f"Average attack test loss: {(test_loss/n_shadow_models):.4f}")
@@ -62,9 +63,10 @@ def main(config):
 
     device = utils.get_device()
     save_dir = f'TRAIN/{dataset_pointer}/{architecture}/MIA'
-    utils.create_dir(save_dir)
     logit_dir = save_dir + '/Logits'
+    utils.create_dir(logit_dir)
     softmax_dir = save_dir + '/Softmax'
+    utils.create_dir(softmax_dir)
     membership_inference_attack(dataset_pointer,architecture,n_inputs,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,softmax_dir)
     print("FIN")
 
