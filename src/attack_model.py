@@ -39,7 +39,7 @@ def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir
         x_test = x_test.values
 
       model = TabNetClassifier(  n_d = 32,
-      n_a = 32)
+      n_a = 32,seed =i,verbose=0 )
       model.fit(x_train, y_train,
       eval_set=[(x_train, y_train),(x_test, y_test)],
       max_epochs = 100,
@@ -49,7 +49,7 @@ def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir
       save_path = f"{save_dir}/{save_name}"
       torch.save(model, save_path)
        
-    print(f"ATTACK MODEL: {i} STATS")
+    print(f"ATTACK MODEL: {save_name} STATS")
     modelstats(model,x_train,x_test,y_train,y_test)
 
 
@@ -60,8 +60,8 @@ def modelstats(model,x_train,x_test,y_train,y_test):
   train_accuracy = accuracy_score(y_train, y_pred_train)
   test_accuracy = accuracy_score(y_test, y_pred_test)
 
-  train_precision = precision_score(y_train, y_pred_train)
-  test_precision = precision_score(y_test, y_pred_test)
+  train_precision = precision_score(y_train, y_pred_train,zero_division=1)
+  test_precision = precision_score(y_test, y_pred_test,zero_division=1)
 
   train_recall = recall_score(y_train, y_pred_train)
   test_recall = recall_score(y_test, y_pred_test)
