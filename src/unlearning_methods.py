@@ -127,21 +127,16 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
             #Soften the student logits by applying softmax first and log() second
             soft_targets = nn.functional.softmax(teacher_logits / T,dim=-1)
             soft_prob = nn.functional.log_softmax(student_logits / T,dim=-1)
-
             # Calculate the soft targets loss. Scaled by T**2 as suggested by the authors of the paper "Distilling the knowledge in a neural network"
             soft_targets_loss = torch.sum(soft_targets * (soft_targets.log() - soft_prob)) / soft_prob.size()[0] * (T**2)
-
             # Calculate the true label loss
             label_loss = criterion(student_logits,labels)
-
+            teacher_loss =  criterion(teacher_logits,labels)
             # Weighted sum of the two losses
             loss = soft_target_loss_weight * soft_targets_loss + ce_loss_weight * label_loss
-
             loss.backward()
             optimizer.step()
-
             running_loss += loss.item()
-
         print(f"Epoch {epoch+1}/{epochs},Loss: {running_loss / len(train_loader)}")
     return student
 
@@ -149,29 +144,29 @@ def stochastic_teacher_unlearning(path,remain_loader,test_loader,forget_loader,d
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
-  orignial_model,optimizer_gt,criterion,= load_model(path,0.0005,device)
+  student_model,bad_optimizer,criterion,= load_model(path,0.001,device)
 
   stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
-  evaluate_forget_remain_test(orignial_model,forget_loader,remain_loader,test_loader,device)
+  evaluate_forget_remain_test(student_model,forget_loader,remain_loader,test_loader,device)
 
-  student_model = deepcopy(orignial_model)
-  erased_model = train_knowledge_distillation(stochastic_teacher_optimizer,criterion,teacher=stochastic_teacher,student=student_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
+  student_model =  train_knowledge_distillation(bad_optimizer,criterion,teacher=stochastic_teacher,student=student_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
   print("Stochastic teacher knowledge distillation complete")
-  evaluate_forget_remain_test(erased_model,forget_loader,remain_loader,test_loader,device)
+  evaluate_forget_remain_test(student_model,forget_loader,remain_loader,test_loader,device)
 
-
-  retrained_model = train_knowledge_distillation(optimizer_gt,criterion,teacher=orignial_model,student=erased_model,train_loader=remain_loader,epochs=n_repair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
+  optimizer_gt,criterion_gt = utils.set_hyperparameters(student_model,0.01)  
+  gt_model,optimizer_nn,criterion,= load_model(path,0.5,device) 
+  student_model = train_knowledge_distillation(optimizer_gt,criterion_gt,teacher=gt_model,student=student_model,train_loader=remain_loader,epochs=n_repair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
   print("Good teacher knowledge distillation complete")
 
-  forget_accuracy,forget_loss,forget_ece  = retrained_forget_acc = utils.evaluate_test(retrained_model,forget_loader,criterion,n_classes,device)
-  remain_accuracy,remain_loss,remain_ece = utils.evaluate_test(retrained_model,remain_loader,criterion,n_classes,device)
-  test_accuracy,test_loss,test_ece = utils.evaluate_test(retrained_model,test_loader,criterion,n_classes,device)
+  forget_accuracy,forget_loss,forget_ece  = utils.evaluate_test(student_model,forget_loader,criterion,n_classes,device)
+  remain_accuracy,remain_loss,remain_ece = utils.evaluate_test(student_model,remain_loader,criterion,n_classes,device)
+  test_accuracy,test_loss,test_ece = utils.evaluate_test(student_model,test_loader,criterion,n_classes,device)
   print(f"Forget accuracy:{forget_accuracy:.2f}%\tForget loss:{forget_loss:.2f}\tForget ECE:{forget_ece:.2f}")
   print(f"Remain accuracy:{remain_accuracy:.2f}%\tRemain loss:{remain_loss:.2f}\tRemain ECE:{remain_ece:.2f}")
   print(f"Test accuracy:{test_accuracy:.2f}%\tTest loss:{test_loss:.2f}\tTest ECE:{test_ece:.2f}")
 
   results_dict['Stochastic Teacher Unlearning'] = [remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
-  return retrained_model,results_dict
+  return student_model,results_dict
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
@@ -322,7 +317,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     return consine_model,results_dict
 
 def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epochs,results_dict,n_classes,seed):
-    print("\Consine Unlearning:")
+    print("\nConsine Unlearning:")
     print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
@@ -369,7 +364,11 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
 # Random Label Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
 
 def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
-    randl_model,optimizer_ft,criterion = load_model(path,0.01,device)
+    print("\Amnesiac Unlearning:")
+    print("\n")
+    randl_model,optimizer_ft,criterion = load_model(path,0.001,device)
+    print("\n Orignial model accuracy:")
+    evaluate_forget_remain_test(randl_model,forget_loader,remain_loader,test_loader,device)
     randl_train = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     randl_model,rand_forget_accuracy,rand_forget_loss,rand_forget_ece,test_accuracy,test_loss, test_ece=  randl_train.amnesiac()
     print("Performed Amnesiac Unlearning")
@@ -386,6 +385,27 @@ def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_lo
     print(f"Test accuracy:{test_accuracy:.2f}%\tTest loss:{test_loss:.2f}\tTest ECE:{test_ece:.2f}")
     results_dict['Amnesiac Unlearning'] = [best_epoch,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return randl_model,results_dict
+
+def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
+   print("\nFine Tuning Unlearning:")
+   utils.set_seed(seed)
+   ls_model,optimizer,criterion = load_model(path,0.01,device)
+   optimizer_ls = nn.CrossEntropyLoss(label_smoothing=1.0)
+   ls_train = Trainer(ls_model, forget_loader, forget_loader, test_loader, optimizer_ls, criterion, device, n_epoch_impair,n_classes,seed)
+   ls_model,forget_accuracy,forget_loss,forget_ece,test_accuracy,test_loss,test_ece,best_epoch = ls_train.train()
+   print(f"\nModel accuracies post label smoothing:")
+   evaluate_forget_remain_test(ls_model,forget_loader,remain_loader,test_loader,device)
+   print(f"\nFine Tuning:")
+   optimizer_ft,criterion = utils.set_hyperparameters(ls_model,lr=0.01)
+   ls_fine_tune = Unlearner(ls_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+   ls_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch= ls_fine_tune.fine_tune()
+   forget_accuracy,forget_loss,forget_ece = ls_fine_tune.evaluate(forget_loader)
+   print(f"Forget accuracy:{forget_accuracy:.2f}%\tForget loss:{forget_loss:.2f}\tForget ECE:{forget_ece:.2f}")
+   print(f"Remain accuracy:{remain_accuracy:.2f}%\tRemain loss:{remain_loss:.2f}\tRemain ECE:{remain_ece:.2f}")
+   print(f"Test accuracy:{test_accuracy:.2f}%\tTest loss:{test_loss:.2f}\tTest ECE:{test_ece:.2f}")
+   results_dict['Label Smoothing Unlearning'] = [best_epoch,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
+   return ls_model,results_dict
+
 
 
 

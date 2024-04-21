@@ -148,6 +148,9 @@ def main(config):
             randl_model,results_dict = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
             unlearn_logits(randl_model,forget_loader,device,save_dir,'randl_model_logits','randl_model_loss')
 
+            ls_model,results_dict = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
+            unlearn_logits(ls_model,forget_loader,device,save_dir,'randl_model_logits','randl_model_loss')
+
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
             with open(f"{save_dir}/unlearning_results.json",'w') as f:
                 json.dump(results_dict,f)
