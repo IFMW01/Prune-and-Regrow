@@ -386,18 +386,18 @@ def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_lo
     results_dict['Amnesiac Unlearning'] = [best_epoch,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
     return randl_model,results_dict
 
-def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed):
+def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,seed):
    print("\nFine Tuning Unlearning:")
    utils.set_seed(seed)
-   ls_model,optimizer,criterion = load_model(path,0.01,device)
-   optimizer_ls = nn.CrossEntropyLoss(label_smoothing=1.0)
-   ls_train = Trainer(ls_model, forget_loader, forget_loader, test_loader, optimizer_ls, criterion, device, n_epoch_impair,n_classes,seed)
+   ls_model,optimizer,criterion = load_model(path,(0.001*(256/forget_instances_num)),device)
+   criterion_ls = nn.CrossEntropyLoss(label_smoothing=1)
+   ls_train = Trainer(ls_model, forget_loader, forget_loader, test_loader, optimizer, criterion_ls, device, n_epoch_impair,n_classes,seed)
    ls_model,forget_accuracy,forget_loss,forget_ece,test_accuracy,test_loss,test_ece,best_epoch = ls_train.train()
    print(f"\nModel accuracies post label smoothing:")
    evaluate_forget_remain_test(ls_model,forget_loader,remain_loader,test_loader,device)
    print(f"\nFine Tuning:")
    optimizer_ft,criterion = utils.set_hyperparameters(ls_model,lr=0.01)
-   ls_fine_tune = Unlearner(ls_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+   ls_fine_tune = Unlearner(ls_model,remain_loader, remain_eval_loader, forget_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,5,n_classes,seed)
    ls_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch= ls_fine_tune.fine_tune()
    forget_accuracy,forget_loss,forget_ece = ls_fine_tune.evaluate(forget_loader)
    print(f"Forget accuracy:{forget_accuracy:.2f}%\tForget loss:{forget_loss:.2f}\tForget ECE:{forget_ece:.2f}")

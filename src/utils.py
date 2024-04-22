@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import os
 import vgg 
-from vgg import VGGish,VGG9
+from vgg import VGGishMel,VGGishSpec,VGG9
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -37,8 +37,10 @@ def create_dir(directory):
         os.makedirs(directory)
 
 def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
-    if architecture == 'VGGish':
-        model = VGGish(n_inputs,n_classes)
+    if architecture == 'VGGishMel':
+        model = VGGishMel(n_inputs,n_classes)
+    elif architecture == 'VGGishSpec':
+        model = VGGishSpec(n_inputs,n_classes)
 
     # elif architecture == 'Transformer':
     #     model  = SimpleViT(
