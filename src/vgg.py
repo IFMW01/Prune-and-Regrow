@@ -11,20 +11,20 @@ class VGGishMel(nn.Module):
             nn.Conv2d(32, 32, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 128, kernel_size=3, padding=1),
+            nn.Conv2d(128, 32, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2))
         self.embeddings = nn.Sequential(
-            nn.Linear(512, 1024),
+            nn.Linear(512, 2048),
             nn.ReLU(inplace=True),
-            nn.Linear(1024, 2048),
+            nn.Linear(2048, 2048),
             nn.ReLU(inplace=True),
             nn.Linear(2048, num_classes))
 
@@ -71,10 +71,10 @@ class VGGishSpec(nn.Module):
     def __init__(self,in_channels,num_classes):
         super(VGGishSpec, self).__init__()
         self.features = nn.Sequential(
-            nn.Conv2d(in_channels, 16, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(16, 16, kernel_size=3, padding=1),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(16, 32, kernel_size=3, padding=1),
@@ -88,11 +88,11 @@ class VGGishSpec(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2))
         self.embeddings = nn.Sequential(
-            nn.Linear(32*16*3, 1024),
+            nn.Linear(32*16*3, 2048),
             nn.ReLU(inplace=True),
-            nn.Linear(1024, 1024),
+            nn.Linear(2048, 2048),
             nn.ReLU(inplace=True),
-            nn.Linear(1024, num_classes))
+            nn.Linear(2048, num_classes))
 
     def forward(self, x):
         x = self.features(x)
