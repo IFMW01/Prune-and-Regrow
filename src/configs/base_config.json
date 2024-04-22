@@ -1,8 +1,8 @@
 {    
 
-"dataset_pointer": "audioMNIST",
+"dataset_pointer": "SpeechCommands",
 "pipeline": "mel",
-"architecture": "VGGish",
+"architecture": "VGGishMel",
 "n_epochs": 50,
 "seeds": [40],
 "n_classes":10, 
