@@ -130,7 +130,7 @@ class WavToSpec(torch.nn.Module):
     def __init__(
         self,
         input_freq=16000,
-        n_fft=1024,
+        n_fft=512,
         n_mel=32
     ):
         super().__init__()

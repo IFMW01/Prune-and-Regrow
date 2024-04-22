@@ -6,7 +6,6 @@ from Trainer import Trainer
 import load_datasets as ld
 import utils 
 
-from vgg import VGGish,VGG9
 # from transformer import SimpleViT
 
 def create_base_model(train,save_path,device,seed,train_loader,test_loader,results_dict):
