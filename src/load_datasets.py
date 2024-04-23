@@ -123,8 +123,6 @@ class DatasetProcessor(Dataset):
     audio_path = self.audio_files[idx]
     data = torch.load(audio_path)
     data["feature"] = data["feature"][None,:,:]
-    print(data["feature"])
-    print(data["label"])
     return data["feature"], data["label"]
 
 class DatasetProcessor_randl(Dataset):
