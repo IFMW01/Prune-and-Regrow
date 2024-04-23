@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import os
 import vgg 
-from vgg import VGGishMel,VGGishSpec,VGG9
+from vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -25,6 +25,7 @@ def count_parameters(model):
 
 def set_hyperparameters(model,lr):
     optimizer = optim.SGD(model.parameters(),lr,momentum=0.9)
+    # optimizer = optim.Adam(model.parameters(),lr)
     criterion = nn.CrossEntropyLoss()
     return optimizer,criterion
 
@@ -41,6 +42,11 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         model = VGGishMel(n_inputs,n_classes)
     elif architecture == 'VGGishSpec':
         model = VGGishSpec(n_inputs,n_classes)
+    elif architecture == 'VGGishMelr':
+        model = VGGishMelr(n_inputs,n_classes)
+    elif architecture == 'VGGishSpecr':
+        model = VGGishSpecr(n_inputs,n_classes)
+    
 
     # elif architecture == 'Transformer':
     #     model  = SimpleViT(

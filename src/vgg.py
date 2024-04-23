@@ -22,7 +22,40 @@ class VGGishMel(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2, 2))
         self.embeddings = nn.Sequential(
-            nn.Linear(128, 2048),
+            nn.Linear(192, 2048),
+            nn.ReLU(inplace=True),
+            nn.Linear(2048, 2048),
+            nn.ReLU(inplace=True),
+            nn.Linear(2048, num_classes))
+
+    def forward(self, x):
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.embeddings(x)
+        return x
+
+class VGGishMelr(nn.Module):
+    def __init__(self,in_channels,num_classes):
+        super(VGGishMelr, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2))
+        self.embeddings = nn.Sequential(
+            nn.Linear(1280, 2048),
             nn.ReLU(inplace=True),
             nn.Linear(2048, 2048),
             nn.ReLU(inplace=True),
@@ -99,6 +132,40 @@ class VGGishSpec(nn.Module):
         x = torch.flatten(x, 1)
         x = self.embeddings(x)
         return x
+
+class VGGishSpecr(nn.Module):
+    def __init__(self,in_channels,num_classes):
+        super(VGGishSpecr, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, 2))
+        self.embeddings = nn.Sequential(
+            nn.Linear(10240, 2048),
+            nn.ReLU(inplace=True),
+            nn.Linear(2048, 2048),
+            nn.ReLU(inplace=True),
+            nn.Linear(2048, num_classes))
+
+    def forward(self, x):
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.embeddings(x)
+        return x
+
 
 class VGG9(nn.Module):
     def __init__(self, in_channels, num_classes):

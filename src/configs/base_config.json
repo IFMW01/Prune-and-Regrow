@@ -1,8 +1,8 @@
 {    
 "dataset_pointer": "Ravdess",
 "pipeline": "mel",
-"architecture": "VGGishMel",
-"n_epochs": 20,
+"architecture": "VGGishMelr",
+"n_epochs": 250,
 "seeds": [40],
 "n_classes":8, 
 "n_inputs":1
