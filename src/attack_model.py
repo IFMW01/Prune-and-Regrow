@@ -80,18 +80,25 @@ def modelstats(model,x_train,x_test,y_train,y_test):
 
 
 def create_mia_datasets(data_directory):
-    df = pd.DataFrame()
-    list_of_files = glob.glob(f'{data_directory}/*.csv')
-    for  data_path in list_of_files:
-        df = pd.concat([df,pd.read_csv(data_path)],ignore_index=True)
-    df.to_csv(f'{data_directory}_all.csv',index = False)
-    df_lables = df['label']
-    df = df.drop(['label'], axis=1)
+  df = pd.DataFrame()
+  list_of_files = glob.glob(f'{data_directory}/*.csv')
+  for  data_path in list_of_files:
+      df = pd.concat([df,pd.read_csv(data_path)],ignore_index=True)
+  
+  label_1 = df[df['label'] == 1].index
 
-    x_train,x_test,y_train,y_test= train_test_split(df,df_lables, test_size=0.2, random_state=42,shuffle=True)
-    print(x_train)
-    print(y_train)
-    return x_train,y_train,x_test,y_test
+  label_0 = df[df['label'] == 0].sample(n=len(label_1), random_state=42).index
+
+  balanced_indices = label_1.union(label_0)
+  balanced_df = df.loc[balanced_indices]
+  balanced_df.to_csv(f'{data_directory}_all_balanced.csv',index = False)
+  df_lables = balanced_df['label']
+  balanced_df = balanced_df.drop(['label'], axis=1)
+
+  x_train,x_test,y_train,y_test= train_test_split(balanced_df,df_lables, test_size=0.2, random_state=42,shuffle=True)
+  print(x_train)
+  print(y_train)
+  return x_train,y_train,x_test,y_test
 
 def main(config_attack,config_base):
     dataset_pointer = config_base.get("dataset_pointer", None)

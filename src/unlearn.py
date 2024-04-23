@@ -4,14 +4,14 @@ import unlearning_methods as um
 import load_datasets as ld
 import glob
 import utils 
-import torch
 import math
 import random
 import numpy as np
+import unlearn_metrics
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from load_datasets import DatasetProcessor,DatasetProcessor_randl
-import audioMNIST as AudioMNIST
+
 
 def unlearn_logits(model,loader,device,save_dir,filename_logits,filename_loss):
     logits,loss = utils.logits_unlearn(model,loader,device)
@@ -117,7 +117,7 @@ def main(config_unlearn,config_base):
         results_dict = {}
 
         for seed in seeds:
-    
+            results_dict[seed] = {}
             model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
             save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_percentage}/{seed}/"
             utils.create_dir(save_dir)
@@ -128,42 +128,64 @@ def main(config_unlearn,config_base):
             orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
             logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_logits','orginal_model_loss')
 
-            naive_model,results_dict = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict,seed)
+            naive_model,results_dict[seed] = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed],seed)
             logit_distributions(naive_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'naive_model_logits','naive_model_loss')
+            results_dict[seed]["Original Model"].append(unlearn_metrics.actviation_distance(orginal_model,naive_model))
+            results_dict[seed]["Original Model"].append(unlearn_metrics.JS_divergence(orginal_model,naive_model,forget_eval_loader,device)) 
+
+            results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.actviation_distance(naive_model,naive_model))
+            results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.JS_divergence(naive_model,naive_model,forget_eval_loader,device))      
 
 
-            gradient_ascent_model,results_dict = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,forget_instances_num,dataset_pointer,seed)
+            gradient_ascent_model,results_dict[seed] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_instances_num,dataset_pointer,seed)
             logit_distributions(gradient_ascent_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'gradient_ascent_model_logits','gradient_ascent_model_loss')
+            results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.actviation_distance(gradient_ascent_model,naive_model))
+            results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.JS_divergence(gradient_ascent_model,naive_model,forget_eval_loader,device))      
 
-
-            fine_tuning_model,results_dict = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
+            fine_tuning_model,results_dict[seed] = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(fine_tuning_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'fine_tuning_model_logits','fine_tuning_model_loss')
+            results_dict[seed]["Fine Tune Unlearning"].append(unlearn_metrics.actviation_distance(fine_tuning_model,naive_model))
+            results_dict[seed]["Fine Tune Unlearning"].append(unlearn_metrics.JS_divergence(fine_tuning_model,naive_model,forget_eval_loader,device))       
 
-            stochastic_teacher_model,results_dict = um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,results_dict,n_epoch_impair,n_epoch_repair,seed)
+            stochastic_teacher_model,results_dict[seed] = um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,results_dict[seed],n_epoch_impair,n_epoch_repair,seed)
             logit_distributions(stochastic_teacher_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'stochastic_teacher_model_logits','stochastic_teacher_model_loss')
+            results_dict[seed]["Stochastic Teacher Unlearning"].append(unlearn_metrics.actviation_distance(stochastic_teacher_model,naive_model))
+            results_dict[seed]["Stochastic Teacher Unlearning"].append(unlearn_metrics.JS_divergence(stochastic_teacher_model,naive_model,forget_eval_loader,device))       
 
-            omp_model,results_dict = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs_fine_tune,results_dict,n_classes,seed)
+            omp_model,results_dict[seed] = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_logits','omp_model_loss')
+            results_dict[seed]["OMP Unlearning"].append(unlearn_metrics.actviation_distance(omp_model,naive_model))
+            results_dict[seed]["OMP Unlearning"].append(unlearn_metrics.JS_divergence(omp_model,naive_model,forget_eval_loader,device))       
 
 
-            cosine_model,results_dict = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
+            cosine_model,results_dict[seed] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_logits','cosine_model_loss')
+            results_dict[seed]["Cosine Unlearning"].append(unlearn_metrics.actviation_distance(cosine_model,naive_model))
+            results_dict[seed]["Cosine Unlearning"].append(unlearn_metrics.JS_divergence(cosine_model,naive_model,forget_eval_loader,device))       
 
 
-            kk_model,results_dict = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict,n_classes,seed)
+            kk_model,results_dict[seed] = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(kk_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'kk_model_logits','kk_model_loss')
+            results_dict[seed]["Kurtosis Unlearning"].append(unlearn_metrics.actviation_distance(kk_model,naive_model))
+            results_dict[seed]["Kurtosis Unlearning"].append(unlearn_metrics.JS_divergence(kk_model,naive_model,forget_eval_loader,device))    
 
 
-            randl_model,results_dict = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
+            randl_model,results_dict[seed] = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,seed)
             logit_distributions(randl_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'randl_model_logits','randl_model_loss')
+            results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.actviation_distance(randl_model,naive_model))
+            results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device))    
 
 
-            ls_model,results_dict = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict,n_classes,seed)
-            logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'lable_smoothing_logits','lable_smoothing_loss')
+            ls_model,results_dict[seed] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,seed)
+            logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'label_smoothing_logits','label_smoothing_loss')
+            results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.actviation_distance(randl_model,naive_model))
+            results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device))    
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
-            with open(f"{save_dir}/unlearning_results.json",'w') as f:
-                json.dump(results_dict,f)
+  
+        with open(f"{save_dir}/unlearning_results.json",'w') as f:
+            json.dump(results_dict,f)
+        unlearn_metrics.mia_efficacy()  
         print("FIN")
 
 if __name__ == "__main__":
