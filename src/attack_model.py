@@ -93,10 +93,10 @@ def create_mia_datasets(data_directory):
     print(y_train)
     return x_train,y_train,x_test,y_test
 
-def main(config):
-    dataset_pointer = config.get("dataset_pointer", None)
-    architecture = config.get("architecture", None)
-    n_attack_models = config.get("n_attack_models", None)
+def main(config_attack,config_base):
+    dataset_pointer = config_base.get("dataset_pointer", None)
+    architecture = config_base.get("architecture", None)
+    n_attack_models = config_attack.get("n_attack_models", None)
 
     device = utils.get_device()
     dataset_dir = f'TRAIN/{dataset_pointer}/{architecture}/MIA'
@@ -128,6 +128,8 @@ def main(config):
     print("FIN")
 
 if __name__ == "__main__":
-    with open("./configs/attack_config.json", "r") as f:
-        config = json.load(f)
-    main(config)
+    with open("./configs/base_config.json","r") as b:
+        config_base = json.load(b)    
+    with open("./configs/attack_config.json", "r") as a:
+        config_attack = json.load(a)
+    main(config_attack,config_base)

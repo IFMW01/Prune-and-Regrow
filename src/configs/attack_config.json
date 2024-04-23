@@ -1,5 +1,3 @@
 {
-    "dataset_pointer": "audioMNIST",
-    "architecture": "VGGish",
     "n_attack_models": 3
 }

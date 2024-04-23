@@ -1,5 +1,4 @@
 {    
-
 "dataset_pointer": "SpeechCommands",
 "pipeline": "mel",
 "architecture": "VGGishMel",

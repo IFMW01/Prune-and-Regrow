@@ -43,20 +43,20 @@ def randomise_lables(data_set,dataset_pointer):
               current_label = random.randint(0, len(labels))        
     return data_set
 
-def main(config):
-    dataset_pointer = config.get("dataset_pointer",None)
-    pipeline = config.get("pipeline",None)
-    architecture = config.get("architecture",None)
-    n_epochs = config.get("n_epochs",None)
-    seeds = config.get("seeds",None)
-    n_classes = config.get("n_classes",None)
-    n_inputs = config.get("n_inputs",None)
-    unlearning = config.get("unlearning",None)
-    n_epoch_impair = config.get("n_epoch_impair",None)
-    n_epoch_repair = config.get("n_epoch_repair",None)
-    n_epochs_fine_tune = config.get("n_epochs_fine_tune",None)
-    forget_percentage = config.get("forget_percentage",None)
-    pruning_ratio = config.get("pruning_ratio",None)
+def main(config_unlearn,config_base):
+    dataset_pointer = config_base.get("dataset_pointer",None)
+    pipeline = config_base.get("pipeline",None)
+    architecture = config_base.get("architecture",None)
+    n_epochs = config_base.get("n_epochs",None)
+    seeds = config_base.get("seeds",None)
+    n_classes = config_base.get("n_classes",None)
+    n_inputs = config_base.get("n_inputs",None)
+    unlearning = config_unlearn.get("unlearning",None)
+    n_epoch_impair = config_unlearn.get("n_epoch_impair",None)
+    n_epoch_repair = config_unlearn.get("n_epoch_repair",None)
+    n_epochs_fine_tune = config_unlearn.get("n_epochs_fine_tune",None)
+    forget_percentage = config_unlearn.get("forget_percentage",None)
+    pruning_ratio = config_unlearn.get("pruning_ratio",None)
     
     print("Received arguments from config file:")
     print(f"Unlearning: {unlearning}")
@@ -167,6 +167,8 @@ def main(config):
         print("FIN")
 
 if __name__ == "__main__":
-    with open("./configs/unlearn_config.json","r") as f:
-        config = json.load(f)
-    main(config)
+    with open("./configs/base_config.json","r") as b:
+        config_base = json.load(b)    
+    with open("./configs/unlearn_config.json","r") as u:
+        config_unlearn = json.load(u)
+    main(config_unlearn,config_base)

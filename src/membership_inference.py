@@ -57,14 +57,14 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
   print(f"Average attack test accuracy: {(test_acc/n_shadow_models):.4f}")
   print(f"Average attack test loss: {(test_loss/n_shadow_models):.4f}")
 
-def main(config):
-    dataset_pointer = config.get("dataset_pointer", None)
-    pipeline = config.get("pipeline", None)
-    architecture = config.get("architecture", None)
-    n_classes = config.get("n_classes", None)
-    n_inputs = config.get("n_inputs", None)
-    n_shadow_models = config.get("n_shadow_models", None)
-    n_shadow_epochs = config.get("n_shadow_epochs", None)
+def main(config_mia,config_base):
+    dataset_pointer = config_base.get("dataset_pointer", None)
+    pipeline = config_base.get("pipeline", None)
+    architecture = config_base.get("architecture", None)
+    n_classes = config_base.get("n_classes", None)
+    n_inputs = config_base.get("n_inputs", None)
+    n_shadow_models = config_mia.get("n_shadow_models", None)
+    n_shadow_epochs = config_mia.get("n_shadow_epochs", None)
 
     device = utils.get_device()
     save_dir = f'TRAIN/{dataset_pointer}/{architecture}/MIA'
@@ -76,7 +76,9 @@ def main(config):
     print("FIN")
 
 if __name__ == "__main__":
-    with open("./configs/mia_config.json", "r") as f:
-        config = json.load(f)
-    main(config)
+    with open("./configs/base_config.json","r") as b:
+        config_base = json.load(b)    
+    with open("./configs/mia_config.json", "r") as mia:
+        config_mia = json.load(mia)
+    main(config_mia,config_base)
 
