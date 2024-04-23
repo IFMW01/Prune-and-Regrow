@@ -6,10 +6,9 @@ import torchmetrics.classification
 from torchmetrics.classification import MulticlassCalibrationError
 
 class Trainer():
-    def __init__(self,model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
+    def __init__(self,model, train_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
         self.model = model
         self.train_loader = train_loader
-        self.train_eval_loader = train_eval_loader
         self.test_loader = test_loader
         self.optimizer = optimizer
         self.criterion = criterion
@@ -70,7 +69,7 @@ class Trainer():
                 loss.backward()
                 self.optimizer.step()
 
-            train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
+            train_accuracy,train_loss,train_ece = self.evaluate(self.train_loader)
             accuracies.append(train_accuracy)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
             

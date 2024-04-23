@@ -4,10 +4,12 @@ from load_datasets import WavToMel,WavToSpec
 import Trainer
 import json
 import utils
-import processAudioMNIST as pAudioMNIST
+import audioMNIST 
+import ravdess 
+from load_datasets import DatasetProcessor
 from torch.utils.data import DataLoader
 from Trainer import Trainer
-from processAudioMNIST import AudioMNISTDataset
+from audioMNIST import AudioMNISTDataset
 
 
 def create_membership_inference_dataset(all_processed,seed):
@@ -28,13 +30,16 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
       train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
       train_loader,train_eval_loader,test_loader = ld.loaders(train_set_mia,test_set_mia,dataset_pointer)
     elif dataset_pointer == 'audioMNIST':
-       all_processed = pAudioMNIST.load_mia_dataset(pipeline,pipeline_on_wav,dataset_pointer)
+       all_processed = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
+    elif dataset_pointer == 'ravdess':
+       all_processed = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer) 
+    if dataset_pointer == 'audioMNIST' or dataset_pointer == 'audioMNIST':
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-       train_data_mia = AudioMNISTDataset(train_set_mia)
-       test_data_mia = AudioMNISTDataset(test_set_mia)
+       train_data_mia = DatasetProcessor(train_set_mia)
+       test_data_mia = DatasetProcessor(test_set_mia)
        train_loader = DataLoader(train_data_mia, batch_size=256, shuffle=True, num_workers=2)
-       train_eval_loader = DataLoader(train_data_mia, batch_size=256, shuffle=True, num_workers=2)
-       test_loader = DataLoader(test_data_mia, batch_size=256, shuffle=True, num_workers=2)
+       train_eval_loader = DataLoader(train_data_mia, batch_size=256, shuffle=False, num_workers=2)
+       test_loader = DataLoader(test_data_mia, batch_size=256, shuffle=False, num_workers=2)
        
     model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
     trainer = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_shadow_epochs,n_classes,seed)
