@@ -1,6 +1,4 @@
 {    
-
-"n_shadow_models":10,
+"n_shadow_models":5,
 "n_shadow_epochs":30
-
 }
