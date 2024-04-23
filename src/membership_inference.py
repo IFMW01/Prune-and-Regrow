@@ -9,11 +9,12 @@ import ravdess
 from load_datasets import DatasetProcessor
 from torch.utils.data import DataLoader
 from Trainer import Trainer
-from audioMNIST import AudioMNISTDataset
+
 
 
 def create_membership_inference_dataset(all_processed,seed):
   train_set, test_set = train_test_split(all_processed,train_size = 0.5, test_size=0.2, random_state=seed,shuffle=True)
+  print(test_set.size)
   return train_set,test_set
 
 def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,softmax_dir):
@@ -23,16 +24,20 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     pipeline_on_wav = WavToMel()
   elif pipeline == 'spec':
      pipeline_on_wav = WavToSpec()
+  
+  if dataset_pointer == 'SpeechCommands':
+    all_processed = ld.load_mia_dataset(dataset_pointer,pipeline_on_wav)
+  elif dataset_pointer == 'audioMNIST':
+       all_processed = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
+  elif dataset_pointer == 'ravdess':
+       all_processed = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer) 
 
   for seed in range(n_shadow_models):
     if dataset_pointer == 'SpeechCommands':
-      all_processed = ld.load_mia_dataset(dataset_pointer,pipeline)
       train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-      train_loader,train_eval_loader,test_loader = ld.loaders(train_set_mia,test_set_mia,dataset_pointer)
-    elif dataset_pointer == 'audioMNIST':
-       all_processed = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
-    elif dataset_pointer == 'ravdess':
-       all_processed = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer) 
+      train_loader = ld.trainset_loader(train_set_mia)
+      train_eval_loader = ld.testset_loader(train_set_mia)
+      test_loader = ld.testset_loader(test_set_mia)
     if dataset_pointer == 'audioMNIST' or dataset_pointer == 'audioMNIST':
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
        train_data_mia = DatasetProcessor(train_set_mia)
