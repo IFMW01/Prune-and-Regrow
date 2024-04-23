@@ -38,14 +38,14 @@ def create_ravdess(pipeline,pipeline_on_wav,dataset_pointer):
     temp_dir = f'./{pipeline}/{dataset_pointer}'
     if not os.path.isdir(f'{data_folder}'):
         cv_13 = load_dataset("narad/ravdess", split="train")
-        all =  [[cv_13[x]['audio']['path'],cv_13[x]['audio']['array'],cv_13[x]['labels']] for x in range(len(cv_13))]
+        all = np.array([[cv_13[x]['audio']['path'],cv_13[x]['audio']['array'],cv_13[x]['labels']] for x in range(len(cv_13))],dtype=object)
         utils.create_dir(data_folder)
         np.save(data_path, all)
 
     if pipeline:
         if not os.path.isdir(f'{temp_dir}'):
             utils.create_dir(temp_dir)
-            all_data = np.load(data_path)
+            all_data = np.load(data_path,allow_pickle=True)
             convert_to_spectograms(all_data,temp_dir,pipeline_on_wav)
         all_data = glob.glob(f'{temp_dir}/*.pth') 
     
