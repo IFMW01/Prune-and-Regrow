@@ -58,9 +58,9 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         test_set = DatasetProcessor(test_set)
 
     if dataset_pointer == 'SpeechCommands':
-        train_loader = trainset_loader(train_set,dataset_pointer)
-        train_eval_loader = testset_loader(train_set,dataset_pointer)
-        test_loader = testset_loader(test_set,dataset_pointer)
+        train_loader = trainset_loader(train_set)
+        train_eval_loader = testset_loader(train_set)
+        test_loader = testset_loader(test_set)
 
     else:
         train_loader = torch.utils.data.DataLoader(train_set, batch_size=256,

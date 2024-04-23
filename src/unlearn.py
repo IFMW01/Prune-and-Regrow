@@ -185,7 +185,7 @@ def main(config_unlearn,config_base):
   
         with open(f"{save_dir}/unlearning_results.json",'w') as f:
             json.dump(results_dict,f)
-        unlearn_metrics.mia_efficacy()  
+        # unlearn_metrics.mia_efficacy()  
         print("FIN")
 
 if __name__ == "__main__":
