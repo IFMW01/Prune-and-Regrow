@@ -34,20 +34,18 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
 def create_ravdess(pipeline,pipeline_on_wav,dataset_pointer):
     utils.set_seed(42)
     data_folder = f'./ravdess'
-    data_path = f'{data_folder}/all_path.json'
+    data_path = f'{data_folder}/all_path.npy'
     temp_dir = f'./{pipeline}/{dataset_pointer}'
     if not os.path.isdir(f'{data_folder}'):
         cv_13 = load_dataset("narad/ravdess", split="train")
         all =  [[cv_13[x]['audio']['path'],cv_13[x]['audio']['array'],cv_13[x]['labels']] for x in range(len(cv_13))]
         utils.create_dir(data_folder)
-        all_path = f'{data_folder}/all_data.json'
-        with open(f'{data_path}', 'w') as f:
-            json.dump(all, f)
+        np.save(data_path, all)
+
     if pipeline:
         if not os.path.isdir(f'{temp_dir}'):
             utils.create_dir(temp_dir)
-            with open('my_list.json', 'r') as f:
-                all_data = json.load(f)
+            all_data = np.load(data_path)
             convert_to_spectograms(all_data,temp_dir,pipeline_on_wav)
         all_data = glob.glob(f'{temp_dir}/*.pth') 
     
@@ -69,20 +67,3 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
   
   return train, test    
 
-def load_mia_dataset(pipeline,pipeline_on_wav,dataset_pointer):
-    data_folder = './AudioMNIST/data/*/'
-    temp_dir = f'./{pipeline}/{dataset_pointer}'
-    if os.path.isdir(f'{temp_dir}'):
-        all_data = glob.glob(f'{temp_dir}/*.pth')   
-    else:
-      if not os.path.isdir('./AudioMNIST'):
-          git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
-          subprocess.run(git_clone_command, check=True)
-      all_data = glob.glob(f'{data_folder}*.wav')
-      if pipeline:
-          convert_to_spectograms(all_data,temp_dir,pipeline_on_wav)
-          all_data = glob.glob(f'{temp_dir}/*.pth')   
-      repository_path = './AudioMNIST'
-      shutil.rmtree(repository_path)
-    
-    return all_data   
