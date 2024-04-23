@@ -9,6 +9,7 @@ class Trainer():
     def __init__(self,model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
         self.model = model
         self.train_loader = train_loader
+        self.train_eval_loader = train_eval_loader
         self.test_loader = test_loader
         self.optimizer = optimizer
         self.criterion = criterion

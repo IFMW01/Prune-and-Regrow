@@ -21,14 +21,13 @@ from tqdm import tqdm
 def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
   os.makedirs(destination_folder, exist_ok=True) 
   for index,(path,wav,label) in enumerate(tqdm(data_folder)):
-    audio, samplerate = sf.read(wav)
-    audio = librosa.resample(audio.astype(float),orig_sr=samplerate,target_sr=downsample)
-    audio = torch.tensor(audio).float()
-    audio = nn.ConstantPad1d((0, downsample - audio.shape[0]), 0)(audio)
+    wav = librosa.resample(wav.astype(float),orig_sr=48000,target_sr=downsample)
+    wav = torch.tensor(wav).float()
+    wav = nn.ConstantPad1d((0, downsample - wav.shape[0]), 0)(wav)
     if pipeline:
-        audio = pipeline(audio)
+        wav = pipeline(wav)
     label =torch.tensor(label)
-    data_dict  = {"feature": audio, "label": label}
+    data_dict  = {"feature": wav, "label": label}
     torch.save(data_dict, os.path.join(destination_folder, f"{index}.pth"), )
 
 def create_ravdess(pipeline,pipeline_on_wav,dataset_pointer):
