@@ -11,7 +11,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from load_datasets import DatasetProcessor,DatasetProcessor_randl
-import processAudioMNIST as AudioMNIST
+import audioMNIST as AudioMNIST
 
 def unlearn_logits(model,loader,device,save_dir,filename_logits,filename_loss):
     logits,loss = utils.logits_unlearn(model,loader,device)

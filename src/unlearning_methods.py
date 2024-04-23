@@ -140,7 +140,7 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
         print(f"Epoch {epoch+1}/{epochs},Loss: {running_loss / len(train_loader)}")
     return student
 
-def stochastic_teacher_unlearning(path,remain_loader,test_loader,remain_eval_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,results_dict,n_impair_epochs,n_repair_epochs,seed):
+def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,results_dict,n_impair_epochs,n_repair_epochs,seed):
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
