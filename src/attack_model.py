@@ -12,6 +12,10 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
+  x_train = x_train.to(device)
+  y_train = y_train.to(device)
+  x_test = x_test.to(device)
+  y_test = y_test.to(device)
   for i in range(num_models):
     utils.set_seed(i)
     if attack_model == 'xgb':
@@ -40,6 +44,7 @@ def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir
 
       model = TabNetClassifier(  n_d = 32,
       n_a = 32,seed =i,verbose=0 )
+      model.to(device)
       model.fit(x_train, y_train,
       eval_set=[(x_train, y_train),(x_test, y_test)],
       max_epochs = 100,

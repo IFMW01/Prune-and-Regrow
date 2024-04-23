@@ -32,7 +32,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         test_list = SubsetSC("testing")
         labels = np.load('./labels/speech_commands_labels.npy')
         labels = labels.tolist()
-        train_set,test_set = convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav)
+        train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
     elif dataset_pointer == 'audioMNIST':
         all_list = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
         train_set, test_set = audioMNIST.train_test(all_list,pipeline,dataset_pointer,seed)
@@ -73,7 +73,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     return train_loader,train_eval_loader,test_loader
 
 
-def convert_sets(train_list,test_list,dataset_pointer,pipeline_on_wav):
+def convert_sets(train_list,test_list,pipeline_on_wav):
 
     print("Converting datasets")
     train_set = pp.convert_waveform(train_list,pipeline_on_wav,False)
