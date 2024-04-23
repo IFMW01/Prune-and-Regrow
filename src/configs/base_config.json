@@ -1,10 +1,10 @@
 {    
-"dataset_pointer": "audioMNIST",
+"dataset_pointer": "Ravdess",
 "pipeline": "mel",
 "architecture": "VGGishMel",
-"n_epochs": 50,
+"n_epochs": 20,
 "seeds": [40],
-"n_classes":10, 
+"n_classes":8, 
 "n_inputs":1
 }
 

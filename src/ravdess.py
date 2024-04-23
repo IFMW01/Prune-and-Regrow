@@ -20,14 +20,15 @@ from tqdm import tqdm
 
 def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
   os.makedirs(destination_folder, exist_ok=True) 
-  for index,(path,wav,label) in enumerate(tqdm(data_folder)):
-    wav = librosa.resample(wav.astype(float),orig_sr=48000,target_sr=downsample)
-    wav = torch.tensor(wav).float()
-    wav = nn.ConstantPad1d((0, downsample - wav.shape[0]), 0)(wav)
+  for index,(path,label) in enumerate(tqdm(data_folder)):
+    audio, samplerate = sf.read(path)
+    audio = librosa.resample(audio.astype(float),orig_sr=samplerate,target_sr=downsample)
+    audio = torch.tensor(audio).float()
+    audio = nn.ConstantPad1d((0, downsample - audio.shape[0]), 0)(audio)
     if pipeline:
-        wav = pipeline(wav)
+        audio = pipeline(audio)
     label =torch.tensor(label)
-    data_dict  = {"feature": wav, "label": label}
+    data_dict  = {"feature": audio, "label": label}
     torch.save(data_dict, os.path.join(destination_folder, f"{index}.pth"), )
 
 def create_ravdess(pipeline,pipeline_on_wav,dataset_pointer):
@@ -37,7 +38,7 @@ def create_ravdess(pipeline,pipeline_on_wav,dataset_pointer):
     temp_dir = f'./{pipeline}/{dataset_pointer}'
     if not os.path.isdir(f'{data_folder}'):
         cv_13 = load_dataset("narad/ravdess", split="train")
-        all = np.array([[cv_13[x]['audio']['path'],cv_13[x]['audio']['array'],cv_13[x]['labels']] for x in range(len(cv_13))],dtype=object)
+        all = np.array([[cv_13[x]['audio']['path'],cv_13[x]['labels']] for x in range(len(cv_13))],dtype=object)
         utils.create_dir(data_folder)
         np.save(data_path, all)
 
@@ -59,8 +60,8 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
     test = (test.values.flatten().tolist())
   else:
     train, test = train_test_split(all_data, test_size=0.2, random_state=seed,shuffle=True)
-    train_path = f'./{temp_dir}/train.csv'
-    test_path = f'./{temp_dir}/test.csv'
+    train_path = f'{temp_dir}/train.csv'
+    test_path = f'{temp_dir}/test.csv'
     pd.DataFrame(train).to_csv(f'{train_path}', index=False)
     pd.DataFrame(test).to_csv(f'{test_path}', index=False)
   
