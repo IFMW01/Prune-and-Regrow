@@ -23,7 +23,6 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
   os.makedirs(destination_folder, exist_ok=True) 
   for index,(path,label) in enumerate(tqdm(data_folder)):
     if not os.path.isfile(path):
-       print(path)
        continue
     audio, samplerate = sf.read(path)
     if audio.ndim > 1:
@@ -37,7 +36,6 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
         audio = pipeline(audio)
     label = torch.tensor(label)
     data_dict  = {"feature": audio, "label": label}
-    print(data_dict)
     torch.save(data_dict, os.path.join(destination_folder, f"{index}.pth"), )
   
 def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
