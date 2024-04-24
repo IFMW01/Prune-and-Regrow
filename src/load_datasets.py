@@ -65,13 +65,13 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     #     train_eval_loader = testset_loader(train_set)
     #     test_loader = testset_loader(test_set)
 
-    else:
-        train_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
-                                                shuffle=True, num_workers=2)
-        train_eval_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
-                                                shuffle=False, num_workers=2)
-        test_loader = torch.utils.data.DataLoader(test_set, batch_size=256,
-                                                shuffle=False, num_workers=2)
+
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
+                                            shuffle=True, num_workers=2)
+    train_eval_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
+                                            shuffle=False, num_workers=2)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=256,
+                                            shuffle=False, num_workers=2)
         
     return train_loader,train_eval_loader,test_loader
 
