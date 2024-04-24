@@ -26,6 +26,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
      pipeline_on_wav = WavToSpec()
   
   if dataset_pointer == 'SpeechCommands':
+    # TODO sort out loader for all speech commands
     all_processed = ld.load_mia_dataset(dataset_pointer,pipeline_on_wav)
   elif dataset_pointer == 'audioMNIST':
        all_processed = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
@@ -33,12 +34,12 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
        all_processed = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer) 
 
   for seed in range(n_shadow_models):
-    if dataset_pointer == 'SpeechCommands':
-      train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-      train_loader = ld.trainset_loader(train_set_mia)
-      train_eval_loader = ld.testset_loader(train_set_mia)
-      test_loader = ld.testset_loader(test_set_mia)
-    if dataset_pointer == 'audioMNIST' or dataset_pointer == 'audioMNIST':
+    # if dataset_pointer == 'SpeechCommands':
+    #   train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
+    #   train_loader = ld.trainset_loader(train_set_mia)
+    #   train_eval_loader = ld.testset_loader(train_set_mia)
+    #   test_loader = ld.testset_loader(test_set_mia)
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'ravdess':
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
        train_data_mia = DatasetProcessor(train_set_mia)
        test_data_mia = DatasetProcessor(test_set_mia)
