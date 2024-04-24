@@ -179,7 +179,7 @@ def main(config_unlearn,config_base):
             results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device))    
 
 
-            ls_model,results_dict[seed] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,seed)
+            ls_model,results_dict[seed] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_instances_num,seed)
             logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'label_smoothing_logits','label_smoothing_loss')
             results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.actviation_distance(ls_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.JS_divergence(ls_model,naive_model,forget_eval_loader,device))    
