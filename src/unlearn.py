@@ -25,16 +25,16 @@ def logit_distributions(model,remain_eval_loader,forget_eval_loader,test_loader,
      
 
 def randomise_lables(data_set,dataset_pointer):
-    if dataset_pointer == 'SpeechCommands':
-        labels = np.load('./labels/speech_commands_labels.npy')
-        labels = labels.tolist()
-        for i in range(len(data_set)):
-          label_index = labels.index(data_set[i][2])
-          current_label = label_index
-          while current_label == label_index:
-              current_label = random.randint(0, (len(labels)-1))
-          data_set[i][2] = labels[current_label]
-    elif dataset_pointer == 'CIFAR10':
+    # if dataset_pointer == 'SpeechCommands':
+    #     labels = np.load('./labels/speech_commands_labels.npy')
+    #     labels = labels.tolist()
+    #     for i in range(len(data_set)):
+    #       label_index = labels.index(data_set[i][2])
+    #       current_label = label_index
+    #       while current_label == label_index:
+    #           current_label = random.randint(0, (len(labels)-1))
+    #       data_set[i][2] = labels[current_label]
+    if dataset_pointer == 'CIFAR10':
         labels = np.load('./labels/cifar10_labels.npy')
         labels = labels.tolist()
         for i in range(len(data_set)):
@@ -85,36 +85,36 @@ def main(config_unlearn,config_base):
         print(f"Remain instances: {len(remain_set)}")
         print(f"Forget instances: {len(forget_set)}")
         print("Creating remain and forget data loaders")
-        if dataset_pointer == 'SpeechCommands':
-          remain_loader = ld.trainset_loader(remain_set)
-          remain_eval_loader = ld.testset_loader(remain_set)
-          forget_loader = ld.trainset_loader(forget_set)
-          forget_eval_loader =  ld.testset_loader(forget_set)
+        # if dataset_pointer == 'SpeechCommands':
+        #   remain_loader = ld.trainset_loader(remain_set)
+        #   remain_eval_loader = ld.testset_loader(remain_set)
+        #   forget_loader = ld.trainset_loader(forget_set)
+        #   forget_eval_loader =  ld.testset_loader(forget_set)
+        #   forget_randl_data = randomise_lables(forget_set,dataset_pointer)
+        #   forget_randl_loader = ld.trainset_loader(forget_randl_data)
+        #   test_loader = ld.testset_loader(test_set)
+        if dataset_pointer == 'CIFAR10':
           forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-          forget_randl_loader = ld.trainset_loader(forget_randl_data)
-          test_loader = ld.testset_loader(test_set)
-        elif dataset_pointer == 'CIFAR10':
-          forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-        elif dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
+        elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
           forget_randl_set = forget_set
           remain_set = DatasetProcessor(remain_set)
           forget_set = DatasetProcessor(forget_set)
           test_set = DatasetProcessor(test_set)
           forget_randl_data = DatasetProcessor_randl(forget_randl_set)
         
-        if dataset_pointer == 'CIFAR10' or dataset_pointer == 'audioMNIST'  or dataset_pointer == 'Ravdess':
-            remain_loader = DataLoader(remain_set, batch_size=256,
-                                                shuffle=True, num_workers=2)
-            remain_eval_loader = DataLoader(remain_set, batch_size=256,
-                                                shuffle=False, num_workers=2)
-            forget_loader = DataLoader(forget_set, batch_size=256,
-                                                shuffle=True, num_workers=2)
-            forget_eval_loader = DataLoader(forget_set, batch_size=256,
-                                                shuffle=False, num_workers=2)       
-            test_loader = DataLoader(test_set, batch_size=256,
-                                                shuffle=False, num_workers=2)
-            forget_randl_loader = DataLoader(forget_randl_data, batch_size=256,
-                                                shuffle=True, num_workers=2)
+        # if dataset_pointer == 'CIFAR10' or dataset_pointer == 'audioMNIST'  or dataset_pointer == 'Ravdess':
+        remain_loader = DataLoader(remain_set, batch_size=256,
+                                            shuffle=True, num_workers=2)
+        remain_eval_loader = DataLoader(remain_set, batch_size=256,
+                                            shuffle=False, num_workers=2)
+        forget_loader = DataLoader(forget_set, batch_size=256,
+                                            shuffle=True, num_workers=2)
+        forget_eval_loader = DataLoader(forget_set, batch_size=256,
+                                            shuffle=False, num_workers=2)       
+        test_loader = DataLoader(test_set, batch_size=256,
+                                            shuffle=False, num_workers=2)
+        forget_randl_loader = DataLoader(forget_randl_data, batch_size=256,
+                                            shuffle=True, num_workers=2)
         
         results_dict = {}
 

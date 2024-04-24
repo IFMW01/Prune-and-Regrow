@@ -10,6 +10,7 @@ import random
 import torchvision.transforms as transforms
 import ravdess
 import audioMNIST
+import speech_commands
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
@@ -28,11 +29,13 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if not os.path.exists(dataset_pointer):
             print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
-        train_list = SubsetSC("training") 
-        test_list = SubsetSC("testing")
-        labels = np.load('./labels/speech_commands_labels.npy')
-        labels = labels.tolist()
-        train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
+
+        # train_list = SubsetSC("training") 
+        # test_list = SubsetSC("testing")
+        # labels = np.load('./labels/speech_commands_labels.npy')
+        # labels = labels.tolist()
+        # train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
+        train_set,test_set = speech_commands.create_speechcommands()
     elif dataset_pointer == 'audioMNIST':
         all_list = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
         train_set, test_set = audioMNIST.train_test(all_list,pipeline,dataset_pointer,seed)
@@ -53,14 +56,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if unlearnng:
         return train_set,test_set
     
-    if dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
         train_set = DatasetProcessor(train_set)
         test_set = DatasetProcessor(test_set)
 
-    if dataset_pointer == 'SpeechCommands':
-        train_loader = trainset_loader(train_set)
-        train_eval_loader = testset_loader(train_set)
-        test_loader = testset_loader(test_set)
+    # if dataset_pointer == 'SpeechCommands':
+    #     train_loader = trainset_loader(train_set)
+    #     train_eval_loader = testset_loader(train_set)
+    #     test_loader = testset_loader(test_set)
 
     else:
         train_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
