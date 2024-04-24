@@ -32,9 +32,11 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     train, test = speech_commands.create_speechcommands(dataset_pointer,pipeline_on_wav)
     all_processed = np.append(test, train)
   elif dataset_pointer == 'audioMNIST':
-       all_processed = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
+       train, test = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
+       all_processed = np.append(test, train)
   elif dataset_pointer == 'ravdess':
-       all_processed = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer) 
+       train, test = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
+       all_processed = np.append(test, train) 
 
   for seed in range(n_shadow_models):
     # if dataset_pointer == 'SpeechCommands':

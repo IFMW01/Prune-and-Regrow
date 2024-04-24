@@ -32,18 +32,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         # train_list = SubsetSC("testing") 
         # test_list = SubsetSC("testing")
         # print(train_list[0])
-        # labels = np.load('./labels/speech_commands_labels.npy')
-        # labels = labels.tolist()
         # train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
         train_set,test_set = speech_commands.create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer)
+        labels = np.load('./labels/speech_commands_labels.npy')
     elif dataset_pointer == 'audioMNIST':
-        all_list = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
-        train_set, test_set = audioMNIST.train_test(all_list,pipeline,dataset_pointer,seed)
+        train_set, test_set = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/audiomnist_labels.npy')
-        labels = labels.tolist()
     elif dataset_pointer == 'Ravdess':
-        all_list = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
-        train_set, test_set = ravdess.train_test(all_list,pipeline,dataset_pointer,seed)
+        train_set, test_set = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/ravdess_label.npy')
     elif dataset_pointer == 'CIFAR10':
         transform = transforms.Compose([transforms.ToTensor(),
@@ -52,6 +48,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
                                                 download=True, transform=transform)
         test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
                                             download=True, transform=transform)
+    labels = labels.tolist()
 
     if unlearnng:
         return train_set,test_set

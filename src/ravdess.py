@@ -56,22 +56,22 @@ def create_ravdess(pipeline,pipeline_on_wav,dataset_pointer):
     all_data = np.load(data_path,allow_pickle=True)
     convert_to_spectograms(all_data,temp_dir,pipeline_on_wav)
     all_data = glob.glob(f'{temp_dir}/*.pth') 
-
-    return all_data
+    train, test = train_test(all_data,pipeline,dataset_pointer,42)
+    return train, test
 
 def train_test(all_data,pipeline,dataset_pointer,seed):
   temp_dir = f'./{pipeline}/{dataset_pointer}'
-  # if os.path.isfile(f'{temp_dir}/train.csv') or os.path.isfile(f'{temp_dir}/test.csv'):
-  #   train = pd.read_csv(f'{temp_dir}/train.csv')
-  #   test = pd.read_csv(f'{temp_dir}/test.csv')
-  #   train = (train.values.flatten().tolist())
-  #   test = (test.values.flatten().tolist())
-  # else:
-  train, test = train_test_split(all_data, test_size=0.2, random_state=seed,shuffle=True)
-  train_path = f'{temp_dir}/train.csv'
-  test_path = f'{temp_dir}/test.csv'
-  pd.DataFrame(train).to_csv(f'{train_path}', index=False)
-  pd.DataFrame(test).to_csv(f'{test_path}', index=False)
-  
+  if os.path.isfile(f'{temp_dir}/train.csv') or os.path.isfile(f'{temp_dir}/test.csv'):
+    train = pd.read_csv(f'{temp_dir}/train.csv')
+    test = pd.read_csv(f'{temp_dir}/test.csv')
+    train = (train.values.flatten().tolist())
+    test = (test.values.flatten().tolist())
+  else:
+    train, test = train_test_split(all_data, test_size=0.2, random_state=seed,shuffle=True)
+    train_path = f'{temp_dir}/train.csv'
+    test_path = f'{temp_dir}/test.csv'
+    pd.DataFrame(train).to_csv(f'{train_path}', index=False)
+    pd.DataFrame(test).to_csv(f'{test_path}', index=False)
+    
   return train, test    
 
