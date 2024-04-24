@@ -41,7 +41,7 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
     test_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
     if not os.path.isdir(f'{train_temp_dir}'):
       train_list = SubsetSC("training") 
-      test_list = SubsetSC("training") 
+      test_list = SubsetSC("testing") 
       train_path_arr = []
       test_path_arr = []
       with open("./SpeechCommands/speech_commands_v0.02/training_list.txt", "r") as file:
@@ -57,10 +57,10 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
       if pipeline:
         utils.create_dir(train_temp_dir)
         utils.create_dir(test_temp_dir)
-        for i in range(len(train_list)):
+        for i in tqdm(range(len(train_list))):
           sc_train.append((train_path_arr[i],train_list[i][4]))
-        for i in range(len(test_list)):
-          sc_train.append((test_path_arr[i],test_list[i][4]))
+        for i in tqdm(range(len(test_list))):
+          sc_test.append((test_path_arr[i],test_list[i][4]))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
