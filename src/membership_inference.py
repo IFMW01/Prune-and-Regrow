@@ -9,6 +9,8 @@ import ravdess
 from load_datasets import DatasetProcessor
 from torch.utils.data import DataLoader
 from Trainer import Trainer
+import speech_commands
+import numpy as np
 
 
 
@@ -27,7 +29,8 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
   
   if dataset_pointer == 'SpeechCommands':
     # TODO sort out loader for all speech commands
-    all_processed = ld.load_mia_dataset(dataset_pointer,pipeline_on_wav)
+    train, test = speech_commands.create_speechcommands(dataset_pointer,pipeline_on_wav)
+    all_processed = np.append(test, train)
   elif dataset_pointer == 'audioMNIST':
        all_processed = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
   elif dataset_pointer == 'ravdess':

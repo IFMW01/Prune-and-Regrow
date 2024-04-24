@@ -22,6 +22,8 @@ from torchaudio.datasets import SPEECHCOMMANDS
 def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
   os.makedirs(destination_folder, exist_ok=True) 
   for index,(path,label) in enumerate(tqdm(data_folder)):
+    if not os.path.isfile(path):
+       continue
     audio, samplerate = sf.read(path)
     if audio.ndim > 1:
       # Convert to mono 
@@ -40,7 +42,7 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
     train_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
     test_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
     if not os.path.isdir(f'{train_temp_dir}'):
-      train_list = SubsetSC("training") 
+      train_list = SubsetSC("testing") 
       test_list = SubsetSC("testing") 
       train_path_arr = []
       test_path_arr = []

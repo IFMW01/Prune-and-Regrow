@@ -47,6 +47,7 @@ def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
           all_data = glob.glob(f'{temp_dir}/*.pth')   
       repository_path = './AudioMNIST'
       shutil.rmtree(repository_path)
+    train_test(all_data,pipeline,dataset_pointer,42)
     return all_data
     
 def train_test(all_data,pipeline,dataset_pointer,seed):
