@@ -16,6 +16,7 @@ from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 from datasets import load_dataset
 from tqdm import tqdm
+from torchaudio.datasets import SPEECHCOMMANDS
 
 
 def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
@@ -43,16 +44,27 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
     train_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
     test_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
     if not os.path.isdir(f'{train_temp_dir}'):
-      sc = load_dataset("speech_commands", "v0.02")
+      train_list = SubsetSC("training") 
+      test_list = SubsetSC("training") 
+      train_path_arr = []
+      test_path_arr = []
+      with open("./SpeechCommands/speech_commands_v0.02/training_list.txt", "r") as file:
+        for line in file:
+            train_path_arr.append((line.strip()))
+
+      with open("./SpeechCommands/speech_commands_v0.02/testing_list.txt", "r") as file:
+        for line in file:
+            test_path_arr.append((line.strip()))
+      
       sc_train = []
       sc_test = []
       if pipeline:
         utils.create_dir(train_temp_dir)
         utils.create_dir(test_temp_dir)
-        for i in range(len(sc['train'])):
-          sc_train.append((sc['train'][i]['audio']['array'],sc['train'][i]['label']))
-        for i in range(len(sc['validation'])):
-          sc_test.append((sc['validation'][i]['audio']['array'],sc['validation'][i]['label']))
+        for i in range(len(train_list)):
+          sc_train.append((train_path_arr[i],train_list[i][4]))
+        for i in range(len(test_list)):
+          sc_train.append((test_path_arr[i],test_list[i][4]))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
@@ -92,6 +104,10 @@ class SubsetSC(SPEECHCOMMANDS):
             excludes = set(excludes)
             filepath = os.path.join(self._path, 'training_list.txt')
             self._walker = [w for w in self._walker if w not in excludes]
+            with open(filepath, "w") as file:
+                for item in self._walker:
+                    file.write(str(item) + "\n")
+
         elif subset == "all":
             self._walker = [w for w in self._walker]
 
