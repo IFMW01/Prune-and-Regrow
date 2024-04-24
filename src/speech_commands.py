@@ -51,8 +51,8 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
         utils.create_dir(test_temp_dir)
         for i in range(len(sc['train'])):
           sc_train.append((sc['train'][i]['audio']['array'],sc['train'][i]['label']))
-        for i in range(len(sc['valid'])):
-          sc_test.append((sc['valid'][i]['audio']['array'],sc['valid'][i]['label']))
+        for i in range(len(sc['validation'])):
+          sc_test.append((sc['validation'][i]['audio']['array'],sc['validation'][i]['label']))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
@@ -75,4 +75,23 @@ def train_test(all_data,pipeline,dataset_pointer,seed):
   pd.DataFrame(test).to_csv(f'{test_path}', index=False)
   
   return train, test    
+
+class SubsetSC(SPEECHCOMMANDS):
+    def __init__(self,subset: str = None):
+        super().__init__("./", download=True)
+        def load_list(filename):
+            filepath = os.path.join(self._path, filename)
+            with open(filepath) as fileobj:
+                return [os.path.normpath(os.path.join(self._path, line.strip())) for line in fileobj]
+        if subset == "validation":
+            self._walker = load_list("validation_list.txt")
+        elif subset == "testing":
+            self._walker = load_list("testing_list.txt")
+        elif subset == "training":
+            excludes = load_list("validation_list.txt") + load_list("testing_list.txt")
+            excludes = set(excludes)
+            filepath = os.path.join(self._path, 'training_list.txt')
+            self._walker = [w for w in self._walker if w not in excludes]
+        elif subset == "all":
+            self._walker = [w for w in self._walker]
 

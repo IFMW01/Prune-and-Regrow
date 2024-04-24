@@ -29,13 +29,13 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if not os.path.exists(dataset_pointer):
             print(f"Downloading: {dataset_pointer}")
     if dataset_pointer == 'SpeechCommands':
-
-        # train_list = SubsetSC("training") 
-        # test_list = SubsetSC("testing")
-        # labels = np.load('./labels/speech_commands_labels.npy')
-        # labels = labels.tolist()
-        # train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
-        train_set,test_set = speech_commands.create_speechcommands()
+        train_list = SubsetSC("testing") 
+        test_list = SubsetSC("testing")
+        print(train_list[0])
+        labels = np.load('./labels/speech_commands_labels.npy')
+        labels = labels.tolist()
+        train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
+        # train_set,test_set = speech_commands.create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer)
     elif dataset_pointer == 'audioMNIST':
         all_list = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
         train_set, test_set = audioMNIST.train_test(all_list,pipeline,dataset_pointer,seed)
@@ -95,24 +95,7 @@ def load_mia_dataset(dataset_pointer :str,pipeline_on_wav):
     all_set = pp.convert_waveform(all_list,pipeline_on_wav,False)
     return all_set
 
-class SubsetSC(SPEECHCOMMANDS):
-    def __init__(self,subset: str = None):
-        super().__init__("./", download=True)
-        def load_list(filename):
-            filepath = os.path.join(self._path, filename)
-            with open(filepath) as fileobj:
-                return [os.path.normpath(os.path.join(self._path, line.strip())) for line in fileobj]
-        if subset == "validation":
-            self._walker = load_list("validation_list.txt")
-        elif subset == "testing":
-            self._walker = load_list("testing_list.txt")
-        elif subset == "training":
-            excludes = load_list("validation_list.txt") + load_list("testing_list.txt")
-            excludes = set(excludes)
-            filepath = os.path.join(self._path, 'training_list.txt')
-            self._walker = [w for w in self._walker if w not in excludes]
-        elif subset == "all":
-            self._walker = [w for w in self._walker]
+
 
 class DatasetProcessor(Dataset):
   def __init__(self, annotations):
@@ -227,4 +210,23 @@ def testset_loader(dataset,batch_size=256):
   )
 
   return dataset_loader
+
+class SubsetSC(SPEECHCOMMANDS):
+    def __init__(self,subset: str = None):
+        super().__init__("./", download=True)
+        def load_list(filename):
+            filepath = os.path.join(self._path, filename)
+            with open(filepath) as fileobj:
+                return [os.path.normpath(os.path.join(self._path, line.strip())) for line in fileobj]
+        if subset == "validation":
+            self._walker = load_list("validation_list.txt")
+        elif subset == "testing":
+            self._walker = load_list("testing_list.txt")
+        elif subset == "training":
+            excludes = load_list("validation_list.txt") + load_list("testing_list.txt")
+            excludes = set(excludes)
+            filepath = os.path.join(self._path, 'training_list.txt')
+            self._walker = [w for w in self._walker if w not in excludes]
+        elif subset == "all":
+            self._walker = [w for w in self._walker]
     
