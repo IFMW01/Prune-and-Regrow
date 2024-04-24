@@ -23,6 +23,7 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
   os.makedirs(destination_folder, exist_ok=True) 
   for index,(path,label) in enumerate(tqdm(data_folder)):
     if not os.path.isfile(path):
+       print(path)
        continue
     audio, samplerate = sf.read(path)
     if audio.ndim > 1:
@@ -34,19 +35,20 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
     audio = nn.ConstantPad1d((0, downsample - audio.shape[0]), 0)(audio)
     if pipeline:
         audio = pipeline(audio)
-    label =torch.tensor(label)
+    label = torch.tensor(label)
     data_dict  = {"feature": audio, "label": label}
+    print(data_dict)
     torch.save(data_dict, os.path.join(destination_folder, f"{index}.pth"), )
   
 def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
     train_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
-    test_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
+    test_temp_dir = f'./{pipeline}/{dataset_pointer}/Test'
     if not os.path.isdir(f'{train_temp_dir}'):
-      train_list = SubsetSC("testing") 
+      train_list = SubsetSC("training") 
       test_list = SubsetSC("testing") 
       train_path_arr = []
       test_path_arr = []
-      with open("./SpeechCommands/speech_commands_v0.02/training_list.txt", "r") as file:
+      with open("./SpeechCommands/speech_commands_v0.02/testing_list.txt", "r") as file:
         for line in file:
             train_path_arr.append((line.strip()))
 
@@ -60,9 +62,9 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
         utils.create_dir(train_temp_dir)
         utils.create_dir(test_temp_dir)
         for i in tqdm(range(len(train_list))):
-          sc_train.append((train_path_arr[i],train_list[i][4]))
+          sc_train.append((f"./SpeechCommands/speech_commands_v0.02/{train_path_arr[i]}",train_list[i][4]))
         for i in tqdm(range(len(test_list))):
-          sc_test.append((test_path_arr[i],test_list[i][4]))
+          sc_test.append((f"./SpeechCommands/speech_commands_v0.02/{test_path_arr[i]}",test_list[i][4]))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
