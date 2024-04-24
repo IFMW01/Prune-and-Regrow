@@ -1,6 +1,6 @@
 import torch.nn as nn 
 import torch
-import torch.functional as F
+import torch.nn.functional as F
 import utils
 import json
 from glob import glob
@@ -34,11 +34,10 @@ pruning_ratio = config_unlearn.get("pruning_ratio",None)
 def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     sftmx = nn.Softmax(dim = 1)
     distances = []
-    for batch in dataloader:
-        x, _, _ = batch
-        x = x.to(device)
-        unlearn_outputs = unlearn_model(x)
-        retrain_outputs = retrain_model(x)
+    for batch, (data,label) in enumerate(dataloader):
+        data = data.to(device)
+        unlearn_outputs = unlearn_model(data)
+        retrain_outputs = retrain_model(data)
         diff = torch.sqrt(torch.sum(torch.square(F.softmax(unlearn_outputs, dim = 1) - F.softmax(retrain_outputs, dim = 1)), axis = 1))
         diff = diff.detach().cpu()
         distances.append(diff)
@@ -46,10 +45,12 @@ def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     return distances.mean()
 
 def JS_divergence(unlearn_model, retrain_model,forget_eval_loader,device):
-    df_unlearn_logit,df_unlearn_loss = utils.logits_unlearn((unlearn_model,forget_eval_loader,device))
-    df_retrain_logit,df_retrain_loss = utils.logits_unlearn((retrain_model,forget_eval_loader,device))
+    df_unlearn_logit,df_unlearn_loss = utils.logits_unlearn(unlearn_model,forget_eval_loader,device)
+    df_retrain_logit,df_retrain_loss = utils.logits_unlearn(retrain_model,forget_eval_loader,device)
     diff = (df_unlearn_loss+df_retrain_loss)/2
-    js_divergence = 0.5*F.kl_div(torch.lxog(df_unlearn_loss), diff) + 0.5*F.kl_div(torch.log(df_retrain_loss), diff)
+    retrain_loss = torch.tensor(df_retrain_loss.values)
+    unlearn_loss = torch.tensor(df_unlearn_loss.values)
+    js_divergence = 0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)
     return js_divergence
 
 def mia_efficacy():

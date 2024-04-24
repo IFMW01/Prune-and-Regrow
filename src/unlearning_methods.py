@@ -21,12 +21,14 @@ def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed
     utils.set_seed(seed)
     forget_set = []
     remain_set = train_set
-    if dataset_pointer == 'CIFAR10':
+    if dataset_pointer == 'CIFAR10'or 'SpeechCommands':
         total_instances = len(remain_set)
         random_indices = np.random.choice(total_instances, forget_instances_num, replace=False)
         forget_set = [remain_set[i] for i in random_indices]
         remain_set = [instance for i, instance in enumerate(remain_set) if i not in random_indices]
     else:
+        print(len(remain_set))
+        print(type(remain_set))
         forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
         remain_set = list(set(remain_set) - set(forget_set))
     return remain_set,forget_set

@@ -29,10 +29,12 @@ def randomise_lables(data_set,dataset_pointer):
         labels = np.load('./labels/speech_commands_labels.npy')
         labels = labels.tolist()
         for i in range(len(data_set)):
-          label_index = labels.index(data_set[i][(len(data_set[i])-1)])
+          print(data_set[i])
+          label_index = labels.index(data_set[i][2])
           current_label = label_index
           while current_label == label_index:
-              current_label = random.randint(0, len(labels))
+              current_label = random.randint(0, (len(labels)-1))
+          data_set[i][2] = labels[current_label]
     elif dataset_pointer == 'CIFAR10':
         labels = np.load('./labels/cifar10_labels.npy')
         labels = labels.tolist()
@@ -40,7 +42,8 @@ def randomise_lables(data_set,dataset_pointer):
           label = data_set[i][1]
           current_label = label
           while current_label == label:
-              current_label = random.randint(0, len(labels))        
+              current_label = random.randint(0, (len(labels)-1))  
+          data_set[i][1] = current_label    
     return data_set
 
 def main(config_unlearn,config_base):
@@ -84,13 +87,13 @@ def main(config_unlearn,config_base):
         print(f"Forget instances: {len(forget_set)}")
         print("Creating remain and forget data loaders")
         if dataset_pointer == 'SpeechCommands':
-          remain_loader = ld.trainset_loader(remain_set,dataset_pointer)
-          remain_eval_loader = ld.testset_loader(remain_set,dataset_pointer)
-          forget_loader = ld.trainset_loader(forget_set,dataset_pointer)
-          forget_eval_loader =  ld.testset_loader(forget_set,dataset_pointer)
+          remain_loader = ld.trainset_loader(remain_set)
+          remain_eval_loader = ld.testset_loader(remain_set)
+          forget_loader = ld.trainset_loader(forget_set)
+          forget_eval_loader =  ld.testset_loader(forget_set)
           forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-          forget_randl_loader = ld.trainset_loader(forget_randl_data,dataset_pointer)
-          test_loader = ld.testset_loader(test_set,dataset_pointer)
+          forget_randl_loader = ld.trainset_loader(forget_randl_data)
+          test_loader = ld.testset_loader(test_set)
         elif dataset_pointer == 'CIFAR10':
           forget_randl_data = randomise_lables(forget_set,dataset_pointer)
         elif dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
@@ -130,7 +133,8 @@ def main(config_unlearn,config_base):
 
             naive_model,results_dict[seed] = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed],seed)
             logit_distributions(naive_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'naive_model_logits','naive_model_loss')
-            results_dict[seed]["Original Model"].append(unlearn_metrics.actviation_distance(orginal_model,naive_model))
+            results_dict[seed]["Original Model"] = []
+            results_dict[seed]["Original Model"].append(unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Original Model"].append(unlearn_metrics.JS_divergence(orginal_model,naive_model,forget_eval_loader,device)) 
 
             results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.actviation_distance(naive_model,naive_model))
@@ -139,47 +143,47 @@ def main(config_unlearn,config_base):
 
             gradient_ascent_model,results_dict[seed] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_instances_num,dataset_pointer,seed)
             logit_distributions(gradient_ascent_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'gradient_ascent_model_logits','gradient_ascent_model_loss')
-            results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.actviation_distance(gradient_ascent_model,naive_model))
+            results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.actviation_distance(gradient_ascent_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.JS_divergence(gradient_ascent_model,naive_model,forget_eval_loader,device))      
 
             fine_tuning_model,results_dict[seed] = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(fine_tuning_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'fine_tuning_model_logits','fine_tuning_model_loss')
-            results_dict[seed]["Fine Tune Unlearning"].append(unlearn_metrics.actviation_distance(fine_tuning_model,naive_model))
+            results_dict[seed]["Fine Tune Unlearning"].append(unlearn_metrics.actviation_distance(fine_tuning_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Fine Tune Unlearning"].append(unlearn_metrics.JS_divergence(fine_tuning_model,naive_model,forget_eval_loader,device))       
 
             stochastic_teacher_model,results_dict[seed] = um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,results_dict[seed],n_epoch_impair,n_epoch_repair,seed)
             logit_distributions(stochastic_teacher_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'stochastic_teacher_model_logits','stochastic_teacher_model_loss')
-            results_dict[seed]["Stochastic Teacher Unlearning"].append(unlearn_metrics.actviation_distance(stochastic_teacher_model,naive_model))
+            results_dict[seed]["Stochastic Teacher Unlearning"].append(unlearn_metrics.actviation_distance(stochastic_teacher_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Stochastic Teacher Unlearning"].append(unlearn_metrics.JS_divergence(stochastic_teacher_model,naive_model,forget_eval_loader,device))       
 
             omp_model,results_dict[seed] = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_logits','omp_model_loss')
-            results_dict[seed]["OMP Unlearning"].append(unlearn_metrics.actviation_distance(omp_model,naive_model))
+            results_dict[seed]["OMP Unlearning"].append(unlearn_metrics.actviation_distance(omp_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["OMP Unlearning"].append(unlearn_metrics.JS_divergence(omp_model,naive_model,forget_eval_loader,device))       
 
 
             cosine_model,results_dict[seed] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_logits','cosine_model_loss')
-            results_dict[seed]["Cosine Unlearning"].append(unlearn_metrics.actviation_distance(cosine_model,naive_model))
+            results_dict[seed]["Cosine Unlearning"].append(unlearn_metrics.actviation_distance(cosine_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Cosine Unlearning"].append(unlearn_metrics.JS_divergence(cosine_model,naive_model,forget_eval_loader,device))       
 
 
             kk_model,results_dict[seed] = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed],n_classes,seed)
             logit_distributions(kk_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'kk_model_logits','kk_model_loss')
-            results_dict[seed]["Kurtosis Unlearning"].append(unlearn_metrics.actviation_distance(kk_model,naive_model))
+            results_dict[seed]["Kurtosis Unlearning"].append(unlearn_metrics.actviation_distance(kk_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Kurtosis Unlearning"].append(unlearn_metrics.JS_divergence(kk_model,naive_model,forget_eval_loader,device))    
 
 
             randl_model,results_dict[seed] = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,seed)
             logit_distributions(randl_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'randl_model_logits','randl_model_loss')
-            results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.actviation_distance(randl_model,naive_model))
+            results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.actviation_distance(randl_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device))    
 
 
             ls_model,results_dict[seed] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,seed)
             logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'label_smoothing_logits','label_smoothing_loss')
-            results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.actviation_distance(randl_model,naive_model))
-            results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device))    
+            results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.actviation_distance(ls_model, naive_model, forget_eval_loader, device))
+            results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.JS_divergence(ls_model,naive_model,forget_eval_loader,device))    
 
             print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
   
