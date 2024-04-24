@@ -47,7 +47,10 @@ def actviation_distance(unlearn_model, retrain_model, dataloader, device):
 def JS_divergence(unlearn_model, retrain_model,forget_eval_loader,device):
     df_unlearn_logit,df_unlearn_loss = utils.logits_unlearn(unlearn_model,forget_eval_loader,device)
     df_retrain_logit,df_retrain_loss = utils.logits_unlearn(retrain_model,forget_eval_loader,device)
+    df_retrain_loss = df_retrain_loss.drop(['label'],axis =1)
+    df_unlearn_loss = df_unlearn_loss.drop(['label'],axis =1)
     diff = (df_unlearn_loss+df_retrain_loss)/2
+    diff = torch.tensor(diff.values)
     retrain_loss = torch.tensor(df_retrain_loss.values)
     unlearn_loss = torch.tensor(df_unlearn_loss.values)
     js_divergence = 0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)

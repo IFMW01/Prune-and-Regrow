@@ -29,7 +29,6 @@ def randomise_lables(data_set,dataset_pointer):
         labels = np.load('./labels/speech_commands_labels.npy')
         labels = labels.tolist()
         for i in range(len(data_set)):
-          print(data_set[i])
           label_index = labels.index(data_set[i][2])
           current_label = label_index
           while current_label == label_index:
@@ -127,7 +126,7 @@ def main(config_unlearn,config_base):
             print(f"Acessing trained model on seed: {seed}")
             model_path = glob.glob(os.path.join(model_dir,'*.pth'))
             model_path = model_path[0]
-            
+                   
             orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
             logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_logits','orginal_model_loss')
 
@@ -137,7 +136,7 @@ def main(config_unlearn,config_base):
             results_dict[seed]["Original Model"].append(unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Original Model"].append(unlearn_metrics.JS_divergence(orginal_model,naive_model,forget_eval_loader,device)) 
 
-            results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.actviation_distance(naive_model,naive_model))
+            results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.actviation_distance(naive_model, naive_model, forget_eval_loader, device))
             results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.JS_divergence(naive_model,naive_model,forget_eval_loader,device))      
 
 
