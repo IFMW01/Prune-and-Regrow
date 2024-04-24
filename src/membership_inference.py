@@ -28,7 +28,6 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
      pipeline_on_wav = WavToSpec()
   
   if dataset_pointer == 'SpeechCommands':
-    # TODO sort out loader for all speech commands
     train, test = speech_commands.create_speechcommands(dataset_pointer,pipeline_on_wav)
     all_processed = np.append(test, train)
   elif dataset_pointer == 'audioMNIST':
