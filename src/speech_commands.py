@@ -52,7 +52,7 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
 
       with open("./SpeechCommands/speech_commands_v0.02/testing_list.txt", "r") as file:
         for line in file:
-            test_path_arr.append((line.strip()))
+            test_path_arr.append((f"./SpeechCommands/speech_commands_v0.02/{line.strip()}"))
 
       sc_train = []
       sc_test = []       
@@ -60,9 +60,9 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
         utils.create_dir(train_temp_dir)
         utils.create_dir(test_temp_dir)
         for i in tqdm(range(len(train_list))):
-          sc_train.append((f"./SpeechCommands/speech_commands_v0.02/{train_path_arr[i]}",train_list[i][4]))
+          sc_train.append((f"{train_path_arr[i]}",train_list[i][4]))
         for i in tqdm(range(len(test_list))):
-          sc_test.append((f"./SpeechCommands/speech_commands_v0.02/{test_path_arr[i]}",test_list[i][4]))
+          sc_test.append((test_path_arr[i],test_list[i][4]))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
