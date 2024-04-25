@@ -64,7 +64,7 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
         for i in tqdm(range(len(train_list))):
           sc_train.append((f"{train_path_arr[i]}",labels.index(train_list[i][2])))
         for i in tqdm(range(len(test_list))):
-          sc_test.append((test_path_arr[i],labels.index(train_list[i][2])))
+          sc_test.append((test_path_arr[i],labels.index(test_list[i][2])))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
