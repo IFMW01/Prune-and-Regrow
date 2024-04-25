@@ -34,6 +34,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         # print(train_list[0])
         # train_set,test_set = convert_sets(train_list,test_list,pipeline_on_wav)
         train_set,test_set = speech_commands.create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer)
+        print(train_set[0])
         labels = np.load('./labels/speech_commands_labels.npy')
     elif dataset_pointer == 'audioMNIST':
         train_set, test_set = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
@@ -55,6 +56,8 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
         train_set = DatasetProcessor(train_set)
+        print(train_set[0])
+        print(train_set[0][0].shape)
         test_set = DatasetProcessor(test_set)
 
     # if dataset_pointer == 'SpeechCommands':

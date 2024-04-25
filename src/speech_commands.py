@@ -41,6 +41,8 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
 def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
     train_temp_dir = f'./{pipeline}/{dataset_pointer}/Train'
     test_temp_dir = f'./{pipeline}/{dataset_pointer}/Test'
+    labels = np.load('./labels/speech_commands_labels.npy')
+    labels = labels.tolist()
     if not os.path.isdir(f'{train_temp_dir}'):
       train_list = SubsetSC("training") 
       test_list = SubsetSC("testing") 
@@ -60,15 +62,16 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
         utils.create_dir(train_temp_dir)
         utils.create_dir(test_temp_dir)
         for i in tqdm(range(len(train_list))):
-          sc_train.append((f"{train_path_arr[i]}",train_list[i][4]))
+          sc_train.append((f"{train_path_arr[i]}",labels.index(train_list[i][2])))
         for i in tqdm(range(len(test_list))):
-          sc_test.append((test_path_arr[i],test_list[i][4]))
+          sc_test.append((test_path_arr[i],labels.index(train_list[i][2])))
         convert_to_spectograms(sc_train,train_temp_dir,pipeline_on_wav)
         convert_to_spectograms(sc_test,test_temp_dir,pipeline_on_wav)
 
     train_set = glob.glob(f'{train_temp_dir}/*.pth') 
     test_set = glob.glob(f'{test_temp_dir}/*.pth') 
     return train_set,test_set
+
 
 class SubsetSC(SPEECHCOMMANDS):
     def __init__(self,subset: str = None):
