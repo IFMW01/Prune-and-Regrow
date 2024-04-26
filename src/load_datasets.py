@@ -9,6 +9,7 @@ import random
 import torchvision.transforms as transforms
 import ravdess
 import audioMNIST
+import utils
 import speech_commands
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -45,30 +46,37 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
 
     if unlearnng:
         return train_set,test_set
-    
+    device  = utils.get_device()
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
-        train_set = DatasetProcessor(train_set)
-        test_set = DatasetProcessor(test_set)
+        train_set = DatasetProcessor(train_set,device)
+        test_set = DatasetProcessor(test_set,device)
 
-    train_loader = DataLoader(train_set, batch_size=256,shuffle=True, num_workers=2)
-    train_eval_loader = DataLoader(train_set, batch_size=256,shuffle=False, num_workers=2)
-    test_loader = DataLoader(test_set, batch_size=256,shuffle=False, num_workers=2)
+    train_loader = DataLoader(train_set, batch_size=256,shuffle=True)
+    train_eval_loader = DataLoader(train_set, batch_size=256,shuffle=False)
+    test_loader = DataLoader(test_set, batch_size=256,shuffle=False)
         
     return train_loader,train_eval_loader,test_loader
 
 class DatasetProcessor(Dataset):
-  def __init__(self, annotations):
+  def __init__(self, annotations, device):
+    print(type(annotations))
     self.audio_files = annotations
+    self.features = [] #torch.zeros(size=(len(self.audio_files),))
+    self.labels = [] #torch.zeros(size=(len(self.audio_files),))
+    for idx, path in enumerate(self.audio_files):
+       d = torch.load(path)
+       d["feature"] = d["feature"][None,:,:]
+       self.features.append(d["feature"].to(device))
+       self.labels.append(d["label"].to(device))
+    # self.features = torch.tensor(self.features)
+    # self.labels = torch.tensor(self.labels)
 
   def __len__(self):
     return len(self.audio_files)
   
   def __getitem__(self, idx):
     """Get the item at idx and apply the transforms."""
-    audio_path = self.audio_files[idx]
-    data = torch.load(audio_path)
-    data["feature"] = data["feature"][None,:,:]
-    return data["feature"], data["label"]
+    return self.features[idx], self.labels[idx]
 
 class DatasetProcessor_randl(Dataset):
   def __init__(self, annotations):
