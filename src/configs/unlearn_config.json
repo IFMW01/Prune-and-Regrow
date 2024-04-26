@@ -4,6 +4,9 @@
     "n_epoch_impair": 1,
     "n_epoch_repair": 4,
     "n_epochs_fine_tune": 5,
+    "forget_random": true ,
     "forget_percentage":10,
+    "forget_classes": false ,
+    "forget_classes_num":1,
     "pruning_ratio":0.05
 }

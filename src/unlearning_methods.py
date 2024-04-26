@@ -37,10 +37,25 @@ def class_removal(dataset_pointer,forget_classes_num,num_classes,train_set,test_
     utils.set_seed(seed)
     forget_set = []
     remain_set = train_set
-    classes_to_forget = random.sample(range(num_classes), forget_classes_num)
 
-    for i in range in range(train_set):
-        if train_set[]
+    test_remove = []
+    test_keep = test_set
+
+    classes_to_forget = random.sample(range(num_classes), forget_classes_num)
+    for i in range in range(remain_set):
+        if remain_set[i]['label'] in classes_to_forget:
+            forget_set.append(remain_set[i])
+
+    remain_set = list(set(remain_set) - set(forget_set))
+            
+    for i in range in range(test_keep):
+        if test_keep[i]['label'] in classes_to_forget:
+            test_remove.append(test_keep[i])
+
+    test_keep = list(set(test_keep) - set(test_remove))
+    
+    return forget_set,remain_set,test_keep
+
 
 
     if dataset_pointer == 'CIFAR10':
@@ -373,9 +388,6 @@ def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test
    results_dict['Label Smoothing Unlearning'] = [best_epoch,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece]
    return ls_model,results_dict
 
-
-
-
 def vectorise_model(model):
     """Convert Paramaters to Vector form."""
     return Params2Vec(model.parameters())
@@ -388,7 +400,6 @@ def cosine_similarity(base_weights, model_weights):
         torch.linalg.norm(base_weights)
         * torch.linalg.norm(model_weights)
     ),-1, 1),0)
-
 
 def global_prune_without_masks(model, amount):
     """Global Unstructured Pruning of model."""
