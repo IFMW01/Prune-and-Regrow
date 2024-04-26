@@ -207,9 +207,9 @@ def main(config_unlearn,config_base):
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_rand_datasets(dataset_pointer,pipeline,forget_percentage) 
         elif forget_classes == True:
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes) 
-            
+
         unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_percentage,device)
-        print("FIN")
+    print("FIN")
 
 if __name__ == "__main__":
     with open("./configs/base_config.json","r") as b:
