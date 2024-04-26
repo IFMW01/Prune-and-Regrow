@@ -1,6 +1,5 @@
 import torchaudio
 import os
-import preprocess as pp
 import torch
 import librosa
 import numpy as np
@@ -54,12 +53,9 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         print(train_set[0][0].shape)
         test_set = DatasetProcessor(test_set)
 
-    train_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
-                                            shuffle=True, num_workers=2)
-    train_eval_loader = torch.utils.data.DataLoader(train_set, batch_size=256,
-                                            shuffle=False, num_workers=2)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=256,
-                                            shuffle=False, num_workers=2)
+    train_loader = DataLoader(train_set, batch_size=256,shuffle=True, num_workers=2)
+    train_eval_loader = DataLoader(train_set, batch_size=256,shuffle=False, num_workers=2)
+    test_loader = DataLoader(test_set, batch_size=256,shuffle=False, num_workers=2)
         
     return train_loader,train_eval_loader,test_loader
 
