@@ -48,7 +48,7 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
       test_list = SubsetSC("testing") 
       train_path_arr = []
       test_path_arr = []
-      with open("./SpeechCommands/speech_commands_v0.02/training_list.txt", "r") as file:
+      with open("./SpeechCommands/speech_commandxs_v0.02/training_list.txt", "r") as file:
         for line in file:
             train_path_arr.append((line.strip()))
 

@@ -32,7 +32,6 @@ pruning_ratio = config_unlearn.get("pruning_ratio",None)
 
 
 def actviation_distance(unlearn_model, retrain_model, dataloader, device):
-    sftmx = nn.Softmax(dim = 1)
     distances = []
     for batch, (data,label) in enumerate(dataloader):
         data = data.to(device)
@@ -44,17 +43,23 @@ def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     distances = torch.cat(distances, axis = 0)
     return distances.mean()
 
-def JS_divergence(unlearn_model, retrain_model,forget_eval_loader,device):
-    df_unlearn_logit,df_unlearn_loss = utils.logits_unlearn(unlearn_model,forget_eval_loader,device)
-    df_retrain_logit,df_retrain_loss = utils.logits_unlearn(retrain_model,forget_eval_loader,device)
-    df_retrain_loss = df_retrain_loss.drop(['label'],axis =1)
-    df_unlearn_loss = df_unlearn_loss.drop(['label'],axis =1)
-    diff = (df_unlearn_loss+df_retrain_loss)/2
-    diff = torch.tensor(diff.values)
-    retrain_loss = torch.tensor(df_retrain_loss.values)
-    unlearn_loss = torch.tensor(df_unlearn_loss.values)
-    js_divergence = 0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)
-    return js_divergence
+def JS_divergence(unlearn_model, retrain_model,dataloader,device):
+    js_divergence = []
+    for batch, (data,label) in enumerate(dataloader):
+        data = data.to(device)
+        unlearn_outputs = unlearn_model(data)
+        retrain_outputs = retrain_model(data)
+        unlearn_outputs = F.softmax(unlearn_outputs,dim=1)
+        retrain_outputs = F.softmax(retrain_outputs,dim=1)
+        unlearn_loss = F.cross_entropy(unlearn_outputs, label,reduction ='none')
+        retrain_loss = F.cross_entropy(retrain_outputs, label,reduction ='none')
+        diff = (unlearn_outputs+retrain_outputs)/2 
+        
+        js_divergence.append(0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff))
+        distances.append(diff)
+    distances = torch.cat(distances, axis = 0)
+    return js_divergence.mean()
+
 
 def mia_efficacy():
     logits_dict = {}
