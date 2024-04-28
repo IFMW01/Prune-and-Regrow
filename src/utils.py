@@ -2,7 +2,6 @@ import torch.optim as optim
 import torch
 import torch.nn as nn
 import os
-import models.vgg as vgg 
 from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
 from tqdm import tqdm
 import numpy as np
