@@ -8,11 +8,8 @@ import Trainer
 import Unlearner 
 import scipy.stats as stats
 import torch.nn.utils.prune as prune
-from copy import deepcopy
 from Trainer import Trainer
 from Unlearner import Unlearner
-from torch.autograd import grad
-from tqdm import tqdm
 from torch.nn.utils import parameters_to_vector as Params2Vec
 
 

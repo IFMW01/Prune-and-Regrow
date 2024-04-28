@@ -2,7 +2,6 @@ import torch
 import utils
 from tqdm import tqdm
 from copy import deepcopy
-import torchmetrics.classification 
 from torchmetrics.classification import MulticlassCalibrationError
 
 class Trainer():

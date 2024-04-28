@@ -5,16 +5,7 @@ import torch
 import soundfile as sf
 import torch.nn as nn
 import numpy as np
-import subprocess
-import shutil
-import random
-import json
-import datasets
 import utils
-import pandas as pd
-from torch.utils.data import Dataset
-from sklearn.model_selection import train_test_split
-from datasets import load_dataset
 from tqdm import tqdm
 from torchaudio.datasets import SPEECHCOMMANDS
 

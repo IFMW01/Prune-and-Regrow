@@ -1,16 +1,15 @@
 import json
 import os
 import unlearning_methods as um
-import load_datasets as ld
+import datasets.load_datasets as ld
 import glob
 import utils 
 import math
 import random
 import numpy as np
 import unlearn_metrics
-from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from load_datasets import DatasetProcessor,DatasetProcessor_randl
+from datasets.load_datasets import DatasetProcessor,DatasetProcessor_randl
 
 
 def unlearn_logits(model,loader,device,save_dir,filename_logits,filename_loss):

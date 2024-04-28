@@ -7,7 +7,6 @@ import glob
 import numpy as np
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
@@ -121,8 +120,6 @@ def main(config_attack,config_base):
     softmax_attack = softmax_dir +"/Attack"
     utils.create_dir(logit_attack)
     utils.create_dir(softmax_attack)
-
-    print(logit_dir)
 
     x_train_logits,y_train_logits,x_test_logits,y_test_logits = create_mia_datasets(logit_dir)
     x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(softmax_dir)

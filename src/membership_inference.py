@@ -1,15 +1,15 @@
 from sklearn.model_selection import train_test_split
-import load_datasets as ld
-from load_datasets import WavToMel,WavToSpec
+import datasets.load_datasets as ld
+from datasets.load_datasets import WavToMel,WavToSpec
 import Trainer
 import json
 import utils
-import audioMNIST 
-import ravdess 
-from load_datasets import DatasetProcessor
+import datasets.audioMNIST as audioMNIST 
+import datasets.ravdess as ravdess 
+from datasets.load_datasets import DatasetProcessor
 from torch.utils.data import DataLoader
 from Trainer import Trainer
-import speech_commands
+import datasets.speech_commands as speech_commands
 import numpy as np
 
 
