@@ -125,7 +125,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     # unlearn_metrics.mia_efficacy() 
 
 def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_classes):
-    train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
+    train_set,test_set = ld(dataset_pointer,pipeline,True)
     forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
     remain_set,forget_set = um.create_forget_remain_set(dataset_pointer,forget_instances_num,train_set)
     print(f"Remain instances: {len(remain_set)}")
@@ -144,7 +144,7 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
 
 
 def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device):
-    train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
+    train_set,test_set = ld(dataset_pointer,pipeline,True)
     print(f"Number of classes to remove  {len(remain_set)}")
     print(f"Forget instances: {len(forget_set)}")
     print("Creating remain and forget data loaders")

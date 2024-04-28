@@ -1,5 +1,4 @@
 from sklearn.model_selection import train_test_split
-import datasets.load_datasets as ld
 from datasets.load_datasets import WavToMel,WavToSpec
 import Trainer
 import json
