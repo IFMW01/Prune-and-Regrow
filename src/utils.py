@@ -2,8 +2,8 @@ import torch.optim as optim
 import torch
 import torch.nn as nn
 import os
-import vgg 
-from vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
+import models.vgg as vgg 
+from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -114,8 +114,6 @@ def logits(model,train_loader,test_loader,device):
 
     df_all_logits = pd.concat([df_train_logits,df_test_logits],ignore_index=True)
     df_all_loss = pd.concat([df_train_loss,df_test_loss],ignore_index=True)
-    print(type(df_all_logits))
-    print(type(df_all_loss))
     return df_all_logits,df_all_loss
 
 def logits_unlearn(model,forget_loader,device):
