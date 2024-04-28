@@ -40,13 +40,13 @@ def class_removal(dataset_pointer,forget_classes_num,num_classes,train_set,test_
 
     classes_to_forget = random.sample(range(num_classes), forget_classes_num)
     for i in range(len(remain_set)):
-        if remain_set[i][1] in classes_to_forget:
+        if torch.load(remain_set[i]['label']) in classes_to_forget:
             forget_set.append(remain_set[i])
 
     remain_set = list(set(remain_set) - set(forget_set))
             
     for i in range(len(test_keep)):
-        if test_keep[i][1] in classes_to_forget:
+        if torch.load(test_keep[i]['label']) in classes_to_forget:
             test_remove.append(test_keep[i])
 
     test_keep = list(set(test_keep) - set(test_remove))

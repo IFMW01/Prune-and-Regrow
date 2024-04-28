@@ -148,13 +148,10 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
     print("Creating remain and forget data loaders")
     if dataset_pointer == 'CIFAR10':
         forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-    elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
+    elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':        
+        forget_set,remain_set,test_set = um.class_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set)
 
         test_set = ld.DatasetProcessor(test_set,device)
-        train_set = ld.DatasetProcessor(train_set,device)
-
-        forget_set,remain_set,test_set = um.class_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set,seed=42)
-        
         remain_set = ld.DatasetProcessor(remain_set,device)
         forget_set = ld.DatasetProcessor(forget_set,device)
         forget_randl_set = forget_set
