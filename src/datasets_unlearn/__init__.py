@@ -1,1 +1,1 @@
-import load_datasets, audioMNIST, ravdess, speech_commands
+from . import load_datasets, audioMNIST, ravdess, speech_commands
