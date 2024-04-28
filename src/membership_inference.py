@@ -5,10 +5,12 @@ import json
 import utils
 import datasets.audioMNIST as audioMNIST 
 import datasets.ravdess as ravdess 
-from datasets.load_datasets import DatasetProcessor
+from datasets import load_datasets
 from torch.utils.data import DataLoader
 from Trainer import Trainer
-import datasets.speech_commands as speech_commands
+from datasets import speech_commands
+from datasets import audioMNIST
+from datasets import ravdess
 import numpy as np
 
 
@@ -39,8 +41,8 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
   for seed in range(n_shadow_models):
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'ravdess':
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-       train_data_mia = DatasetProcessor(train_set_mia,device)
-       test_data_mia = DatasetProcessor(test_set_mia,device)
+       train_data_mia = load_datasets.DatasetProcessor(train_set_mia,device)
+       test_data_mia = load_datasets.DatasetProcessor(test_set_mia,device)
        train_loader = DataLoader(train_data_mia, batch_size=256, shuffle=True, num_workers=2)
        train_eval_loader = DataLoader(train_data_mia, batch_size=256, shuffle=False, num_workers=2)
        test_loader = DataLoader(test_data_mia, batch_size=256, shuffle=False, num_workers=2)

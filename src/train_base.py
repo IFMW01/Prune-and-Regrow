@@ -2,7 +2,7 @@ import torch
 import json
 import Trainer 
 from Trainer import Trainer
-from datasets import load_dataset as ld
+from datasets import load_datasets as ld
 import utils 
 
 # from transformer import SimpleViT
@@ -39,7 +39,7 @@ def main(config):
     results_dict = {}
 
 
-    train_loader,train_eval_loader,test_loader = ld(dataset_pointer,pipeline,False)
+    train_loader,train_eval_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
         save_dir = f"TRAIN/{dataset_pointer}/{architecture}/{seed}"
         utils.set_seed(seed)
