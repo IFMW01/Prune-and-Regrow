@@ -125,7 +125,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         json.dump(results_dict,f)
     # unlearn_metrics.mia_efficacy() 
 
-def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage):
+def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_classes):
     train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
     forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
     remain_set,forget_set = um.create_forget_remain_set(dataset_pointer,forget_instances_num,train_set)
@@ -136,15 +136,15 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage):
         forget_randl_data = randomise_lables(forget_set,dataset_pointer)
     elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
         forget_randl_set = forget_set
-        remain_set = DatasetProcessor(remain_set)
-        forget_set = DatasetProcessor(forget_set)
-        test_set = DatasetProcessor(test_set)
-        forget_randl_data = DatasetProcessor_randl(forget_randl_set)
+        remain_set = DatasetProcessor(remain_set,device)
+        forget_set = DatasetProcessor(forget_set,device)
+        test_set = DatasetProcessor(test_set,device)
+        forget_randl_data = DatasetProcessor_randl(forget_randl_set,device,num_classes)
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
 
 
-def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes):
+def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device):
     train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
     print(f"Number of classes to remove  {len(remain_set)}")
     print(f"Forget instances: {len(forget_set)}")
@@ -154,10 +154,10 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes)
     elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
         forget_set,remain_set,test_set = um.lass_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set)
         forget_randl_set = forget_set
-        remain_set = DatasetProcessor(remain_set)
-        forget_set = DatasetProcessor(forget_set)
-        test_set = DatasetProcessor(test_set)
-        forget_randl_data = DatasetProcessor_randl(forget_randl_set)
+        remain_set = DatasetProcessor(remain_set,device)
+        forget_set = DatasetProcessor(forget_set,device)
+        test_set = DatasetProcessor(test_set,device)
+        forget_randl_data = DatasetProcessor_randl(forget_randl_set,device,n_classes)
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
     
@@ -204,9 +204,9 @@ def main(config_unlearn,config_base):
         return
     else:
         if forget_random == True:
-            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_rand_datasets(dataset_pointer,pipeline,forget_percentage) 
+            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,n_classes) 
         elif forget_classes == True:
-            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes) 
+            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device) 
 
         unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_percentage,device)
     print("FIN")

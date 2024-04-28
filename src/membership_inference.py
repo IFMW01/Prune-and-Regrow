@@ -38,15 +38,10 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
        all_processed = np.append(test, train) 
 
   for seed in range(n_shadow_models):
-    # if dataset_pointer == 'SpeechCommands':
-    #   train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-    #   train_loader = ld.trainset_loader(train_set_mia)
-    #   train_eval_loader = ld.testset_loader(train_set_mia)
-    #   test_loader = ld.testset_loader(test_set_mia)
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'ravdess':
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
-       train_data_mia = DatasetProcessor(train_set_mia)
-       test_data_mia = DatasetProcessor(test_set_mia)
+       train_data_mia = DatasetProcessor(train_set_mia,device)
+       test_data_mia = DatasetProcessor(test_set_mia,device)
        train_loader = DataLoader(train_data_mia, batch_size=256, shuffle=True, num_workers=2)
        train_eval_loader = DataLoader(train_data_mia, batch_size=256, shuffle=False, num_workers=2)
        test_loader = DataLoader(test_data_mia, batch_size=256, shuffle=False, num_workers=2)

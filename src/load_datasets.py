@@ -59,10 +59,9 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
 
 class DatasetProcessor(Dataset):
   def __init__(self, annotations, device):
-    print(type(annotations))
     self.audio_files = annotations
-    self.features = [] #torch.zeros(size=(len(self.audio_files),))
-    self.labels = [] #torch.zeros(size=(len(self.audio_files),))
+    self.features = [] 
+    self.labels = [] 
     for idx, path in enumerate(self.audio_files):
        d = torch.load(path)
        d["feature"] = d["feature"][None,:,:]
@@ -75,27 +74,40 @@ class DatasetProcessor(Dataset):
     return len(self.audio_files)
   
   def __getitem__(self, idx):
-    """Get the item at idx and apply the transforms."""
     return self.features[idx], self.labels[idx]
 
 class DatasetProcessor_randl(Dataset):
-  def __init__(self, annotations):
+  def __init__(self, annotations,device,num_classes):
     self.audio_files = annotations
+    self.features = [] #torch.zeros(size=(len(self.audio_files),))
+    self.labels = [] #torch.zeros(size=(len(self.audio_files),))
+    for idx, path in enumerate(self.audio_files):
+       d = torch.load(path)
+       d["feature"] = d["feature"][None,:,:]
+       self.features.append(d["feature"].to(device))
+       new_label = d["label"] 
+       while new_label == d["label"]:
+            new_label = random.randint(0, num_classes)
+       torch.tensor(new_label, dtype=torch.int8)
+       d["label"] = new_label
+       self.labels.append(d["label"].to(device))
+
 
   def __len__(self):
     return len(self.audio_files)
   
   def __getitem__(self, idx):
     """Get the item at idx and apply the transforms."""
-    audio_path = self.audio_files[idx]
-    data = torch.load(audio_path)
-    data["feature"] = data["feature"][None,:,:]
-    new_label = data["label"] 
-    while new_label == data["label"]:
-      new_label = random.randint(0, (len(labels)-1))
-    torch.tensor(new_label, dtype=torch.int8)
-    data["label"] = new_label
-    return data["feature"], data["label"]    
+    # audio_path = self.audio_files[idx]
+    # data = torch.load(audio_path)
+    # data["feature"] = data["feature"][None,:,:]
+    # new_label = data["label"] 
+    # while new_label == data["label"]:
+    #   new_label = random.randint(0, (len(labels)-1))
+    # torch.tensor(new_label, dtype=torch.int8)
+    # data["label"] = new_label
+    # return data["feature"], data["label"]   
+    return self.features[idx], self.labels[idx] 
 
 class WavToMel(torch.nn.Module):
     def __init__(
