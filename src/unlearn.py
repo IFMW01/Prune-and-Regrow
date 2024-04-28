@@ -1,7 +1,7 @@
 import json
 import os
 import unlearning_methods as um
-import datasets.load_datasets as ld
+from datasets import load_dataset as ld
 import glob
 import utils 
 import math
