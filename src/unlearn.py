@@ -1,7 +1,6 @@
 import json
 import os
 import unlearning_methods as um
-from datasets_unlearn import load_dataset as ld
 import glob
 import utils 
 import math
@@ -9,7 +8,7 @@ import random
 import numpy as np
 import unlearn_metrics
 from torch.utils.data import DataLoader
-from datasets_unlearn.load_datasets import DatasetProcessor,DatasetProcessor_randl
+from datasets_unlearn import load_datasets as ld
 
 
 def unlearn_logits(model,loader,device,save_dir,filename_logits,filename_loss):
@@ -125,7 +124,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     # unlearn_metrics.mia_efficacy() 
 
 def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_classes):
-    train_set,test_set = ld(dataset_pointer,pipeline,True)
+    train_set,test_set = ld.load_dataset(dataset_pointer,pipeline,True)
     forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
     remain_set,forget_set = um.create_forget_remain_set(dataset_pointer,forget_instances_num,train_set)
     print(f"Remain instances: {len(remain_set)}")
@@ -135,28 +134,32 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
         forget_randl_data = randomise_lables(forget_set,dataset_pointer)
     elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
         forget_randl_set = forget_set
-        remain_set = DatasetProcessor(remain_set,device)
-        forget_set = DatasetProcessor(forget_set,device)
-        test_set = DatasetProcessor(test_set,device)
-        forget_randl_data = DatasetProcessor_randl(forget_randl_set,device,num_classes)
+        remain_set = ld.DatasetProcessor(remain_set,device)
+        forget_set = ld.DatasetProcessor(forget_set,device)
+        test_set = ld.DatasetProcessor(test_set,device)
+        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
 
 
 def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device):
-    train_set,test_set = ld(dataset_pointer,pipeline,True)
-    print(f"Number of classes to remove  {len(remain_set)}")
-    print(f"Forget instances: {len(forget_set)}")
+    train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
+    print(f"Number of classes to remove  {forget_classes_num}")
     print("Creating remain and forget data loaders")
     if dataset_pointer == 'CIFAR10':
         forget_randl_data = randomise_lables(forget_set,dataset_pointer)
     elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
-        forget_set,remain_set,test_set = um.lass_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set)
+
+        test_set = ld.DatasetProcessor(test_set,device)
+        train_set = ld.DatasetProcessor(train_set,device)
+
+        forget_set,remain_set,test_set = um.class_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set,seed=42)
+        
+        remain_set = ld.DatasetProcessor(remain_set,device)
+        forget_set = ld.DatasetProcessor(forget_set,device)
         forget_randl_set = forget_set
-        remain_set = DatasetProcessor(remain_set,device)
-        forget_set = DatasetProcessor(forget_set,device)
-        test_set = DatasetProcessor(test_set,device)
-        forget_randl_data = DatasetProcessor_randl(forget_randl_set,device,n_classes)
+        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
+
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
     
