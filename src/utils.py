@@ -77,7 +77,6 @@ def logits(model,train_loader,test_loader,device):
 
     # Process training set
     for batch_idx,(data,target) in enumerate(tqdm(train_loader)):
-        data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits_train = model(data)
             logits_train_softmax = F.softmax(logits_train,dim=1)
@@ -95,7 +94,6 @@ def logits(model,train_loader,test_loader,device):
 
     # Process test set
     for data,target in test_loader:
-        data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits_test = model(data)
             logit_test_softmax =  F.softmax(logits_test,dim=1)
@@ -123,7 +121,6 @@ def logits_unlearn(model,forget_loader,device):
 
     # Process training set
     for batch_idx,(data,target) in enumerate(tqdm(forget_loader)):
-        data,target = data.to(device),target.to(device)
         with torch.no_grad():
             logits = model(data)
             logit_softmax =  F.softmax(logits,dim=1)

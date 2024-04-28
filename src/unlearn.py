@@ -34,20 +34,20 @@ def randomise_lables(data_set):
 
 def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
     remain_loader = DataLoader(remain_set, batch_size=256,
-                                        shuffle=True, num_workers=2)
+                                        shuffle=True)
     remain_eval_loader = DataLoader(remain_set, batch_size=256,
-                                        shuffle=False, num_workers=2)
+                                        shuffle=False)
     forget_loader = DataLoader(forget_set, batch_size=256,
-                                        shuffle=True, num_workers=2)
+                                        shuffle=True)
     forget_eval_loader = DataLoader(forget_set, batch_size=256,
-                                        shuffle=False, num_workers=2)       
+                                        shuffle=False)       
     test_loader = DataLoader(test_set, batch_size=256,
-                                        shuffle=False, num_workers=2)
+                                        shuffle=False)
     forget_randl_loader = DataLoader(forget_randl_data, batch_size=256,
-                                        shuffle=True, num_workers=2)
+                                        shuffle=True)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
 
-def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,tag,device):
+def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,pruning_ratio,tag,device):
             
     results_dict = {}
 
@@ -73,7 +73,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Naive Unlearning"].append(unlearn_metrics.JS_divergence(naive_model,naive_model,forget_eval_loader,device))      
 
 
-        gradient_ascent_model,results_dict[seed] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_instances_num,dataset_pointer,seed)
+        gradient_ascent_model,results_dict[seed] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_amount,dataset_pointer,seed)
         logit_distributions(gradient_ascent_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'gradient_ascent_model_logits','gradient_ascent_model_loss')
         results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.actviation_distance(gradient_ascent_model, naive_model, forget_eval_loader, device))
         results_dict[seed]["Gradient Ascent Unlearning"].append(unlearn_metrics.JS_divergence(gradient_ascent_model,naive_model,forget_eval_loader,device))      
@@ -112,7 +112,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Amnesiac Unlearning"].append(unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device))    
 
 
-        ls_model,results_dict[seed] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_instances_num,seed)
+        ls_model,results_dict[seed] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed],n_classes,forget_amount,seed)
         logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'label_smoothing_logits','label_smoothing_loss')
         results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.actviation_distance(ls_model, naive_model, forget_eval_loader, device))
         results_dict[seed]["Label Smoothing Unlearning"].append(unlearn_metrics.JS_divergence(ls_model,naive_model,forget_eval_loader,device))    
@@ -150,10 +150,11 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
         forget_randl_data = randomise_lables(forget_set,dataset_pointer)
     elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':        
         forget_set,remain_set,test_set = um.class_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set)
+        forget_randl_set = forget_set
         test_set = ld.DatasetProcessor(test_set,device)
         remain_set = ld.DatasetProcessor(remain_set,device)
         forget_set = ld.DatasetProcessor(forget_set,device)
-        forget_randl_set = forget_set
+        print("here")
         forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
 
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
@@ -189,9 +190,11 @@ def main(config_unlearn,config_base):
     print(f"Number of fine tuning epochs: {n_epochs_fine_tune}")
     print(f"Forgetting random samples : {forget_random}")
     if forget_random == True:
+        tag = 'Item_Removal'
         print(f"Percentage of data to forget: {forget_percentage}")
     print(f"Forgetting classes : {forget_classes}")
     if  forget_classes == True:
+        tag = 'Class_Removal'
         print(f"Number of classes to forget: {forget_classes_num}")
     print(f"Pruning ratio: {pruning_ratio}")
     device = utils.get_device()
@@ -206,7 +209,7 @@ def main(config_unlearn,config_base):
         elif forget_classes == True:
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device) 
 
-        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_percentage,device)
+        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_percentage,pruning_ratio,tag,device)
     print("FIN")
 
 if __name__ == "__main__":

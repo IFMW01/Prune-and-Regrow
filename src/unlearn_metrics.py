@@ -4,6 +4,7 @@ import json
 from glob import glob
 import pandas as pd
 from sklearn.metrics import accuracy_score
+import statistics
 from pytorch_tabnet.tab_model import TabNetClassifier
 
 with open("./configs/base_config.json","r") as b:
@@ -51,12 +52,10 @@ def JS_divergence(unlearn_model, retrain_model,dataloader,device):
         retrain_outputs = F.softmax(retrain_outputs,dim=1)
         unlearn_loss = F.cross_entropy(unlearn_outputs, label,reduction ='none')
         retrain_loss = F.cross_entropy(retrain_outputs, label,reduction ='none')
-        diff = (unlearn_outputs+retrain_outputs)/2 
-        
-        js_divergence.append(0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff))
-        distances.append(diff)
-    distances = torch.cat(distances, axis = 0)
-    return js_divergence.mean()
+        diff = (unlearn_loss+retrain_loss)/2 
+        js = (0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)).detach().cpu().item()
+        js_divergence.append(js)
+    return statistics.mean(js_divergence)
 
 
 def mia_efficacy():

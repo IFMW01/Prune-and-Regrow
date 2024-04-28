@@ -89,7 +89,7 @@ class DatasetProcessor_randl(Dataset):
        new_label = d["label"] 
        while new_label == d["label"]:
             new_label = random.randint(0, num_classes)
-       torch.tensor(new_label, dtype=torch.int8)
+       new_label = torch.tensor(new_label, dtype=torch.int8)
        d["label"] = new_label
        self.labels.append(d["label"].to(device))
 
