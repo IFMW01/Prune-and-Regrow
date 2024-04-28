@@ -128,8 +128,8 @@ def main(config_attack,config_base):
     x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(softmax_dir)
 
     print("Logit Attack Models")
-    attack_model = 'xgb'
-    attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
+    # attack_model = 'xgb'
+    # attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
     attack_model = 'tabnet'
     attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
     print("Loss Attack Models")
