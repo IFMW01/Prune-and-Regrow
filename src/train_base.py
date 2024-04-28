@@ -2,7 +2,7 @@ import torch
 import json
 import Trainer 
 from Trainer import Trainer
-from datasets import load_datasets as ld
+from datasets_unlearn import load_datasets as ld
 import utils 
 
 # from transformer import SimpleViT
