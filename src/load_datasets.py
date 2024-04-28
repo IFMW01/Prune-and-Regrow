@@ -7,10 +7,10 @@ import torch
 import torchvision
 import random
 import torchvision.transforms as transforms
-import ravdess
-import audioMNIST
+import datasets.ravdess as ravdess
+import datasets.audioMNIST as audioMNIST
 import utils
-import speech_commands
+import datasets.speech_commands as speech_commands
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
