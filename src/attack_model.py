@@ -8,13 +8,9 @@ import numpy as np
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_scor
 
 def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
-  x_train = x_train.to(device)
-  y_train = y_train.to(device)
-  x_test = x_test.to(device)
-  y_test = y_test.to(device)
   for i in range(num_models):
     utils.set_seed(i)
     if attack_model == 'xgb':
@@ -40,14 +36,22 @@ def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir
       if not isinstance(x_train, np.ndarray):
         x_train = x_train.values
         x_test = x_test.values
+        y_train = y_train.values
+        y_test = y_test.values
+        
+      # x_train = x_train.to(device)
+      # y_train = y_train.to(device)
+      # x_test = x_test.to(device)
+      # y_test = y_test.to(device)
 
       model = TabNetClassifier(  n_d = 32,
-      n_a = 32,seed =i,verbose=0 )
-      model.to(device)
+      n_a = 32,seed =i,verbose=1 )
+      model
       model.fit(x_train, y_train,
       eval_set=[(x_train, y_train),(x_test, y_test)],
       max_epochs = 100,
-      patience =100
+      patience =100,
+      eval_metric= 'auc'
       )
       save_name = f'tabnet_model_{i}.json'
       save_path = f"{save_dir}/{save_name}"

@@ -5,12 +5,11 @@ import random
 import utils
 import numpy as np
 import Trainer
-import Unlearner 
 import scipy.stats as stats
 import torch.nn.utils.prune as prune
 import time
 from Trainer import Trainer
-from Unlearner import Unlearner
+from unlearn import Unlearner
 from torch.nn.utils import parameters_to_vector as Params2Vec
 
 

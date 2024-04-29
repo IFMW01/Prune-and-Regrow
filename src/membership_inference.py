@@ -14,11 +14,11 @@ import numpy as np
 
 
 def create_membership_inference_dataset(all_processed,seed):
-  train_set, test_set = train_test_split(all_processed,train_size = 0.5, test_size=0.2, random_state=seed,shuffle=True)
+  train_set, test_set = train_test_split(all_processed,train_size = 0.5, test_size=0.1, random_state=seed,shuffle=True)
   print(test_set.size)
   return train_set,test_set
 
-def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,softmax_dir):
+def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,loss_dir):
   test_acc = 0 
   test_loss = 0
   if pipeline == 'mel':
@@ -27,7 +27,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
      pipeline_on_wav = WavToSpec()
   
   if dataset_pointer == 'SpeechCommands':
-    train, test = speech_commands.create_speechcommands(dataset_pointer,pipeline_on_wav)
+    train, test = speech_commands.create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer)
     all_processed = np.append(test, train)
   elif dataset_pointer == 'audioMNIST':
        train, test = audioMNIST.create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer)
@@ -41,13 +41,13 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
        train_data_mia = load_datasets.DatasetProcessor(train_set_mia,device)
        test_data_mia = load_datasets.DatasetProcessor(test_set_mia,device)
-       train_loader = DataLoader(train_data_mia, batch_size=256, shuffle=True, num_workers=2)
-       train_eval_loader = DataLoader(train_data_mia, batch_size=256, shuffle=False, num_workers=2)
-       test_loader = DataLoader(test_data_mia, batch_size=256, shuffle=False, num_workers=2)
+       train_loader = DataLoader(train_data_mia, batch_size=256, shuffle=True)
+       train_eval_loader = DataLoader(train_data_mia, batch_size=256, shuffle=False)
+       test_loader = DataLoader(test_data_mia, batch_size=256, shuffle=False)
        
     model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
     trainer = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_shadow_epochs,n_classes,seed)
-    mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,test_ece,best_epoch = trainer.train()
+    mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,test_ece,best_epoch,time = trainer.train()
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
     print(f'test loss {mia_test_loss}')
@@ -55,7 +55,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     filename_logit = (f"MAI_logit_{seed}.csv")
     filename_loss = (f"MAI_loss_{seed}.csv")
     mia_logit_df.to_csv(f"{logit_dir}/{filename_logit}", index = False)
-    mia_loss_df.to_csv(f"{softmax_dir}/{filename_loss}", index = False)
+    mia_loss_df.to_csv(f"{loss_dir}/{filename_loss}", index = False)
     print(f"{filename_logit} and {filename_loss} saved")
 
   print(f"Average attack test accuracy: {(test_acc/n_shadow_models):.4f}")
@@ -72,11 +72,11 @@ def main(config_mia,config_base):
 
     device = utils.get_device()
     save_dir = f'TRAIN/{dataset_pointer}/{architecture}/MIA'
-    logit_dir = save_dir + '/Logits'
-    utils.create_dir(logit_dir)
-    softmax_dir = save_dir + '/Softmax'
-    utils.create_dir(softmax_dir)
-    membership_inference_attack(dataset_pointer,architecture,n_inputs,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,softmax_dir)
+    loss_dir = save_dir + '/Loss'
+    utils.create_dir(loss_dir)
+    logits_dir = save_dir + '/Logits'
+    utils.create_dir(logits_dir)
+    membership_inference_attack(dataset_pointer,architecture,n_inputs,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logits_dir,loss_dir)
     print("FIN")
 
 if __name__ == "__main__":

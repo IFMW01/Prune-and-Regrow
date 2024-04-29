@@ -5,8 +5,9 @@ import utils
 import math
 import random
 import numpy as np
-from datasets_unlearn import unlearning_methods as um
-from datasets_unlearn import unlearn_metrics
+from unlearn import unlearning_methods as um
+from unlearn import unlearn_metrics
+from unlearn import Unlearner
 from torch.utils.data import DataLoader
 from datasets_unlearn import load_datasets as ld
 
