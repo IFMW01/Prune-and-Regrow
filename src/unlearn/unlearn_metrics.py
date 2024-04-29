@@ -59,10 +59,10 @@ def JS_divergence(unlearn_model, retrain_model,dataloader,device):
     return statistics.mean(js_divergence)
 
 
-def mia_efficacy(model,forget_loader,device,attack_model_list_logit,attack_model_list_loss):
+def mia_efficacy(model,forget_loader,device):
     df_forget_logit,df_forget_loss = utils.logits_unlearn(model,forget_loader,device)
-    attack_model_list_logit =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Logit')
-    attack_model_list_loss =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Loss')
+    attack_model_list_logit =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Logits/Attack')
+    attack_model_list_loss =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Loss/Attack')
     logits_results =  attack_results(attack_model_list_logit,df_forget_logit)
     loss_results = attack_results(attack_model_list_logit,df_forget_logit)
     return logits_results,loss_results
