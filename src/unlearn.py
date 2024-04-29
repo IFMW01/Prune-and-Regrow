@@ -50,12 +50,9 @@ def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
 
 def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,pruning_ratio,tag,device):
             
-    acc_dict = {}
-    dist_dict = {}
-    time_dict = {}
-
+    results_dict = {}
     for seed in seeds:
-        results_dict = {}
+        results_dict[seed] = {}
         model_dir = f'TRAIN/{dataset_pointer}/{architecture}/{seed}'
         save_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{tag}/{forget_amount}/{seed}/"
         utils.create_dir(save_dir)
