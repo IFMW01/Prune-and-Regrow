@@ -68,8 +68,6 @@ class DatasetProcessor(Dataset):
        d["feature"] = d["feature"][None,:,:]
        self.features.append(d["feature"].to(device))
        self.labels.append(d["label"].to(device))
-    # self.features = torch.tensor(self.features)
-    # self.labels = torch.tensor(self.labels)
 
   def __len__(self):
     return len(self.audio_files)
@@ -80,8 +78,8 @@ class DatasetProcessor(Dataset):
 class DatasetProcessor_randl(Dataset):
   def __init__(self, annotations,device,num_classes):
     self.audio_files = annotations
-    self.features = [] #torch.zeros(size=(len(self.audio_files),))
-    self.labels = [] #torch.zeros(size=(len(self.audio_files),))
+    self.features = []
+    self.labels = [] 
     for idx, path in enumerate(self.audio_files):
        d = torch.load(path)
        d["feature"] = d["feature"][None,:,:]
@@ -89,16 +87,13 @@ class DatasetProcessor_randl(Dataset):
        new_label = d["label"] 
        while new_label == d["label"]:
             new_label = random.randint(0, num_classes)
-       new_label = torch.tensor(new_label, dtype=torch.LongTensor)
-       d["label"] = new_label
-       self.labels.append(d["label"].to(device))
-
+       new_label = torch.tensor(new_label)
+       self.labels.append(new_label.to(device))
 
   def __len__(self):
     return len(self.audio_files)
   
   def __getitem__(self, idx):
-    """Get the item at idx and apply the transforms."""
     return self.features[idx], self.labels[idx] 
 
 class WavToMel(torch.nn.Module):
