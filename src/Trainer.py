@@ -58,7 +58,6 @@ class Trainer():
         
         losses = []
         accuracies = []
-        tot
 
         for epoch in tqdm(range(0, self.n_epoch)):
             epoch_time = 0
@@ -74,14 +73,13 @@ class Trainer():
                 loss = self.criterion(output, target)
                 loss.backward()
                 self.optimizer.step()
-
-            epoch_time = start_time - end_time
+            end_time = time.time()
+            epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
             accuracies.append(train_accuracy)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
-            end_time = time.time()
             if test_accuracy > best_test_accuracy:
                 best_time = training_time
                 best_test_accuracy = test_accuracy

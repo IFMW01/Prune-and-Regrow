@@ -99,15 +99,6 @@ class DatasetProcessor_randl(Dataset):
   
   def __getitem__(self, idx):
     """Get the item at idx and apply the transforms."""
-    # audio_path = self.audio_files[idx]
-    # data = torch.load(audio_path)
-    # data["feature"] = data["feature"][None,:,:]
-    # new_label = data["label"] 
-    # while new_label == data["label"]:
-    #   new_label = random.randint(0, (len(labels)-1))
-    # torch.tensor(new_label, dtype=torch.int8)
-    # data["label"] = new_label
-    # return data["feature"], data["label"]   
     return self.features[idx], self.labels[idx] 
 
 class WavToMel(torch.nn.Module):

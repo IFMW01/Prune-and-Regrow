@@ -82,6 +82,7 @@ class Unlearner():
         best_test_accuracy = 0 
         best_test_loss = float('inf')
         best_time = 0
+        fine_tune_time = 0
 
         for epoch in tqdm(range(0, self.n_epoch_repair)):
             start_time = time.time()
@@ -137,6 +138,7 @@ class Unlearner():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.forget_loader):
+                print(target)
                 data = data.to(self.device)
                 target = target.to(self.device)
                 self.optimizer.zero_grad()
