@@ -69,11 +69,8 @@ def mia_efficacy():
         logits_dict[seed] = attack_results(attack_model_list,logits_list)
         loss_dict[seed] = attack_results(attack_model_list,loss_list)
         
-    save_dict_path = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_percentage}/"
-    with open(f"{save_dict_path}_mia_efficacy_logits",'w') as f:
-        json.dump(logits_dict,f)
-    with open(f"{save_dict_path}_mia_efficacy_loss",'w') as f:
-        json.dump(loss_dict,f)
+    return logits_dict,loss_dict
+
 
 
 def attack_results(model_list,unlearn_list):
