@@ -49,11 +49,11 @@ def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir
       model
       model.fit(x_train, y_train,
       eval_set=[(x_train, y_train),(x_test, y_test)],
-      max_epochs = 100,
-      patience =100,
+      max_epochs = 50,
+      patience =50,
       eval_metric= 'auc'
       )
-      save_name = f'tabnet_model_{i}.json'
+      save_name = f'tabnet_model_{i}.pth'
       save_path = f"{save_dir}/{save_name}"
       torch.save(model, save_path)
        
@@ -134,8 +134,8 @@ def main(config_attack,config_base):
     attack_model = 'tabnet'
     attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
     print("Loss Attack Models")
-    attack_model = 'xgb'
-    attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
+    # attack_model = 'xgb'
+    # attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
     attack_model = 'tabnet'   
     attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
     print("FIN")

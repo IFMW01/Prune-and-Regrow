@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 import json
-from glob import glob
+import glob
 import pandas as pd
 from sklearn.metrics import accuracy_score
 import statistics
