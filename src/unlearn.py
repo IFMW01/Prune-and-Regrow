@@ -74,8 +74,12 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Original Model"]["Activation distance"] = unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device)
         results_dict[seed]["Original Model"]["JS divergance"]  = unlearn_metrics.JS_divergence(orginal_model,naive_model,forget_eval_loader,device)
 
-        results_dict[seed]["Naive Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(naive_model, naive_model, forget_eval_loader, device))
-        results_dict[seed]["Naive Unlearning"]["JS divergance"] = (unlearn_metrics.JS_divergence(naive_model,naive_model,forget_eval_loader,device))      
+
+        results_dict[seed]["Naive Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(naive_model, naive_model, forget_eval_loader, device)
+        results_dict[seed]["Naive Unlearning"]["JS divergance"] = (unlearn_metrics.JS_divergence(naive_model,naive_model,forget_eval_loader,device)) 
+        logits_results,loss_results = unlearn_metrics.mia_efficacy(naive_model,forget_loader,device)
+        results_dict[seed]["Naive Unlearning"]["Logit MIA"] =   logits_results     
+        results_dict[seed]["Naive Unlearning"]["Loss MIA"] =   loss_results       
 
         results_dict[seed]["Gradient Ascent Unlearning"] = {}
         gradient_ascent_model,results_dict[seed]["Gradient Ascent Unlearning"] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Gradient Ascent Unlearning"],n_classes,forget_amount,dataset_pointer,seed)
@@ -99,7 +103,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["OMP Unlearning"] = {}
         omp_model,results_dict[seed]["OMP Unlearning"] = um. omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs_fine_tune,results_dict[seed]["OMP Unlearning"],n_classes,seed)
         logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_logits','omp_model_loss')
-        
+
         # TESTING
         print(results_dict)
 
@@ -132,7 +136,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'label_smoothing_logits','label_smoothing_loss')
         
         results_dict[seed]["Label Smoothing Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(ls_model, naive_model, forget_eval_loader, device)
-        results_dict[seed]["Label Smoothing Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(ls_model,naive_model,forget_eval_loader,device))    
+        results_dict[seed]["Label Smoothing Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(ls_model,naive_model,forget_eval_loader,device)  
 
         print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
 

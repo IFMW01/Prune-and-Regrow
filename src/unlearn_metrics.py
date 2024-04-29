@@ -5,6 +5,7 @@ from glob import glob
 import pandas as pd
 from sklearn.metrics import accuracy_score
 import statistics
+import utils
 from pytorch_tabnet.tab_model import TabNetClassifier
 
 with open("./configs/base_config.json","r") as b:
@@ -58,38 +59,25 @@ def JS_divergence(unlearn_model, retrain_model,dataloader,device):
     return statistics.mean(js_divergence)
 
 
-def mia_efficacy():
-    logits_dict = {}
-    loss_dict = {}
-    for seed in seeds:
-        unlearn_dir = f"TRAIN/{dataset_pointer}/{architecture}/UNLEARN/{forget_percentage}/{seed}/"
-        logits_list = glob.glob(f'{unlearn_dir} *logits_forget.csv')
-        loss_list = glob.glob(f'{unlearn_dir} *loss_forget.csv')
-        attack_model_list =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Loss')
-        logits_dict[seed] = attack_results(attack_model_list,logits_list)
-        loss_dict[seed] = attack_results(attack_model_list,loss_list)
-        
-    return logits_dict,loss_dict
+def mia_efficacy(model,forget_loader,device,attack_model_list_logit,attack_model_list_loss):
+    df_forget_logit,df_forget_loss = utils.logits_unlearn(model,forget_loader,device)
+    attack_model_list_logit =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Logit')
+    attack_model_list_loss =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Loss')
+    logits_results =  attack_results(attack_model_list_logit,df_forget_logit)
+    loss_results = attack_results(attack_model_list_logit,df_forget_logit)
+    return logits_results,loss_results
 
-
-
-def attack_results(model_list,unlearn_list):
-    output_dictionary = {}
+def attack_results(model_list,df):
+    attack_sucess = []
+    labels = df['label']
+    df = df.drop(['label'],axis=1)
     for attack_path in model_list:
         attack_model = TabNetClassifier()
         attack_model.load_model(attack_path)
-        for method in unlearn_list:
-            key = method.split('_')[0]
-            df = pd.read_csv(method)
-            labels = df['label']
-            df = df.drop(['label'],axis=1)
-            y_pred = attack_model(df)
-            acc = accuracy_score(labels.values, y_pred)
-            if key in output_dictionary:
-                output_dictionary[key].append(acc)
-            else:
-                output_dictionary[key] = [acc]
-    return output_dictionary 
+        y_pred = attack_model(df)
+        acc = accuracy_score(labels.values, y_pred)
+        attack_sucess.append(acc)
+    return attack_sucess 
 
 
 
