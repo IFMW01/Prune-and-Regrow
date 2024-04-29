@@ -3,6 +3,7 @@ import utils
 from tqdm import tqdm
 from copy import deepcopy
 from torchmetrics.classification import MulticlassCalibrationError
+import time 
 
 class Unlearner():
     def __init__(self,model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed):
@@ -44,8 +45,10 @@ class Unlearner():
         return accuracy,model_loss, ece
     
     def gradient_ascent(self):
-
+        impair_time = 0
         for epoch in tqdm(range(self.n_epoch_impair)):
+            start_time = time.time()
+            epoch_time = 0
             train_loss = 0.0
             self.model.train()
 
@@ -60,14 +63,16 @@ class Unlearner():
                 self.optimizer.step()
                 train_loss += loss.item()
 
- 
+            end_time = time.time()
+            epoch_time = start_time - end_time
+            impair_time += round(epoch_time,3)
             foget_accuracy,forget_loss,forget_ece = self.evaluate(self.forget_eval_loader)
             remain_accuracy,remain_loss,remain_ece  = self.evaluate(self.remain_eval_loader)
             test_accuracy,test_loss,test_ece  = self.evaluate(self.test_loader)
             print(f"Epoch: {epoch}/{self.n_epoch_impair}\tForget accuracy: {foget_accuracy:.2f}%\tForget loss: {forget_loss:.6f}")
             print(f'Remain accuracy: {remain_accuracy:.2f}%\tRemain loss: {remain_loss:.6f}\tRemain ECE: {remain_ece:.6f}')
             print(f'Test accuracy: {test_accuracy:.2f}%\tTest loss: {test_loss:.6f}\tTest ECE: {test_ece:.6f}')
-        return self.model
+        return self.model,impair_time
 
     def fine_tune(self):
         
@@ -76,8 +81,11 @@ class Unlearner():
         test_ece = 0
         best_test_accuracy = 0 
         best_test_loss = float('inf')
+        best_time = 0
 
         for epoch in tqdm(range(0, self.n_epoch_repair)):
+            start_time = time.time()
+            epoch_time = 0
             self.model.train()
             epoch_loss = 0.0
 
@@ -90,10 +98,15 @@ class Unlearner():
                 loss.backward()
                 self.optimizer.step()
 
+            end_time = time.time()
+            epoch_time = start_time - end_time
+            fine_tune_time += round(epoch_time,3)
+
             train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
 
             if test_accuracy > best_test_accuracy:
+                best_time = fine_tune_time
                 best_test_accuracy = test_accuracy
                 best_test_loss = test_loss
                 best_model = deepcopy(self.model)
@@ -107,7 +120,7 @@ class Unlearner():
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch
+        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time
 
     
     def amnesiac(self):
@@ -115,8 +128,11 @@ class Unlearner():
         utils.set_seed(self.seed)
         train_ece = 0 
         test_ece = 0
-
+        impair_time = 0
         for epoch in tqdm(range(0, self.n_epoch_impair)):
+            start_time = time.time()
+            epoch_time = 0
+            self.model.train()
             self.model.train()
             epoch_loss = 0.0
 
@@ -129,10 +145,14 @@ class Unlearner():
                 loss.backward()
                 self.optimizer.step()
 
+            end_time = time.time()
+            epoch_time = start_time - end_time
+            impair_time += round(epoch_time,3)
+
             train_accuracy,train_loss,train_ece = self.evaluate(self.forget_eval_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
                 
             print(f"Epoch: {epoch}/{self.n_epoch_repair}\t Forget random labels accuracy: {train_accuracy:.2f}%\Forget random labels loss: {train_loss:.6f}\Forget random labels ECE {train_ece:.2f}")
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
-        return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss, test_ece
+        return self.model,impair_time

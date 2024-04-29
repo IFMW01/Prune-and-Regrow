@@ -87,11 +87,11 @@ def attack_results(model_list,unlearn_list):
             labels = df['label']
             df = df.drop(['label'],axis=1)
             y_pred = attack_model(df)
-            loss_mia_acc = accuracy_score(labels.values, y_pred)
+            acc = accuracy_score(labels.values, y_pred)
             if key in output_dictionary:
-                output_dictionary[key].append(loss_mia_acc)
+                output_dictionary[key].append(acc)
             else:
-                output_dictionary[key] = [loss_mia_acc]
+                output_dictionary[key] = [acc]
     return output_dictionary 
 
 

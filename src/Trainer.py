@@ -2,6 +2,7 @@ import torch
 import utils
 from tqdm import tqdm
 from copy import deepcopy
+import time
 from torchmetrics.classification import MulticlassCalibrationError
 
 class Trainer():
@@ -52,11 +53,16 @@ class Trainer():
         best_train_loss = 0
         best_train_ece = 0
         best_test_ece = 0
+        training_time = 0
+        best_time = 0
         
         losses = []
         accuracies = []
+        tot
 
         for epoch in tqdm(range(0, self.n_epoch)):
+            epoch_time = 0
+            start_time = time.time()
             self.model.train()
             epoch_loss = 0.0
 
@@ -69,11 +75,15 @@ class Trainer():
                 loss.backward()
                 self.optimizer.step()
 
+            epoch_time = start_time - end_time
+            training_time +=  round(epoch_time, 3)
+
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
             accuracies.append(train_accuracy)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
-            
+            end_time = time.time()
             if test_accuracy > best_test_accuracy:
+                best_time = training_time
                 best_test_accuracy = test_accuracy
                 best_test_loss = test_loss
                 best_model = deepcopy(self.model)
@@ -86,8 +96,9 @@ class Trainer():
             losses.append(train_loss)
             print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
-    
+
+
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
 
-        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch
+        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time
     
