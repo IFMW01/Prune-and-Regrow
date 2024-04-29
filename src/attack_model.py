@@ -8,7 +8,7 @@ import numpy as np
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_scor
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 def attack_models(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
   for i in range(num_models):
