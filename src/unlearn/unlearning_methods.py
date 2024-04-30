@@ -9,7 +9,7 @@ import scipy.stats as stats
 import torch.nn.utils.prune as prune
 import time
 from Trainer import Trainer
-from unlearn import Unlearner
+from unlearn.Unlearner import Unlearner
 from torch.nn.utils import parameters_to_vector as Params2Vec
 
 
