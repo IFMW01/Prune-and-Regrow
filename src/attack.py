@@ -9,6 +9,8 @@ from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import models.attack_model as attack_model
+import utils
 from torch.utils.data import DataLoader,TensorDataset
 import Trainer
 
@@ -63,19 +65,19 @@ def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save
     print(f"ATTACK MODEL: {save_name} STATS")
     modelstats(model,x_train,x_test,y_train,y_test)
 
-def attack_model(num_models,train_loader,test_loader,n_classes,save_dir,device):
+def attack_model(num_models,train_loader,test_loader,n_inputs,n_classes,save_dir,device):
 
   for i in range(num_models):
     utils.set_seed(i)
-    train = Trainer(model, train_loader, train_loader, test_loader, optimizer, criterion, device, 50,n_classes,i)
+    model = attack_model.softmax_net(n_inputs)
+    optimizer, criterion = utils.set_hyperparameters(model)
 
-    save_name = f'tabnet_model_{i}.pth'
+    trainer = Trainer(model, train_loader, train_loader, test_loader, optimizer, criterion, device, 50,n_classes,i)
+    best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time = trainer.train()
+    save_name = f'attack_model_{i}.pth'
     save_path = f"{save_dir}/{save_name}"
-    torch.save(model, save_path)
-       
+    torch.save(best_model, save_path)
     print(f"ATTACK MODEL: {save_name} STATS")
-    modelstats(model,x_train,x_test,y_train,y_test)
-
 
 def modelstats(model,x_train,x_test,y_train,y_test):
   y_pred_train = model.predict(x_train)
