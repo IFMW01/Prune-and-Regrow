@@ -78,8 +78,6 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         logits_results,loss_results = unlearn_metrics.mia_efficacy(naive_model,forget_loader,n_classes,device)
         results_dict[seed]["Naive Unlearning"]["Logit MIA"] =   logits_results     
         results_dict[seed]["Naive Unlearning"]["Loss MIA"] =   loss_results    
-        # TESTING
-        print(results_dict)   
 
         results_dict[seed]["Gradient Ascent Unlearning"] = {}
         gradient_ascent_model,results_dict[seed]["Gradient Ascent Unlearning"] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Gradient Ascent Unlearning"],n_classes,forget_amount,dataset_pointer,seed)
