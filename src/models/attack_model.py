@@ -28,7 +28,7 @@ class SoftmaxModel(nn.Module):
 
 def softmax_net(n_inputs):
     # width=int(config["width"])
-    net = SoftmaxModel(n_in=n_inputs, n_out = 2)
+    net = SoftmaxModel(n_in=n_inputs, n_out = 1)
     return net
 
 class SimpleNet(nn.Module):

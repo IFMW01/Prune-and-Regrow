@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import models.attack_model as attack_model
 import utils
 from torch.utils.data import DataLoader,TensorDataset
-import Trainer
+from Trainer import Trainer
 import random
 
 def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
@@ -65,14 +65,14 @@ def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save
     print(f"ATTACK MODEL: {save_name} STATS")
     modelstats(model,x_train,x_test,y_train,y_test)
 
-def create_attack_model(num_models,train_loader,test_loader,n_inputs,n_classes,save_dir,device):
+def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,device):
 
   for i in range(num_models):
     utils.set_seed(i)
     model = attack_model.softmax_net(n_inputs)
-    optimizer, criterion = utils.set_hyperparameters(model)
-
-    trainer = Trainer(model, train_loader, train_loader, test_loader, optimizer, criterion, device, 50,n_classes,i)
+    optimizer, criterion = utils.set_hyperparameters(model,0.01)
+    
+    trainer = Trainer(model, train_loader, train_loader, test_loader, optimizer, criterion, device, 50,2,i)
     best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time = trainer.train()
     save_name = f'attack_model_{i}.pth'
     save_path = f"{save_dir}/{save_name}"
@@ -123,15 +123,19 @@ def create_mia_datasets(data_directory):
   df_lables = balanced_df['label']
   balanced_df = balanced_df.drop(['label'], axis=1)
 
-  x_train,x_test,y_train,y_test= train_test_split(balanced_df,df_lables, test_size=0.2, random_state=42,shuffle=True)
+  x_train,x_test,y_train,y_test= train_test_split(balanced_df,df_lables, test_size=0.2)
+  x_train = torch.tensor(x_train.values,dtype=torch.float)
+  x_test = torch.tensor(x_test.values,dtype=torch.float)
+  y_train = torch.tensor(y_train.values,dtype=torch.long)
+  y_test = torch.tensor(y_test.values,dtype=torch.long)
+  train_set = [(x_train[i], y_train[i]) for i in range(len(x_train))]
+  test_set = [(x_test[i], y_test[i]) for i in range(len(x_test))]
 
-  return x_train,y_train,x_test,y_test
+  return train_set,test_set
 
-def create_mia_loader(x_train,y_train,x_test,y_test):
-  train = TensorDataset(x_train, y_train)
-  test = TensorDataset(x_test, y_test)
-  train_loader = DataLoader(train, batch_size=264, shuffle=True)
-  test_loader = DataLoader(test, batch_size=264, shuffle=False)
+def create_mia_loader(train_set,test_set):
+  train_loader = DataLoader(train_set, batch_size=264, shuffle=True)
+  test_loader = DataLoader(test_set, batch_size=264, shuffle=False)
   return train_loader,test_loader
 
 def main(config_attack,config_base):
@@ -152,15 +156,15 @@ def main(config_attack,config_base):
   utils.create_dir(logit_attack)
   utils.create_dir(loss_attack)
 
-  x_train_logits,y_train_logits,x_test_logits,y_test_logits = create_mia_datasets(logit_dir)
-  x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(loss_dir)
-  train_logits,test_logits = create_mia_loader(x_train_logits,y_train_logits,x_test_logits,y_test_logits)
-  train_loss,test_loss = create_mia_loader(x_train_loss,y_train_loss,x_test_loss,y_test_loss)
+  train_set_logits,test_set_logits = create_mia_datasets(logit_dir)
+  train_set_loss,test_set_loss = create_mia_datasets(loss_dir)
+  train_logits,test_logits = create_mia_loader(train_set_logits,test_set_logits)
+  train_loss,test_loss = create_mia_loader(train_set_loss,test_set_loss)
 
   print("Logit Attack Models")
-  create_attack_model(n_attack_models,train_logits,test_logits,n_classes,n_classes,logit_attack,device)
+  create_attack_model(n_attack_models,train_logits,test_logits,n_classes,logit_attack,device)
   print("Loss Attack Models")
-  create_attack_model(n_attack_models,train_loss,test_loss,1,n_classes,loss_attack,device)
+  create_attack_model(n_attack_models,train_loss,test_loss,1,loss_attack,device)
   print("FIN")
 
 if __name__ == "__main__":
