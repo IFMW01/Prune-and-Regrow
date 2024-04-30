@@ -11,7 +11,7 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import models.attack_model as attack_model
 import utils
-from torch.utils.data import DataLoader,TensorDataset
+from torch.utils.data import DataLoader
 from Trainer import Trainer
 import random
 

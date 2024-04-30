@@ -66,7 +66,7 @@ def mia_efficacy(model,forget_loader,n_classes,device):
     attack_model_list_logit =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Logits/Attack/*.pth')
     attack_model_list_loss =  glob.glob(f'TRAIN/{dataset_pointer}/{architecture}/MIA/Loss/Attack/*.pth')
     logits_results =  attack_results(attack_model_list_logit,n_classes,df_forget_logit)
-    loss_results = attack_results(attack_model_list_logit,1,df_forget_loss)
+    loss_results = attack_results(attack_model_list_loss,1,df_forget_loss)
     return logits_results,loss_results
 
 def attack_results(model_list,n_inputs,df):
