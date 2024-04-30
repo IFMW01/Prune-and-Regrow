@@ -43,7 +43,7 @@ def actviation_distance(unlearn_model, retrain_model, dataloader, device):
         diff = diff.detach().cpu()
         distances.append(diff)
     distances = torch.cat(distances, axis = 0)
-    return distances.mean()
+    return distances.mean().item()
 
 def JS_divergence(unlearn_model, retrain_model,dataloader,device):
     js_divergence = []

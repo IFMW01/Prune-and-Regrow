@@ -64,7 +64,7 @@ class Unlearner():
                 train_loss += loss.item()
 
             end_time = time.time()
-            epoch_time = start_time - end_time
+            epoch_time =  end_time - start_time
             impair_time += round(epoch_time,3)
             foget_accuracy,forget_loss,forget_ece = self.evaluate(self.forget_eval_loader)
             remain_accuracy,remain_loss,remain_ece  = self.evaluate(self.remain_eval_loader)
@@ -100,7 +100,7 @@ class Unlearner():
                 self.optimizer.step()
 
             end_time = time.time()
-            epoch_time = start_time - end_time
+            epoch_time = end_time - start_time
             fine_tune_time += round(epoch_time,3)
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
@@ -139,7 +139,6 @@ class Unlearner():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.forget_loader):
-                print(target)
                 data = data.to(self.device)
                 target = target.to(self.device)
                 self.optimizer.zero_grad()
@@ -149,7 +148,7 @@ class Unlearner():
                 self.optimizer.step()
 
             end_time = time.time()
-            epoch_time = start_time - end_time
+            epoch_time = end_time - start_time
             impair_time += round(epoch_time,3)
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.forget_eval_loader)

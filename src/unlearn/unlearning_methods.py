@@ -181,7 +181,7 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
             optimizer.step()
             running_loss += loss.item()
             end_time = time.time()
-            epoch_time = start_time - end_time
+            epoch_time = end_time - start_time
             train_time += round(epoch_time,3)
         print(f"Epoch {epoch+1}/{epochs},Loss: {running_loss / len(train_loader)}")
     return student,train_time
@@ -233,7 +233,7 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     start_time = time.time()
     omp_model = global_prune_with_masks(omp_model,pruning_ratio)
     end_time = time.time()
-    impair_time = round((start_time-end_time),3)
+    impair_time = round((end_time -start_time),3)
     optimizer_omp,criterion = utils.set_hyperparameters(omp_model,lr=0.01)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_eval_loader,remain_eval_loader,test_loader,device)
@@ -284,7 +284,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
 
     consine_model = global_prune_without_masks(base_model, float(prune_rate[min]))
     end_time = time.time()
-    impair_time = round((start_time-end_time),3)
+    impair_time = round((end_time - start_time),3)
 
     print(f"Percentage Prune: {prune_rate[min]:.2f}")
     print(f"\nModel accuracies post consine pruning:")
@@ -329,7 +329,7 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
 
     kk_model = global_prune_without_masks(base_model, float(unsafe_prune))
     end_time = time.time()
-    impair_time = round((start_time-end_time),3)
+    impair_time = round((end_time-start_time),3)
     print(f"Percentage Prune: {unsafe_prune:.2f}")
 
     print(f"\nModel accuracies post consine pruning:")
