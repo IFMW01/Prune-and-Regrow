@@ -13,7 +13,7 @@ import models.attack_model as attack_model
 import utils
 from torch.utils.data import DataLoader,TensorDataset
 import Trainer
-
+import random
 
 def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
   for i in range(num_models):
@@ -65,7 +65,7 @@ def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save
     print(f"ATTACK MODEL: {save_name} STATS")
     modelstats(model,x_train,x_test,y_train,y_test)
 
-def attack_model(num_models,train_loader,test_loader,n_inputs,n_classes,save_dir,device):
+def create_attack_model(num_models,train_loader,test_loader,n_inputs,n_classes,save_dir,device):
 
   for i in range(num_models):
     utils.set_seed(i)
@@ -109,14 +109,16 @@ def create_mia_datasets(data_directory):
   df = pd.DataFrame()
   list_of_files = glob.glob(f'{data_directory}/*.csv')
   for  data_path in list_of_files:
-      df = pd.concat([df,pd.read_csv(data_path)],ignore_index=True)
-  
-  label_1 = df[df['label'] == 1].index
+    df = pd.concat([df,pd.read_csv(data_path)],ignore_index=True)
 
-  label_0 = df[df['label'] == 0].sample(n=len(label_1), random_state=42).index
-
-  balanced_indices = label_1.union(label_0)
+  label_1 = df[df['label'] == 1].index.tolist()
+  label_0 = df[df['label'] == 0].index.tolist()
+  random.seed(42)
+  label_0 = random.sample(label_0,len(label_1))
+  balanced_indices = label_1 +label_0
   balanced_df = df.loc[balanced_indices]
+  balanced_df = balanced_df.sample(frac=1, random_state=42)
+
   balanced_df.to_csv(f'{data_directory}_all_balanced.csv',index = False)
   df_lables = balanced_df['label']
   balanced_df = balanced_df.drop(['label'], axis=1)
@@ -144,21 +146,21 @@ def main(config_attack,config_base):
       print(f"There are no models with this {architecture} for this {dataset_pointer} in the MIA directory. Please train relevant models")
       return
   logit_dir = dataset_dir + '/Logits'
-  softmax_dir = dataset_dir + '/Softmax'
+  loss_dir = dataset_dir + '/Loss'
   logit_attack = logit_dir +"/Attack"
-  loss_attack = softmax_dir +"/Attack"
+  loss_attack = loss_dir +"/Attack"
   utils.create_dir(logit_attack)
   utils.create_dir(loss_attack)
 
   x_train_logits,y_train_logits,x_test_logits,y_test_logits = create_mia_datasets(logit_dir)
-  x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(softmax_dir)
+  x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(loss_dir)
   train_logits,test_logits = create_mia_loader(x_train_logits,y_train_logits,x_test_logits,y_test_logits)
   train_loss,test_loss = create_mia_loader(x_train_loss,y_train_loss,x_test_loss,y_test_loss)
 
   print("Logit Attack Models")
-  attack_model(n_attack_models,train_logits,test_logits,n_classes,n_classes,logit_attack,device)
+  create_attack_model(n_attack_models,train_logits,test_logits,n_classes,n_classes,logit_attack,device)
   print("Loss Attack Models")
-  attack_model(n_attack_models,train_loss,test_loss,1,n_classes,loss_attack,device)
+  create_attack_model(n_attack_models,train_loss,test_loss,1,n_classes,loss_attack,device)
   print("FIN")
 
 if __name__ == "__main__":
