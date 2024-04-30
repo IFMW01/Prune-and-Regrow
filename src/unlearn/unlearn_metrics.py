@@ -98,7 +98,6 @@ def attack_results(model_list,n_inputs,df):
                 correct += (predicted == target).sum().item()
         model_loss /= len(forget_laoder)
         accuracy = 100 * correct / total
-        print(accuracy)
         attack_sucess.append(accuracy)
     return attack_sucess 
 
