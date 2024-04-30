@@ -135,6 +135,7 @@ def create_mia_loader(x_train,y_train,x_test,y_test):
 def main(config_attack,config_base):
   dataset_pointer = config_base.get("dataset_pointer", None)
   architecture = config_base.get("architecture", None)
+  n_classes = config_base.get("n_classes", None)
   n_attack_models = config_attack.get("n_attack_models", None)
 
   device = utils.get_device()
@@ -145,27 +146,19 @@ def main(config_attack,config_base):
   logit_dir = dataset_dir + '/Logits'
   softmax_dir = dataset_dir + '/Softmax'
   logit_attack = logit_dir +"/Attack"
-  softmax_attack = softmax_dir +"/Attack"
+  loss_attack = softmax_dir +"/Attack"
   utils.create_dir(logit_attack)
-  utils.create_dir(softmax_attack)
+  utils.create_dir(loss_attack)
 
   x_train_logits,y_train_logits,x_test_logits,y_test_logits = create_mia_datasets(logit_dir)
   x_train_loss,y_train_loss,x_test_loss,y_test_loss = create_mia_datasets(softmax_dir)
   train_logits,test_logits = create_mia_loader(x_train_logits,y_train_logits,x_test_logits,y_test_logits)
   train_loss,test_loss = create_mia_loader(x_train_loss,y_train_loss,x_test_loss,y_test_loss)
 
-
-
   print("Logit Attack Models")
-  # attack_model = 'xgb'
-  # attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
-  attack_model = 'tabnet'
-  # attack_models(n_attack_models,x_train_logits,y_train_logits,x_test_logits,y_test_logits,attack_model,logit_attack,device)
+  attack_model(n_attack_models,train_logits,test_logits,n_classes,n_classes,logit_attack,device)
   print("Loss Attack Models")
-  # attack_model = 'xgb'
-  # attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
-  attack_model = 'tabnet'   
-  attack_models(n_attack_models,x_train_loss,y_train_loss,x_test_loss,y_test_loss,attack_model,softmax_attack,device)
+  attack_model(n_attack_models,train_loss,test_loss,1,n_classes,loss_attack,device)
   print("FIN")
 
 if __name__ == "__main__":
