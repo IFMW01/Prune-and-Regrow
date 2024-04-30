@@ -132,7 +132,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Cosine Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(cosine_model,naive_model,forget_eval_loader,device)  
         logits_results,loss_results = unlearn_metrics.mia_efficacy(cosine_model,forget_loader,n_classes,device)
         results_dict[seed]["Cosine Unlearning"]["Logit MIA"] =   logits_results     
-        results_dict[seed]["OCosine Unlearning"]["Loss MIA"] =   loss_results    
+        results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
         results_dict[seed]["Kurtosis Unlearning"] = {} 
         kk_model,results_dict[seed]["Kurtosis Unlearning"] = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed]["Kurtosis Unlearning"],n_classes,seed)

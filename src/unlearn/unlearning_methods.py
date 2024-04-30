@@ -369,7 +369,7 @@ def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_lo
 def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,seed):
    print("\n Label Smoothing Unlearning:")
    utils.set_seed(seed)
-   ls_model,optimizer,criterion = load_model(path,(0.001*(256/forget_instances_num)),device)
+   ls_model,optimizer,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
    criterion_ls = nn.CrossEntropyLoss(label_smoothing=1)
    ls_train = Trainer(ls_model, forget_loader, forget_eval_loader, test_loader, optimizer, criterion_ls, device, n_epoch_impair,n_classes,seed)
    ls_model,forget_accuracy,forget_loss,forget_ece,test_accuracy,test_loss,test_ece,best_epoch,impair_time = ls_train.train()
