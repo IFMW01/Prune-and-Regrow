@@ -18,7 +18,7 @@ def create_membership_inference_dataset(all_processed,seed):
   print(test_set.size)
   return train_set,test_set
 
-def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,loss_dir):
+def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logit_dir,loss_dir,results_dict):
   test_acc = 0 
   test_loss = 0
   if pipeline == 'mel':
@@ -37,6 +37,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
        all_processed = np.append(test, train) 
 
   for seed in range(n_shadow_models):
+    results_dict[f'{seed}'] = {}
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'ravdess':
        train_set_mia,test_set_mia = create_membership_inference_dataset(all_processed,seed)
        train_data_mia = load_datasets.DatasetProcessor(train_set_mia,device)
@@ -47,7 +48,9 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
        
     model,optimizer,criterion = utils.initialise_model(architecture,n_input,n_classes,device)
     trainer = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_shadow_epochs,n_classes,seed)
-    mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,test_ece,best_epoch,time = trainer.train()
+    mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,mia_test_ece,best_epoch,time = trainer.train()
+    results_dict[f'{seed}'] = {}
+    results_dict = utils.update_dict(results_dict[f'{seed}'],time,best_epoch,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,mia_test_ece)
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
     print(f'test loss {mia_test_loss}')
@@ -60,8 +63,10 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
 
   print(f"Average attack test accuracy: {(test_acc/n_shadow_models):.4f}")
   print(f"Average attack test loss: {(test_loss/n_shadow_models):.4f}")
+  return results_dict
 
 def main(config_mia,config_base):
+    results_dict = {}
     dataset_pointer = config_base.get("dataset_pointer", None)
     pipeline = config_base.get("pipeline", None)
     architecture = config_base.get("architecture", None)
@@ -76,7 +81,9 @@ def main(config_mia,config_base):
     utils.create_dir(loss_dir)
     logits_dir = save_dir + '/Logits'
     utils.create_dir(logits_dir)
-    membership_inference_attack(dataset_pointer,architecture,n_inputs,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logits_dir,loss_dir)
+    results_dict = membership_inference_attack(dataset_pointer,architecture,n_inputs,n_classes,pipeline,device,n_shadow_models,n_shadow_epochs,logits_dir,loss_dir,results_dict)
+    with open(f"{save_dir}/shadow_model_results.json",'w') as f:
+      json.dump(results_dict,f)
     print("FIN")
 
 if __name__ == "__main__":

@@ -10,6 +10,17 @@ import random
 import torch.nn.functional as F
 from torchmetrics.classification import MulticlassCalibrationError
 
+def update_dict(dict,best_time,best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece):
+    dict['Train time'] = best_time
+    dict['Best epoch'] = best_epoch
+    dict['Train accuracy'] = train_accuracy
+    dict['Train loss'] = train_loss
+    dict['Train ece'] = train_ece
+    dict['Test accuracy'] = test_acc
+    dict['Test loss'] = test_loss
+    dict['Test ece'] = test_ece
+    return dict
+
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)

@@ -9,6 +9,8 @@ from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import torch.nn as nn
+import torch.optim as optim
 import models.attack_model as attack_model
 import utils
 from torch.utils.data import DataLoader
@@ -65,19 +67,21 @@ def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save
     print(f"ATTACK MODEL: {save_name} STATS")
     modelstats(model,x_train,x_test,y_train,y_test)
 
-def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,device):
-
+def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,device,dict):
+  criterion = nn.CrossEntropyLoss()    
   for i in range(num_models):
+    dict[f'{i}'] = {}
     utils.set_seed(i)
     model = attack_model.softmax_net(n_inputs)
-    optimizer, criterion = utils.set_hyperparameters(model,0.01)
-    
+    optimizer = optim.Adam(model.parameters(),0.001)
     trainer = Trainer(model, train_loader, train_loader, test_loader, optimizer, criterion, device, 50,2,i)
     best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time = trainer.train()
+    dict = utils.update_dict(dict[f'{i}'],best_time,best_model_epoch,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece)
     save_name = f'attack_model_{i}.pth'
     save_path = f"{save_dir}/{save_name}"
     torch.save(best_model, save_path)
-    print(f"ATTACK MODEL: {save_name} STATS")
+  return dict
+
 
 def modelstats(model,x_train,x_test,y_train,y_test):
   y_pred_train = model.predict(x_train)
@@ -155,16 +159,21 @@ def main(config_attack,config_base):
   loss_attack = loss_dir +"/Attack"
   utils.create_dir(logit_attack)
   utils.create_dir(loss_attack)
+  results_dict = {}
+  results_dict['Logits'] = {}
 
   train_set_logits,test_set_logits = create_mia_datasets(logit_dir)
   train_set_loss,test_set_loss = create_mia_datasets(loss_dir)
   train_logits,test_logits = create_mia_loader(train_set_logits,test_set_logits)
   train_loss,test_loss = create_mia_loader(train_set_loss,test_set_loss)
-
+  results_dict['Logits'] = {}
+  results_dict['Loss'] = {}
   print("Logit Attack Models")
-  create_attack_model(n_attack_models,train_logits,test_logits,n_classes,logit_attack,device)
+  results_dict['Logits'] = create_attack_model(n_attack_models,train_logits,test_logits,n_classes,logit_attack,device,results_dict['Logits'])
   print("Loss Attack Models")
-  create_attack_model(n_attack_models,train_loss,test_loss,1,loss_attack,device)
+  results_dict['Loss'] = create_attack_model(n_attack_models,train_loss,test_loss,1,loss_attack,device,results_dict['Loss'])
+  with open(f"{dataset_dir}/attack_model_results.json",'w') as f:
+    json.dump(results_dict,f)
   print("FIN")
 
 if __name__ == "__main__":

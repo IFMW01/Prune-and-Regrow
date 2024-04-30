@@ -113,8 +113,8 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Stochastic Teacher Unlearning"]["Loss MIA"] =   loss_results    
 
         results_dict[seed]["OMP Unlearning"] = {}
-
-        omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed]["OMP Unlearning"],n_classes,seed)
+                                                        
+        omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs_fine_tune,results_dict[seed]["OMP Unlearning"],n_classes,seed)
         logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_logits','omp_model_loss')
 
         results_dict[seed]["OMP Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(omp_model, naive_model, forget_eval_loader, device)
@@ -124,7 +124,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["OMP Unlearning"]["Logit MIA"] =   logits_results     
         results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
 
-        results_dict[seed]["Cosine Unlearning"] = {}
+        results_dict[seed]["Cosine Unlearning"] = {} 
         cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed]["Cosine Unlearning"],n_classes,seed)
         logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_logits','cosine_model_loss')
         
