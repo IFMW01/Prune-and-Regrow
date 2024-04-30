@@ -14,7 +14,7 @@ def create_base_model(train,save_path,device,seed,train_loader,test_loader,resul
     df_softmax_outputs,df_loss_outputs = utils.logits(best_model,train_loader,test_loader,device)
     df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
     df_loss_outputs.to_csv(f'{save_path}loss_outputs.csv',index = False)
-    results_dict = utils.update_dict(results_dict[f'{seed}'],best_time,best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece)
+    results_dict[f'{seed}'] = utils.update_dict(results_dict[f'{seed}'],best_time,best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece)
     return results_dict
 
 def main(config):
