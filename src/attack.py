@@ -76,7 +76,7 @@ def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,de
     optimizer = optim.Adam(model.parameters(),0.001)
     trainer = Trainer(model, train_loader, train_loader, test_loader, optimizer, criterion, device, 50,2,i)
     best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time = trainer.train()
-    dict = utils.update_dict(dict[f'{i}'],best_time,best_model_epoch,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece)
+    dict[f'{i}'] = utils.update_dict(dict[f'{i}'],best_time,best_model_epoch,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece)
     save_name = f'attack_model_{i}.pth'
     save_path = f"{save_dir}/{save_name}"
     torch.save(best_model, save_path)

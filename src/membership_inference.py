@@ -50,7 +50,7 @@ def membership_inference_attack(dataset_pointer,architecture,n_input,n_classes,p
     trainer = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_shadow_epochs,n_classes,seed)
     mia_model,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,mia_test_ece,best_epoch,time = trainer.train()
     results_dict[f'{seed}'] = {}
-    results_dict = utils.update_dict(results_dict[f'{seed}'],time,best_epoch,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,mia_test_ece)
+    results_dict[f'{seed}'] = utils.update_dict(results_dict[f'{seed}'],time,best_epoch,train_accuracy,train_loss,train_ece,mia_test_accuracy,mia_test_loss,mia_test_ece)
     test_acc += mia_test_accuracy
     test_loss += mia_test_loss
     print(f'test loss {mia_test_loss}')
