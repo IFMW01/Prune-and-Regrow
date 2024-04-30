@@ -225,7 +225,7 @@ def global_unstructured_pruning(model,pruning_ratio):
         param.data[param.data.abs() < threshold] = 0
     return model
 
-def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,acc_dict,time_dict,n_classes,seed):
+def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,seed):
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
@@ -291,7 +291,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     evaluate_forget_remain_test(consine_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,lr=0.01)
-    cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
+    cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     consine_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= cosine_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = cosine_train.evaluate(forget_eval_loader)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
@@ -336,7 +336,7 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     evaluate_forget_remain_test(kk_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,lr=0.01)
-    kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,n_epochs,n_classes,seed)
+    kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_eval_loader)
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)

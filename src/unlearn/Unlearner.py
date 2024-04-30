@@ -106,22 +106,11 @@ class Unlearner():
             train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
 
-            if test_accuracy > best_test_accuracy:
-                best_time = fine_tune_time
-                best_test_accuracy = test_accuracy
-                best_test_loss = test_loss
-                best_model = deepcopy(self.model)
-                best_model_epoch = epoch
-                best_train_accuracy = train_accuracy
-                best_train_loss = train_loss
-                best_train_ece = train_ece
-                best_test_ece = test_ece
-
+       
             print(f"Epoch: {epoch}/{self.n_epoch_repair}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
-        print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time
+        return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,epoch,best_time
 
     
     def amnesiac(self):
