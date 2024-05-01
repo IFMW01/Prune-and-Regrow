@@ -2,8 +2,8 @@
 {
     "unlearning":true,
     "n_epoch_impair": 1,
-    "n_epoch_repair": 4,
-    "n_epochs_fine_tune": 10,
+    "n_epoch_repair": 5,
+    "n_epochs_fine_tune": 5,
     "forget_random": false ,
     "forget_percentage":10,
     "forget_classes": true ,

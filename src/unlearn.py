@@ -72,7 +72,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Original Model"]["Activation distance"] = unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device)
         results_dict[seed]["Original Model"]["JS divergance"]  = unlearn_metrics.JS_divergence(orginal_model,naive_model,forget_eval_loader,device)
 
-
+        
         results_dict[seed]["Naive Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(naive_model, naive_model, forget_eval_loader, device)
         results_dict[seed]["Naive Unlearning"]["JS divergance"] = (unlearn_metrics.JS_divergence(naive_model,naive_model,forget_eval_loader,device)) 
         loss_results = unlearn_metrics.mia_efficacy(naive_model,forget_loader,n_classes,device)
@@ -161,7 +161,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     
 
 def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_classes):
-    train_set,test_set = ld.load_dataset(dataset_pointer,pipeline,True)
+    train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
     forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
     print("Creating remain and forget datasets")
     remain_set,forget_set = um.create_forget_remain_set(dataset_pointer,forget_instances_num,train_set)
