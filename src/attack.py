@@ -149,7 +149,7 @@ def main(config_attack,config_base):
   n_attack_models = config_attack.get("n_attack_models", None)
 
   device = utils.get_device()
-  dataset_dir = f'TRAIN/{dataset_pointer}/{architecture}/MIA'
+  dataset_dir = f'Results/{dataset_pointer}/{architecture}/MIA'
   if not os.path.exists(dataset_dir):
       print(f"There are no models with this {architecture} for this {dataset_pointer} in the MIA directory. Please train relevant models")
       return

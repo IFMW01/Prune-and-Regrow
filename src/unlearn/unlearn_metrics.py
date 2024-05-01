@@ -17,7 +17,6 @@ with open("./configs/attack_config.json", "r") as a:
 with open("./configs/unlearn_config.json","r") as u:
     config_unlearn = json.load(u)
 
-
 dataset_pointer = config_base.get("dataset_pointer",None)
 pipeline = config_base.get("pipeline",None)
 architecture = config_base.get("architecture",None)
@@ -31,7 +30,6 @@ n_epoch_repair = config_unlearn.get("n_epoch_repair",None)
 n_epochs_fine_tune = config_unlearn.get("n_epochs_fine_tune",None)
 forget_percentage = config_unlearn.get("forget_percentage",None)
 pruning_ratio = config_unlearn.get("pruning_ratio",None)
-
 
 def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     distances = []

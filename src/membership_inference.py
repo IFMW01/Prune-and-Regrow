@@ -76,7 +76,7 @@ def main(config_mia,config_base):
     n_shadow_epochs = config_mia.get("n_shadow_epochs", None)
 
     device = utils.get_device()
-    save_dir = f'TRAIN/{dataset_pointer}/{architecture}/MIA'
+    save_dir = f'Results/{dataset_pointer}/{architecture}/MIA'
     loss_dir = save_dir + '/Loss'
     utils.create_dir(loss_dir)
     logits_dir = save_dir + '/Logits'
