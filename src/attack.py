@@ -153,25 +153,23 @@ def main(config_attack,config_base):
   if not os.path.exists(dataset_dir):
       print(f"There are no models with this {architecture} for this {dataset_pointer} in the MIA directory. Please train relevant models")
       return
-  logit_dir = dataset_dir + '/Logits'
-  loss_dir = dataset_dir + '/Loss'
-  logit_attack = logit_dir +"/Attack"
-  loss_attack = loss_dir +"/Attack"
-  utils.create_dir(logit_attack)
-  utils.create_dir(loss_attack)
+  # logit_dir = dataset_dir + '/Logits'
+  loss_dir = dataset_dir + '/Attack'
+  # logit_attack = logit_dir +"/Attack"
+  # loss_attack = loss_dir +"/Attack"
+  # utils.create_dir(logit_attack)
+  utils.create_dir(loss_dir)
   results_dict = {}
-  results_dict['Logits'] = {}
-
-  train_set_logits,test_set_logits = create_mia_datasets(logit_dir)
-  train_set_loss,test_set_loss = create_mia_datasets(loss_dir)
-  train_logits,test_logits = create_mia_loader(train_set_logits,test_set_logits)
+  # train_set_logits,test_set_logits = create_mia_datasets(logit_dir)
+  train_set_loss,test_set_loss = create_mia_datasets(dataset_dir)
+  # train_logits,test_logits = create_mia_loader(train_set_logits,test_set_logits)
   train_loss,test_loss = create_mia_loader(train_set_loss,test_set_loss)
-  results_dict['Logits'] = {}
+  # results_dict['Logits'] = {}
   results_dict['Loss'] = {}
-  print("Logit Attack Models")
-  results_dict['Logits'] = create_attack_model(n_attack_models,train_logits,test_logits,n_classes,logit_attack,device,results_dict['Logits'])
+  # print("Logit Attack Models")
+  # results_dict['Logits'] = create_attack_model(n_attack_models,train_logits,test_logits,n_classes,logit_attack,device,results_dict['Logits'])
   print("Loss Attack Models")
-  results_dict['Loss'] = create_attack_model(n_attack_models,train_loss,test_loss,1,loss_attack,device,results_dict['Loss'])
+  results_dict['Loss'] = create_attack_model(n_attack_models,train_loss,test_loss,1,loss_dir,device,results_dict['Loss'])
   with open(f"{dataset_dir}/attack_model_results.json",'w') as f:
     json.dump(results_dict,f)
   print("FIN")
