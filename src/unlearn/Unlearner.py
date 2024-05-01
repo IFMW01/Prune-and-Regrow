@@ -46,9 +46,9 @@ class Unlearner():
     
     def gradient_ascent(self):
         impair_time = 0
+        epoch_time = 0
         for epoch in tqdm(range(self.n_epoch_impair)):
             start_time = time.time()
-            epoch_time = 0
             train_loss = 0.0
             self.model.train()
 
@@ -79,14 +79,12 @@ class Unlearner():
         utils.set_seed(self.seed)
         train_ece = 0 
         test_ece = 0
-        best_test_accuracy = 0 
-        best_test_loss = float('inf')
-        best_time = 0
         fine_tune_time = 0
+        epoch_time = 0
 
         for epoch in tqdm(range(0, self.n_epoch_repair)):
             start_time = time.time()
-            epoch_time = 0
+            
             self.model.train()
             epoch_loss = 0.0
 
@@ -106,8 +104,46 @@ class Unlearner():
             train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
 
+            print(f"Epoch: {epoch}/{self.n_epoch_repair}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
+            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+
+        return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,self.n_epoch_repair,fine_tune_time
+
+    def repair(self):
+        
+        utils.set_seed(self.seed)
+        train_ece = 0 
+        test_ece = 0
+        best_test_accuracy = 0 
+        best_test_loss = float('inf')
+        best_time = 0
+        repair_time = 0
+        epoch_time = 0
+
+        for epoch in tqdm(range(0, self.n_epoch_repair)):
+            start_time = time.time()
+            
+            self.model.train()
+            epoch_loss = 0.0
+
+            for batch_idx, (data, target) in enumerate(self.remain_loader):
+                data = data.to(self.device)
+                target = target.to(self.device)
+                self.optimizer.zero_grad()
+                output = self.model(data)
+                loss = self.criterion(output, target)
+                loss.backward()
+                self.optimizer.step()
+
+            end_time = time.time()
+            epoch_time = end_time - start_time
+            repair_time += round(epoch_time,3)
+
+            train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
+            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
+
             if test_accuracy > best_test_accuracy:
-                best_time = fine_tune_time
+                best_time = repair_time
                 best_test_accuracy = test_accuracy
                 best_test_loss = test_loss
                 best_model = deepcopy(self.model)
@@ -122,7 +158,6 @@ class Unlearner():
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
         return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time
-
     
     def amnesiac(self):
         
@@ -130,10 +165,10 @@ class Unlearner():
         train_ece = 0 
         test_ece = 0
         impair_time = 0
+        epoch_time = 0
         self.model.to(self.device)
         for epoch in tqdm(range(0, self.n_epoch_impair)):
             start_time = time.time()
-            epoch_time = 0
             self.model.train()
             self.model.train()
             epoch_loss = 0.0
