@@ -162,12 +162,8 @@ def main(config_attack,config_base):
   results_dict = {}
   # train_set_logits,test_set_logits = create_mia_datasets(logit_dir)
   train_set_loss,test_set_loss = create_mia_datasets(dataset_dir)
-  # train_logits,test_logits = create_mia_loader(train_set_logits,test_set_logits)
   train_loss,test_loss = create_mia_loader(train_set_loss,test_set_loss)
-  # results_dict['Logits'] = {}
   results_dict['Loss'] = {}
-  # print("Logit Attack Models")
-  # results_dict['Logits'] = create_attack_model(n_attack_models,train_logits,test_logits,n_classes,logit_attack,device,results_dict['Logits'])
   print("Loss Attack Models")
   results_dict['Loss'] = create_attack_model(n_attack_models,train_loss,test_loss,1,loss_dir,device,results_dict['Loss'])
   with open(f"{dataset_dir}/attack_model_results.json",'w') as f:
