@@ -26,6 +26,8 @@ class Trainer():
         total = 0
         ece = 0
         for data, target in dataloader:
+            data = data.to(self.device)
+            target = target.to(self.device)
             with torch.no_grad():
                 output = self.model(data)
                 loss = self.criterion(output, target)
@@ -61,6 +63,8 @@ class Trainer():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.train_loader):
+                data = data.to(self.device)
+                target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)
