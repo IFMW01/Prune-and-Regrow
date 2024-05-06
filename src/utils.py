@@ -77,16 +77,15 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         heads = 4,
         mlp_dim = 1024
         )
-    
     elif architecture == 'VGG9':
         model = VGG9()
     
-    model.to(device)
+    model = model.to(device)
     optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion
 
 def logits(model,train_loader,test_loader,device):
-    model.to(device)
+    model = model.to(device)
 
     model.eval()
     # df_train_logits = pd.DataFrame()
@@ -134,7 +133,7 @@ def logits(model,train_loader,test_loader,device):
     return df_all_loss
 
 def logits_unlearn(model,forget_loader,device):
-    model.to(device)
+    model = model.to(device)
 
     model.eval()
     # df_forget_logit = pd.DataFrame()

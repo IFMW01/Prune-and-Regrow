@@ -66,8 +66,11 @@ class DatasetProcessor(Dataset):
     for idx, path in enumerate(self.audio_files):
        d = torch.load(path)
        d["feature"] = d["feature"][None,:,:]
-       self.features.append(d["feature"].to(device))
-       self.labels.append(d["label"].to(device))
+       d["feature"] = d["feature"].to(device)
+       d["label"] = d["label"].to(device)
+
+       self.features.append(d["feature"])
+       self.labels.append(d["label"])
 
   def __len__(self):
     return len(self.audio_files)
