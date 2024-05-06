@@ -66,11 +66,11 @@ class DatasetProcessor(Dataset):
     for idx, path in enumerate(self.audio_files):
        d = torch.load(path)
        d["feature"] = d["feature"][None,:,:]
-       d["feature"] = d["feature"].to(device)
-       d["label"] = d["label"].to(device)
+       feature = d["feature"].to(device)
+       label = d["label"].to(device)
 
-       self.features.append(d["feature"])
-       self.labels.append(d["label"])
+       self.features.append(feature)
+       self.labels.append(label)
 
   def __len__(self):
     return len(self.audio_files)
@@ -85,8 +85,8 @@ class DatasetProcessor_randl(Dataset):
     self.labels = [] 
     for idx, path in enumerate(self.audio_files):
        d = torch.load(path)
-       d["feature"] = d["feature"][None,:,:]
-       self.features.append(d["feature"].to(device))
+       feature = d["feature"][None,:,:].to(device)
+       self.features.append(feature)
        new_label = d["label"] 
        while new_label == d["label"]:
             new_label = random.randint(0, (num_classes-1))
