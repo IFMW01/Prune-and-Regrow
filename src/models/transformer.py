@@ -74,11 +74,11 @@ class Transformer(nn.Module):
             x = ff(x) + x
         return self.norm(x)
     
-class SimpleViTMel(nn.Module):
+class ViTmel(nn.Module):
     def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, channels = 1, dim_head = 64):
         super().__init__()
         image_height, image_width = (32,63)
-        patch_height, patch_width = (32,21)
+        patch_height, patch_width = (32,9)
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 
@@ -116,11 +116,11 @@ class SimpleViTMel(nn.Module):
       return self.linear_head(x)
 
 
-class SimpleViTSpec(nn.Module):
+class ViTspec(nn.Module):
     def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, channels = 1, dim_head = 64):
         super().__init__()
         image_height, image_width = (257,63)
-        patch_height, patch_width = (257,21)
+        patch_height, patch_width = (257,9)
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 

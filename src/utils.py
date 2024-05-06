@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import os
 from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
+from models.transformer import ViTmel, ViTspec
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -55,19 +56,23 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         model = VGGishMelr(n_inputs,n_classes)
     elif architecture == 'VGGishSpecr':
         model = VGGishSpecr(n_inputs,n_classes)
+    elif architecture == 'ViTmel':
+        model = ViTmel(
+        num_classes = n_classes,
+        dim = 1024,
+        depth = 6,
+        heads = 16,
+        mlp_dim = 2048
+        )
+    elif architecture == 'ViTspec':
+        model = ViTspec(
+        num_classes = n_classes,
+        dim = 1024,
+        depth = 6,
+        heads = 16,
+        mlp_dim = 2048
+        )
     
-
-    # elif architecture == 'Transformer':
-    #     model  = SimpleViT(
-    #         image_size = 32,
-    #         patch_size = 32,
-    #         num_classes = n_classes,
-    #         dim = 1024,
-    #         depth = 6,
-    #         heads = 16,
-    #         mlp_dim = 2048
-    #     )
-
     elif architecture == 'VGG9':
         model = VGG9()
 
