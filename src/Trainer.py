@@ -82,7 +82,7 @@ class Trainer():
                 best_train_loss = train_loss
                 best_train_ece = train_ece
                 best_test_ece = test_ece
-            if epoch% 2 ==0:    
+            if epoch% 10 ==0:    
                 print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
                 print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
