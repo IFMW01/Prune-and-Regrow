@@ -30,8 +30,10 @@ class Unlearner():
         ece = 0    
         for data, target in dataloader:
             with torch.no_grad():
-                data = data.to(self.device)
-                target = target.to(self.device)
+                if data.device.type == 'cpu':
+                    data = data.to(self.device)
+                if target.device.type == 'cpu':
+                    target = target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target)
                 ece += self.metric(output,target).item()
@@ -53,8 +55,10 @@ class Unlearner():
             self.model.train()
 
             for batch_idx,(data,target) in enumerate(self.forget_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                if data.device.type == 'cpu':
+                    data = data.to(self.device)
+                if target.device.type == 'cpu':
+                    target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = -self.criterion(output,target)
@@ -89,8 +93,10 @@ class Unlearner():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.remain_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                if data.device.type == 'cpu':
+                    data = data.to(self.device)
+                if target.device.type == 'cpu':
+                    target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)
@@ -127,8 +133,10 @@ class Unlearner():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.remain_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                if data.device.type == 'cpu':
+                    data = data.to(self.device)
+                if target.device.type == 'cpu':
+                    target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)
@@ -166,7 +174,9 @@ class Unlearner():
         test_ece = 0
         impair_time = 0
         epoch_time = 0
-        self.model.to(self.device)
+        if target.device.type == 'cpu':
+           self.model =  self.model.to(self.device)
+        
         for epoch in tqdm(range(0, self.n_epoch_impair)):
             start_time = time.time()
             self.model.train()
@@ -174,8 +184,10 @@ class Unlearner():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.forget_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                if data.device.type == 'cpu':
+                    data = data.to(self.device)
+                if target.device.type == 'cpu':
+                    target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)
