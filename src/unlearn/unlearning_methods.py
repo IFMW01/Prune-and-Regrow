@@ -61,9 +61,12 @@ def evaluate_forget_remain_test(model,forget_eval_loader,remain_eval_loader,test
     test_set_acc = utils.evaluate(model,test_loader,device)
     print(f"Test set Accuracy: {test_set_acc:.2f}")
 
-def load_model(path,lr,device):
+def load_model(path,architecture,lr,device):
     model = torch.load(path)
     model.to(device)
+    # if architecture == 'ViTspec' or architecture == 'ViTspec':
+    #     optimizer = optim.Adam(model.parameters(), lr=lr)
+    # else:
     optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
     criterion = torch.nn.CrossEntropyLoss()
     return model,optimizer,criterion
@@ -107,14 +110,14 @@ def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain
 
 # GRADIENT ASCENT UNLEARNING
 
-def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,dataset_pointer,seed):
+def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,dataset_pointer,architecture,seed):
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
     if dataset_pointer == 'CIFAR10':
-        ga_model,optimizer_ga,criterion = load_model(path,0.1,device)
+        ga_model,optimizer_ga,criterion = load_model(path,architecture,0.1,device)
     else:
-        ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
+        ga_model,optimizer_ga,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
     evaluate_forget_remain_test(ga_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model,impair_time = ga_train.gradient_ascent()
@@ -130,11 +133,11 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
 
 # FINE TUNE UNLEARNING
 
-def fine_tuning_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,n_classes,seed):
+def fine_tuning_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,n_classes,architecture,seed):
    print("\nFine Tuning Unlearning:")
    utils.set_seed(seed)
    impair_time = 0.0
-   ft_model,optimizer_ft,criterion = load_model(path,0.01,device)
+   ft_model,optimizer_ft,criterion = load_model(path,architecture,0.01,device)
    ft_train = Unlearner(ft_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,0,n_epochs,n_classes,seed)
    ft_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,best_epoch,fine_tune_time = ft_train.fine_tune()
    forget_accuracy,forget_loss,forget_ece= ft_train.evaluate(forget_eval_loader)
@@ -190,7 +193,11 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
-  student_model,bad_optimizer,criterion,= load_model(path,0.001,device)
+  kd_bad_lr  = 0.01
+  if architecture == 'ViTspec' or architecture == 'ViTspec':
+      kd_bad_lr  = 0.0001
+      
+  student_model,bad_optimizer,criterion,= load_model(path,architecture,kd_bad_lr,device)
 
   stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
   evaluate_forget_remain_test(student_model,forget_eval_loader,remain_eval_loader,test_loader,device)
@@ -198,9 +205,8 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
   student_model,impair_time =  train_knowledge_distillation(bad_optimizer,criterion,teacher=stochastic_teacher,student=student_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
   print("Stochastic teacher knowledge distillation complete")
   evaluate_forget_remain_test(student_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-
-  optimizer_gt,criterion_gt = utils.set_hyperparameters(student_model,0.01)  
-  gt_model,optimizer_nn,criterion,= load_model(path,0.5,device) 
+  optimizer_gt,criterion_gt = utils.set_hyperparameters(student_model,architecture,0.01)  
+  gt_model,optimizer_nn,criterion,= load_model(path,architecture,0.5,device) 
   student_model,fine_tune_time = train_knowledge_distillation(optimizer_gt,criterion_gt,teacher=gt_model,student=student_model,train_loader=remain_loader,epochs=n_repair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
   print("Good teacher knowledge distillation complete")
 
@@ -225,16 +231,19 @@ def global_unstructured_pruning(model,pruning_ratio):
         param.data[param.data.abs() < threshold] = 0
     return model
 
-def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,seed):
+def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    omp_model,opimizer,criterion,= load_model(path,0.01,device)
+    omp_model,opimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
     omp_model = global_prune_with_masks(omp_model,pruning_ratio)
     end_time = time.time()
     impair_time = round((end_time -start_time),3)
-    optimizer_omp,criterion = utils.set_hyperparameters(omp_model,lr=0.01)
+
+    # add lr 
+
+    optimizer_omp,criterion = utils.set_hyperparameters(omp_model,architecture,lr=0.01)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning pruned model:")
@@ -259,18 +268,20 @@ def kurtosis_of_kurtoses(model):
   kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
   return kurtosis_kurtosis
 
-def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,n_classes,seed):
+def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\nConsine Unlearning:")
     print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
-    base_model,optimizer,criterion,= load_model(path,0.01,device)
+    # add lr 
+
+    base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     for pruning_ratio in prune_rate:
         pruning_ratio = float(pruning_ratio)
-        prune_model,optimizer,criterion,= load_model(path,0.01,device)
+        prune_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
         prune_model = global_prune_without_masks(prune_model,pruning_ratio)
         prune_model_vec = vectorise_model(prune_model)
         cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
@@ -290,6 +301,9 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
+    # lrrrr
+
+
     optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,lr=0.01)
     cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     consine_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= cosine_train.fine_tune()
@@ -298,18 +312,20 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return consine_model,dict
 
-def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,n_classes,seed):
+def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\n Unsafe Unlearning:")
     print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
-    base_model,optimizer,criterion,= load_model(path,0.01,device)
+    # add lr 
+
+    base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     for pruning_ratio in prune_rate:
         pruning_ratio = float(pruning_ratio)
-        prune_model,optimizer,criterion,= load_model(path,0.01,device)
+        prune_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
         prune_model = global_prune_without_masks(prune_model,pruning_ratio)
         prune_model_vec = vectorise_model(prune_model)
         cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
@@ -346,10 +362,11 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
 
 # Random Label Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
 
-def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,seed):
+def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,architecture,seed):
     print("\nAmnesiac Unlearning:")
     print("\n")
-    randl_model,optimizer_ft,criterion = load_model(path,0.001,device)
+    # add lr
+    randl_model,optimizer_ft,criterion = load_model(path,architecture,0.001,device)
     print("\n Orignial model accuracy:")
     evaluate_forget_remain_test(randl_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     randl_train = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
@@ -367,10 +384,10 @@ def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_lo
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return randl_model,dict
 
-def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,seed):
+def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,architecture,seed):
    print("\n Label Smoothing Unlearning:")
    utils.set_seed(seed)
-   ls_model,optimizer,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
+   ls_model,optimizer,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
    criterion_ls = nn.CrossEntropyLoss(label_smoothing=1)
    ls_train = Trainer(ls_model, forget_loader, forget_eval_loader, test_loader, optimizer, criterion_ls, device, n_epoch_impair,n_classes,seed)
    ls_model,forget_accuracy,forget_loss,forget_ece,test_accuracy,test_loss,test_ece,best_epoch,impair_time = ls_train.train()

@@ -33,7 +33,10 @@ def set_seed(seed):
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
-def set_hyperparameters(model,lr):
+def set_hyperparameters(model,architecture,lr):
+    # if architecture == 'ViTspec' or architecture == 'ViTspec':
+    #     optimizer = optim.Adam(model.parameters(), lr=lr)
+    # else:
     optimizer = optim.SGD(model.parameters(),lr,momentum=0.9)
     # optimizer = optim.Adam(model.parameters(),lr)
     criterion = nn.CrossEntropyLoss()
@@ -75,9 +78,9 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     
     elif architecture == 'VGG9':
         model = VGG9()
-
+    
     model.to(device)
-    optimizer,criterion = set_hyperparameters(model,lr) 
+    optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion
 
 def logits(model,train_loader,test_loader,device):
