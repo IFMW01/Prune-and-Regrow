@@ -75,10 +75,11 @@ class Transformer(nn.Module):
         return self.norm(x)
     
 class ViTmel(nn.Module):
-    def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, channels = 1, dim_head = 64):
+    def __init__(self, *, num_classes, device,  dim, depth, heads, mlp_dim, channels = 1, dim_head = 64):
         super().__init__()
         image_height, image_width = (32,63)
-        patch_height, patch_width = (32,9)
+        patch_height, patch_width = (32,3)
+        self.device = device
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 
@@ -104,10 +105,8 @@ class ViTmel(nn.Module):
 
         self.linear_head = nn.Linear(dim, num_classes)
     def forward(self, img):
-      device = img.device
-
       x = self.to_patch_embedding(img)
-      x += self.pos_embedding.to(device, dtype=x.dtype)
+      x += self.pos_embedding.to(self.device, dtype=x.dtype)
 
       x = self.transformer(x)
       x = x.mean(dim = 1)

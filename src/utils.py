@@ -62,10 +62,11 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     elif architecture == 'ViTmel':
         model = ViTmel(
         num_classes = n_classes,
-        dim = 1024,
+        device = device,
+        dim = 512,
         depth = 6,
-        heads = 16,
-        mlp_dim = 2048
+        heads = 4,
+        mlp_dim = 1024
         )
     elif architecture == 'ViTspec':
         model = ViTspec(
@@ -73,7 +74,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         dim = 1024,
         depth = 6,
         heads = 16,
-        mlp_dim = 2048
+        mlp_dim = 2048,
         )
     
     elif architecture == 'VGG9':
