@@ -26,8 +26,10 @@ class Trainer():
         total = 0
         ece = 0
         for data, target in dataloader:
-            data = data.to(self.device)
-            target = target.to(self.device)
+            if data.device.type == 'cpu':
+                data = data.to(self.device)
+            if target.device.type == 'cpu':
+                target = target.to(self.device)
             with torch.no_grad():
                 output = self.model(data)
                 loss = self.criterion(output, target)
@@ -59,12 +61,17 @@ class Trainer():
         for epoch in tqdm(range(0, self.n_epoch)):
             epoch_time = 0
             start_time = time.time()
+            if self.model.device.type == 'cpu':
+                self.model.to(self.device)
             self.model.train()
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.train_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                if data.device.type == 'cpu':
+                    print("here")
+                    data = data.to(self.device)
+                if target.device.type == 'cpu':
+                    target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)

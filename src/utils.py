@@ -44,6 +44,7 @@ def set_hyperparameters(model,architecture,lr):
 
 def get_device():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
     return device
 
 def create_dir(directory):
@@ -79,13 +80,14 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         )
     elif architecture == 'VGG9':
         model = VGG9()
-    
-    model = model.to(device)
+    if model.device.type == 'cpu':
+        model = model.to(device)
     optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion
 
 def logits(model,train_loader,test_loader,device):
-    model = model.to(device)
+    if model.device.type == 'cpu':
+        model = model.to(device)
 
     model.eval()
     # df_train_logits = pd.DataFrame()
@@ -133,7 +135,8 @@ def logits(model,train_loader,test_loader,device):
     return df_all_loss
 
 def logits_unlearn(model,forget_loader,device):
-    model = model.to(device)
+    if model.device.type == 'cpu':
+        model = model.to(device)
 
     model.eval()
     # df_forget_logit = pd.DataFrame()
@@ -162,8 +165,10 @@ def evaluate(model,dataloader,device):
     total = 0
     for data, target in dataloader:
         with torch.no_grad():
-            data = data.to(device)
-            target = target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             output = model(data)
             _, predicted = torch.max(output, 1)
             total += target.size(0)
@@ -182,8 +187,10 @@ def evaluate_test(model,test_loader,criterion,n_classes,device):
 
     for data, target in test_loader:
         with torch.no_grad():
-            data = data.to(device)
-            target = target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             output = model(data)
             loss = criterion(output, target)
             ece += metric(output,target).item()
