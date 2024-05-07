@@ -74,20 +74,20 @@ class Trainer():
             training_time +=  round(epoch_time, 3)
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
-            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
-            if test_accuracy > best_test_accuracy:
-                best_time = training_time
-                best_test_accuracy = test_accuracy
-                best_test_loss = test_loss
-                best_model = deepcopy(self.model)
-                best_model_epoch = epoch
-                best_train_accuracy = train_accuracy
-                best_train_loss = train_loss
-                best_train_ece = train_ece
-                best_test_ece = test_ece
+            # test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
+            # if test_accuracy > best_test_accuracy:
+            #     best_time = training_time
+            #     best_test_accuracy = test_accuracy
+            #     best_test_loss = test_loss
+            #     best_model = deepcopy(self.model)
+            #     best_model_epoch = epoch
+            #     best_train_accuracy = train_accuracy
+            #     best_train_loss = train_loss
+            #     best_train_ece = train_ece
+            #     best_test_ece = test_ece
 
             print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
-            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+            # print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
