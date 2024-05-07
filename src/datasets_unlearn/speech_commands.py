@@ -86,4 +86,3 @@ class SubsetSC(SPEECHCOMMANDS):
 
         elif subset == "all":
             self._walker = [w for w in self._walker]
-

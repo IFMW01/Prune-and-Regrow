@@ -62,7 +62,7 @@ class DatasetProcessor(Dataset):
   def __init__(self, annotations, device):
     self.audio_files = annotations
     self.features = [] 
-    self.labels = []
+    self.labels = [] 
     for idx, path in enumerate(self.audio_files):
        d = torch.load(path)
        d["feature"] = d["feature"][None,:,:]
@@ -86,7 +86,7 @@ class DatasetProcessor_randl(Dataset):
        self.features.append(d["feature"].to(device))
        new_label = d["label"] 
        while new_label == d["label"]:
-            new_label = random.randint(0, (num_classes-1))
+            new_label = random.randint(0, num_classes)
        new_label = torch.tensor(new_label)
        self.labels.append(new_label.to(device))
 
@@ -134,4 +134,3 @@ class WavToSpec(torch.nn.Module):
         spec = self.spec(waveform)
         spec = torch.from_numpy(librosa.power_to_db(spec))
         return spec
-
