@@ -42,6 +42,7 @@ def main(config):
 
     train_loader,train_eval_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
+
         save_dir = f"Results/{dataset_pointer}/{architecture}"
         utils.set_seed(seed)
         model,optimizer,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
@@ -52,12 +53,19 @@ def main(config):
         utils.create_dir(save_mia_path)
         train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
         results_dict = create_base_model(train,save_model_path,save_mia_path,device,seed,train_loader,test_loader,results_dict)
+
     print(f'Final of all trained models: {results_dict}')
+
     with open(f"{save_dir}/training_results.json",'w') as f:
+
         json.dump(results_dict,f)
+
     print("FIN")
 
 if __name__ == "__main__":
+
     with open("./configs/base_config.json","r") as f:
+
         config = json.load(f)
+        
     main(config)

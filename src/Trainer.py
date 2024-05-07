@@ -26,9 +26,12 @@ class Trainer():
         total = 0
         ece = 0
         for data, target in dataloader:
+
             data = data.to(self.device)
             target = target.to(self.device)
+
             with torch.no_grad():
+                
                 output = self.model(data)
                 loss = self.criterion(output, target)
                 ece += self.metric(output,target).item()
@@ -36,6 +39,7 @@ class Trainer():
                 _, predicted = torch.max(output, 1)
                 total += target.size(0)
                 correct += (predicted == target).sum().item()
+
         ece /= len(dataloader)
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
@@ -70,6 +74,7 @@ class Trainer():
                 loss = self.criterion(output, target)
                 loss.backward()
                 self.optimizer.step()
+
             end_time = time.time()
             epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
@@ -89,7 +94,6 @@ class Trainer():
             if epoch% 10 ==0:    
                 print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
                 print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
-
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
 
