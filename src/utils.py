@@ -39,7 +39,7 @@ def set_hyperparameters(model,lr):
     return optimizer,criterion
 
 def get_device():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda")
     return device
 
 def create_dir(directory):

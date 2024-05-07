@@ -55,7 +55,6 @@ class Trainer():
         best_test_ece = 0
         training_time = 0
         best_time = 0
-        
         losses = []
         accuracies = []
 
