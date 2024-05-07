@@ -55,6 +55,7 @@ class Trainer():
         best_test_ece = 0
         training_time = 0
         best_time = 0
+        
         losses = []
         accuracies = []
 
@@ -62,7 +63,6 @@ class Trainer():
             epoch_time = 0
             start_time = time.time()
             self.model.train()
-            epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.train_loader):
                 # data = data.to(self.device)
