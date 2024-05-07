@@ -56,9 +56,6 @@ class Trainer():
         training_time = 0
         best_time = 0
         
-        losses = []
-        accuracies = []
-
         for epoch in tqdm(range(0, self.n_epoch)):
             epoch_time = 0
             start_time = time.time()
@@ -77,7 +74,6 @@ class Trainer():
             training_time +=  round(epoch_time, 3)
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
-            accuracies.append(train_accuracy)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
             if test_accuracy > best_test_accuracy:
                 best_time = training_time
@@ -89,8 +85,7 @@ class Trainer():
                 best_train_loss = train_loss
                 best_train_ece = train_ece
                 best_test_ece = test_ece
-                
-            losses.append(train_loss)
+
             print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
