@@ -34,11 +34,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 def set_hyperparameters(model,architecture,lr):
-    # if architecture == 'ViTspec' or architecture == 'ViTspec':
-    #     optimizer = optim.Adam(model.parameters(), lr=lr)
-    # else:
     optimizer = optim.SGD(model.parameters(),lr,momentum=0.9)
-    # optimizer = optim.Adam(model.parameters(),lr)
     criterion = nn.CrossEntropyLoss()
     return optimizer,criterion
 
@@ -63,7 +59,6 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     elif architecture == 'ViTmel':
         model = ViTmel(
         num_classes = n_classes,
-        device = device,
         dim = 512,
         depth = 6,
         heads = 4,
@@ -72,7 +67,6 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     elif architecture == 'ViTspec':
         model = ViTspec(
         num_classes = n_classes,
-        device = device,
         dim = 512,
         depth = 6,
         heads = 4,
@@ -80,19 +74,13 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         )
     elif architecture == 'VGG9':
         model = VGG9()
-    if model.device.type == 'cpu':
-        model = model.to(device)
+
+    model.to(device)
     optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion
 
 def logits(model,train_loader,test_loader,device):
-    if model.device.type == 'cpu':
-        model = model.to(device)
-
     model.eval()
-    # df_train_logits = pd.DataFrame()
-    # df_test_logits = pd.DataFrame()
-    # df_all_logits = pd.DataFrame()
     df_train_loss = pd.DataFrame()
     df_test_loss = pd.DataFrame()
     df_all_loss = pd.DataFrame()
@@ -101,15 +89,10 @@ def logits(model,train_loader,test_loader,device):
     for batch_idx,(data,target) in enumerate(tqdm(train_loader)):
         with torch.no_grad():
             logits_train = model(data)
-            # logits_train_softmax = F.softmax(logits_train,dim=1)
             loss = F.cross_entropy(logits_train, target,reduction ='none')
             numpy_train_loss = loss.cpu().numpy()
             train_loss = pd.DataFrame(numpy_train_loss)
             df_train_loss = pd.concat([df_train_loss,train_loss],ignore_index=True)
-    
-            # numpy_train_logits = logits_train_softmax.cpu().numpy()
-            # train_logits = pd.DataFrame(numpy_train_logits)
-            # df_train_logits = pd.concat([df_train_logits,train_logits],ignore_index=True)
 
     df_train_loss['label'] = 0    
     # df_train_logits['label'] = 0
@@ -118,45 +101,27 @@ def logits(model,train_loader,test_loader,device):
     for data,target in test_loader:
         with torch.no_grad():
             logits_test = model(data)
-            # logit_test_softmax =  F.softmax(logits_test,dim=1)
             loss = F.cross_entropy(logits_test, target,reduction ='none')
             numpy_test_loss = loss.cpu().numpy()
             test_loss = pd.DataFrame(numpy_test_loss)
             df_test_loss = pd.concat([df_test_loss,test_loss],ignore_index=True)
-
-            # numpy_logits_test = logit_test_softmax.cpu().numpy()
-            # df_logit_test = pd.DataFrame(numpy_logits_test)
-            # df_test_logits = pd.concat([df_test_logits,df_logit_test],ignore_index=True)
-    # df_test_logits['label'] = 1
     df_test_loss['label'] = 1  
 
-    # df_all_logits = pd.concat([df_train_logits,df_test_logits],ignore_index=True)
     df_all_loss = pd.concat([df_train_loss,df_test_loss],ignore_index=True)
     return df_all_loss
 
 def logits_unlearn(model,forget_loader,device):
-    if model.device.type == 'cpu':
-        model = model.to(device)
-
     model.eval()
-    # df_forget_logit = pd.DataFrame()
     df_forget_loss = pd.DataFrame()
 
-    # Process training set
     for batch_idx,(data,target) in enumerate(tqdm(forget_loader)):
         with torch.no_grad():
             logits = model(data)
-            # logit_softmax =  F.softmax(logits,dim=1)
             loss = F.cross_entropy(logits, target,reduction ='none')
             numpy_loss = loss.cpu().numpy()
             forget_loss = pd.DataFrame(numpy_loss)
             df_forget_loss = pd.concat([df_forget_loss,forget_loss],ignore_index=True)
-
-            # numpy_logits = logit_softmax.cpu().numpy()
-            # forget_logit = pd.DataFrame(numpy_logits)
-            # df_forget_logit = pd.concat([df_forget_logit,forget_logit],ignore_index=True)
     df_forget_loss['label'] = 1
-    # df_forget_logit['label'] = 1  
     return df_forget_loss
 
 def evaluate(model,dataloader,device):
@@ -187,10 +152,8 @@ def evaluate_test(model,test_loader,criterion,n_classes,device):
 
     for data, target in test_loader:
         with torch.no_grad():
-            if data.device.type == 'cpu':
-                data = data.to(device)
-            if target.device.type == 'cpu':
-                target = target.to(device)
+            data = data.to(device)
+            target = target.to(device)
             output = model(data)
             loss = criterion(output, target)
             ece += metric(output,target).item()

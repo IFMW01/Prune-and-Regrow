@@ -1,4 +1,4 @@
 torchmetrics
 pytorch-tabnet
 datasets
-einops
+# einops
