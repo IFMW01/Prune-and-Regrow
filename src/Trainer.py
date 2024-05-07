@@ -26,12 +26,9 @@ class Trainer():
         total = 0
         ece = 0
         for data, target in dataloader:
-
-            data = data.to(self.device)
-            target = target.to(self.device)
-
             with torch.no_grad():
-                
+                # data = data.to(self.device)
+                # target = target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target)
                 ece += self.metric(output,target).item()
@@ -39,7 +36,6 @@ class Trainer():
                 _, predicted = torch.max(output, 1)
                 total += target.size(0)
                 correct += (predicted == target).sum().item()
-
         ece /= len(dataloader)
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
@@ -59,7 +55,10 @@ class Trainer():
         best_test_ece = 0
         training_time = 0
         best_time = 0
-        self.model.to(self.device)
+        
+        losses = []
+        accuracies = []
+
         for epoch in tqdm(range(0, self.n_epoch)):
             epoch_time = 0
             start_time = time.time()
@@ -67,19 +66,19 @@ class Trainer():
             epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.train_loader):
-                data = data.to(self.device)
-                target = target.to(self.device)
+                # data = data.to(self.device)
+                # target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)
                 loss.backward()
                 self.optimizer.step()
-
             end_time = time.time()
             epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
 
             train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
+            accuracies.append(train_accuracy)
             test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
             if test_accuracy > best_test_accuracy:
                 best_time = training_time
@@ -91,9 +90,11 @@ class Trainer():
                 best_train_loss = train_loss
                 best_train_ece = train_ece
                 best_test_ece = test_ece
-            if epoch% 10 ==0:    
-                print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
-                print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+                
+            losses.append(train_loss)
+            print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
+            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
 
