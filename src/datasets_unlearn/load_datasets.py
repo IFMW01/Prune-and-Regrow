@@ -86,9 +86,11 @@ class DatasetProcessor_randl(Dataset):
        self.features.append(d["feature"].to(device))
        new_label = d["label"] 
        while new_label == d["label"]:
-            new_label = random.randint(0, num_classes)
-       new_label = torch.tensor(new_label)
-       self.labels.append(new_label.to(device))
+            new_label = random.randint(0, (num_classes-1))
+       new_label = torch.tensor(new_label).to(device)
+       self.labels.append(new_label)
+    self.labels.to(device)
+    self.features.to(device)
 
   def __len__(self):
     return len(self.audio_files)
