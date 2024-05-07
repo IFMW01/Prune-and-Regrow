@@ -34,7 +34,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 def set_hyperparameters(model,architecture,lr):
-    optimizer = optim.SGD(model.parameters(),lr,momentum=0.9)
+    optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     return optimizer,criterion
 
