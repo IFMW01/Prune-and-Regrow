@@ -25,18 +25,17 @@ class Trainer():
         correct = 0
         total = 0
         ece = 0
+        ece = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
         for data, target in dataloader:
             with torch.no_grad():
-                # data = data.to(self.device)
-                # target = target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target)
-                ece += self.metric(output,target).item()
+                ece.update(torch.softmax(output, dim=1),target)
                 model_loss += loss.item()
                 _, predicted = torch.max(output, 1)
                 total += target.size(0)
                 correct += (predicted == target).sum().item()
-        ece /= len(dataloader)
+        ece = ece.compute()
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
         return accuracy,model_loss, ece
@@ -73,21 +72,22 @@ class Trainer():
             epoch_time = end_time - start_time
             training_time +=  round(epoch_time, 3)
 
-            train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
-            # test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
-            # if test_accuracy > best_test_accuracy:
-            #     best_time = training_time
-            #     best_test_accuracy = test_accuracy
-            #     best_test_loss = test_loss
-            #     best_model = deepcopy(self.model)
-            #     best_model_epoch = epoch
-            #     best_train_accuracy = train_accuracy
-            #     best_train_loss = train_loss
-            #     best_train_ece = train_ece
-            #     best_test_ece = test_ece
+            
+            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
+            if test_accuracy > best_test_accuracy:
+                train_accuracy,train_loss,train_ece = self.evaluate(self.train_eval_loader)
+                best_time = training_time
+                best_test_accuracy = test_accuracy
+                best_test_loss = test_loss
+                best_model = deepcopy(self.model)
+                best_model_epoch = epoch
+                best_train_accuracy = train_accuracy
+                best_train_loss = train_loss
+                best_train_ece = train_ece
+                best_test_ece = test_ece
 
-            print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
-            # print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
+                print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
+                print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
