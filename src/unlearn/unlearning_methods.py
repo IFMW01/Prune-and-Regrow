@@ -343,7 +343,9 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     # else:
     #     prune_modifier = 1/torch.log(torch.Tensor([kurtosis_of_kurtoses_model]))
     unsafe_prune = prune_rate[min]+0.1
-
+    if unsafe_prune=>100:
+        unsafe_prune = 0.95
+    
     kk_model = global_prune_without_masks(base_model, float(unsafe_prune))
     end_time = time.time()
     impair_time = round((end_time-start_time),3)

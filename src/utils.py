@@ -74,7 +74,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         mlp_dim = 2048
         )
     elif architecture == 'CTCmel':
-        CCT(
+        model = CCT(
             img_size = (32, 63),
             embedding_dim = 256,
             n_conv_layers = 2,
@@ -92,7 +92,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
             n_input_channels=1,
         )
     elif architecture == 'CTCspec':
-        CCT(
+        model= CCT(
             img_size = (257, 63),
             embedding_dim = 256,
             n_conv_layers = 2,
