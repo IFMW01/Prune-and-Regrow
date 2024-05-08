@@ -4,6 +4,7 @@ import torch.nn as nn
 import os
 from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
 from models.transformer import ViTmel, ViTspec
+from models.compact_ViT import CCT
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -58,19 +59,55 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         model = VGGishSpecr(n_inputs,n_classes)
     elif architecture == 'ViTmel':
         model = ViTmel(
-        num_classes = n_classes,
-        dim = 512,
+        num_classes = 35,
+        dim = 1024,
         depth = 6,
-        heads = 4,
-        mlp_dim = 1024
+        heads = 6,
+        mlp_dim = 2048
         )
     elif architecture == 'ViTspec':
         model = ViTspec(
         num_classes = n_classes,
-        dim = 512,
+        dim = 1024,
         depth = 6,
         heads = 4,
-        mlp_dim = 1024
+        mlp_dim = 2048
+        )
+    elif architecture == 'CTCmel':
+        CCT(
+            img_size = (32, 63),
+            embedding_dim = 256,
+            n_conv_layers = 2,
+            kernel_size = 7,
+            stride = 2,
+            padding = 3,
+            pooling_kernel_size = 3,
+            pooling_stride = 2,
+            pooling_padding = 1,
+            num_layers = 6,
+            num_heads = 4,
+            mlp_ratio = 2.,
+            num_classes = n_classes,
+            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
+            n_input_channels=1,
+        )
+    elif architecture == 'CTCspec':
+        CCT(
+            img_size = (257, 63),
+            embedding_dim = 256,
+            n_conv_layers = 2,
+            kernel_size = 7,
+            stride = 2,
+            padding = 3,
+            pooling_kernel_size = 3,
+            pooling_stride = 2,
+            pooling_padding = 1,
+            num_layers = 6,
+            num_heads = 4,
+            mlp_ratio = 2.,
+            num_classes = n_classes,
+            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
+            n_input_channels=1,
         )
     elif architecture == 'VGG9':
         model = VGG9()
