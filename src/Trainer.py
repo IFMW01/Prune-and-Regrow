@@ -34,7 +34,7 @@ class Trainer():
                 _, predicted = torch.max(output, 1)
                 total += target.size(0)
                 correct += (predicted == target).sum().item()
-        ece = ece.compute()
+        ece = ece.compute().item()
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
         return accuracy,model_loss, ece
