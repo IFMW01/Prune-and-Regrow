@@ -27,6 +27,10 @@ class Trainer():
         ece = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
         for data, target in dataloader:
             with torch.no_grad():
+                if data.device != self.device:
+                    data = data.to(self.device) 
+                if target.device != self.device:
+                    target = target.to(self.device) 
                 output = self.model(data)
                 loss = self.criterion(output, target)
                 ece.update(torch.softmax(output, dim=1),target)
@@ -60,6 +64,10 @@ class Trainer():
             self.model.train()
 
             for batch_idx, (data, target) in enumerate(self.train_loader):
+                if data.device != self.device:
+                    data = data.to(self.device) 
+                if target.device != self.device:
+                    target = target.to(self.device) 
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)

@@ -62,10 +62,10 @@ def JS_divergence(unlearn_model, retrain_model,dataloader,device):
 def mia_efficacy(model,forget_loader,n_classes,device):
     df_forget_loss = utils.logits_unlearn(model,forget_loader,device)
     attack_model_list=  glob.glob(f'Results/{dataset_pointer}/{architecture}/MIA/Attack/*.pth')
-    loss_results = attack_results(attack_model_list,1,df_forget_loss)
+    loss_results = attack_results(attack_model_list,1,df_forget_loss,device)
     return loss_results
 
-def attack_results(model_list,n_inputs,df):
+def attack_results(model_list,n_inputs,df,device):
     attack_sucess = []
     labels = df['label']
     df = df.drop(['label'],axis=1)
@@ -77,6 +77,7 @@ def attack_results(model_list,n_inputs,df):
     criterion = nn.CrossEntropyLoss()
     for attack_path in model_list:
         attack_model = torch.load(attack_path)
+        attack_model.to(device)
         attack_model.eval()
         model_loss = 0.0
         correct = 0
@@ -84,8 +85,8 @@ def attack_results(model_list,n_inputs,df):
 
         for data, target in forget_laoder:
             with torch.no_grad():
-                # data = data.to(self.device)
-                # target = target.to(self.device)
+                data = data.to(device)
+                target = target.to(device)
                 output = attack_model(data)
                 loss = criterion(output, target)
                 model_loss += loss.item()

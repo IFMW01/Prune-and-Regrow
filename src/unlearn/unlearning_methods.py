@@ -123,7 +123,7 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     ga_model,impair_time = ga_train.gradient_ascent()
 
     print("\nFine tuning gradient ascent model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(ga_model,lr=0.01)
+    optimizer_ft,criterion = utils.set_hyperparameters(ga_model,architecture,lr=0.01)
     ga_fine_tune = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= ga_fine_tune.fine_tune()
     forget_accuracy,forget_loss,forget_ece = ga_fine_tune.evaluate(forget_eval_loader)
@@ -304,7 +304,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     # lrrrr
 
 
-    optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,lr=0.01)
+    optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,architecture,lr=0.01)
     cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     consine_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= cosine_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = cosine_train.evaluate(forget_eval_loader)
@@ -352,7 +352,7 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(kk_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
-    optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,lr=0.01)
+    optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,architecture,lr=0.01)
     kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_eval_loader)
@@ -375,7 +375,7 @@ def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_lo
     evaluate_forget_remain_test(randl_model,forget_eval_loader,remain_eval_loader,test_loader,device)
 
     print("\nFine tuning amnesiac model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(randl_model,lr=0.01)
+    optimizer_ft,criterion = utils.set_hyperparameters(randl_model,architecture,lr=0.01)
     randl_fine_tune = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     randl_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= randl_fine_tune.fine_tune()
     forget_accuracy,forget_loss,forget_ece = randl_fine_tune.evaluate(forget_eval_loader)
@@ -395,7 +395,7 @@ def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test
    evaluate_forget_remain_test(ls_model,forget_eval_loader,remain_eval_loader,test_loader,device)
 
    print(f"\nFine Tuning:")
-   optimizer_ft,criterion = utils.set_hyperparameters(ls_model,lr=0.01)
+   optimizer_ft,criterion = utils.set_hyperparameters(ls_model,architecture,lr=0.01)
    ls_fine_tune = Unlearner(ls_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
    ls_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= ls_fine_tune.fine_tune()
    forget_accuracy,forget_loss,forget_ece = ls_fine_tune.evaluate(forget_eval_loader)

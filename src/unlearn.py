@@ -60,7 +60,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         model_path = glob.glob(os.path.join(model_dir,'*.pth'))
         model_path = model_path[0]
                 
-        orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
+        orginal_model,optimizer,criterion = um.load_model(model_path,architecture,0.01,device)
         results_dict[seed]["Original Model"] = {}
         logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_loss')
 
@@ -118,7 +118,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
 
         results_dict[seed]["Cosine Unlearning"] = {} 
-        cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,seed)
+        cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,seed)
         logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_loss')
         
         results_dict[seed]["Cosine Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(cosine_model, naive_model, forget_eval_loader, device)
@@ -127,7 +127,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
         results_dict[seed]["Kurtosis Unlearning"] = {} 
-        kk_model,results_dict[seed]["Kurtosis Unlearning"] = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Kurtosis Unlearning"],n_classes,seed)
+        kk_model,results_dict[seed]["Kurtosis Unlearning"] = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Kurtosis Unlearning"],n_classes,architecture,seed)
         logit_distributions(kk_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'kk_model_loss')
 
         results_dict[seed]["Kurtosis Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(kk_model, naive_model, forget_eval_loader, device)
