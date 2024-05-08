@@ -17,7 +17,6 @@ class Trainer():
         self.n_epoch = n_epoch
         self.n_classes = n_classes
         self.seed = seed
-        self.metric = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
 
     def evaluate(self,dataloader):
         self.model.eval()
@@ -61,8 +60,6 @@ class Trainer():
             self.model.train()
 
             for batch_idx, (data, target) in enumerate(self.train_loader):
-                # data = data.to(self.device)
-                # target = target.to(self.device)
                 self.optimizer.zero_grad()
                 output = self.model(data)
                 loss = self.criterion(output, target)

@@ -20,28 +20,24 @@ class Unlearner():
         self.n_epoch_repair = n_epoch_repair
         self.n_classes = n_classes
         self.seed = seed
-        self.metric = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
 
     def evaluate(self,dataloader):
         self.model.eval()
         model_loss = 0.0
         correct = 0
         total = 0
-        ece = 0    
+        ece = 0
+        ece = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
         for data, target in dataloader:
             with torch.no_grad():
-                if data.device.type == 'cpu':
-                    data = data.to(self.device)
-                if target.device.type == 'cpu':
-                    target = target.to(self.device)
                 output = self.model(data)
                 loss = self.criterion(output, target)
-                ece += self.metric(output,target).item()
+                ece.update(torch.softmax(output, dim=1),target)
                 model_loss += loss.item()
                 _, predicted = torch.max(output, 1)
                 total += target.size(0)
                 correct += (predicted == target).sum().item()
-        ece /= len(dataloader)
+        ece = ece.compute()
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
         return accuracy,model_loss, ece
@@ -174,8 +170,6 @@ class Unlearner():
         test_ece = 0
         impair_time = 0
         epoch_time = 0
-        if target.device.type == 'cpu':
-           self.model =  self.model.to(self.device)
         
         for epoch in tqdm(range(0, self.n_epoch_impair)):
             start_time = time.time()
