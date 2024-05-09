@@ -59,19 +59,19 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         model = VGGishSpecr(n_inputs,n_classes)
     elif architecture == 'ViTmel':
         model = ViTmel(
-        num_classes = 35,
-        dim = 1024,
+        num_classes = n_classes,
+        dim = 512,
         depth = 6,
         heads = 6,
-        mlp_dim = 2048
+        mlp_dim = 1024
         )
     elif architecture == 'ViTspec':
         model = ViTspec(
         num_classes = n_classes,
-        dim = 1024,
+        dim = 512,
         depth = 6,
-        heads = 4,
-        mlp_dim = 2048
+        heads = 6,
+        mlp_dim = 1024
         )
     elif architecture == 'CTCmel':
         model = CCT(
