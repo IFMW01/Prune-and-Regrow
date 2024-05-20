@@ -242,13 +242,16 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     impair_time = round((end_time -start_time),3)
 
     # add lr 
-
+    pre_train = vectorise_model(omp_model).count_nonzero()
+    print(f'Number of parameters pre training: {pre_train}')
     optimizer_omp,criterion = utils.set_hyperparameters(omp_model,architecture,lr=0.01)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning pruned model:")
     omp_train = Unlearner(omp_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_omp, criterion, device,0,n_epochs,n_classes,seed)
     omp_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= omp_train.fine_tune()
+    post_train = vectorise_model(omp_model).count_nonzero()
+    print(f'Number of parameters pre training: {post_train}')
     forget_accuracy,forget_loss,forget_ece = omp_train.evaluate(forget_eval_loader)
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
@@ -317,7 +320,6 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
-    # add lr 
 
     base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
@@ -348,6 +350,8 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     
     kk_model = global_prune_without_masks(base_model, float(unsafe_prune))
     end_time = time.time()
+    pre_train = vectorise_model(kk_model).count_nonzero()
+    print(f'Number of parameters pre training: {pre_train}')
     impair_time = round((end_time-start_time),3)
     print(f"Percentage Prune: {unsafe_prune:.2f}")
 
@@ -357,6 +361,8 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
     optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,architecture,lr=0.01)
     kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
+    post_train = vectorise_model(kk_model).count_nonzero()
+    print(f'Number of parameters post training: {post_train}')
     forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_eval_loader)
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
@@ -420,7 +426,6 @@ def cosine_similarity(base_weights, model_weights):
     ),-1, 1),0)
 
 def global_prune_without_masks(model, amount):
-    """Global Unstructured Pruning of model."""
     parameters_to_prune = []
     for mod in model.modules():
         if hasattr(mod, "weight"):
@@ -445,8 +450,6 @@ def global_prune_without_masks(model, amount):
     return model
 
 def global_prune_with_masks(model, amount):
-    """Global Unstructured Pruning of model."""
-    
     parameters_to_prune = []
     for mod in model.modules():
         if hasattr(mod, "weight"):
