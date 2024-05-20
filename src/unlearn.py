@@ -56,7 +56,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         print(f'\nSeed: {seed}')
         results_dict[seed] = {}
         model_dir = f'Results/{dataset_pointer}/{architecture}/{seed}'
-        save_dir = f"Results/{dataset_pointer}/{architecture}/UNLEARN/{tag}/{forget_amount}/{seed}/OMP/"
+        save_dir = f"Results/{dataset_pointer}/{architecture}/UNLEARN/{tag}/{forget_amount}/{seed}/"
         utils.create_dir(save_dir)
         print(f"Acessing trained model on seed: {seed}")
         model_path = glob.glob(os.path.join(model_dir,'*.pth'))
@@ -112,18 +112,29 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         # results_dict[seed]["Stochastic Teacher Unlearning"]["JS divergance"]= unlearn_metrics.JS_divergence(stochastic_teacher_model,naive_model,forget_eval_loader,device)     
 
         # loss_results = unlearn_metrics.mia_efficacy(stochastic_teacher_model,forget_loader,n_classes,device)
-        # results_dict[seed]["Stochastic Teacher Unlearning"]["Loss MIA"] =   loss_results    
+        # results_dict[seed]["Stochastic Teacher Unlearning"]["Loss MIA"] =   loss_results   
 
-        results_dict[seed]["OMP Unlearning"] = {}
+        results_dict[seed]["MAX P Unlearning"] = {} 
+
+        max_p_model,results_dict[seed]["MAX P Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epoch_repair,results_dict[seed]["MAX P Unlearning"],n_classes,architecture,seed)
+        logit_distributions(max_p_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'max_p_model_loss')
+
+        results_dict[seed]["MAX P Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(max_p_model, naive_model, forget_eval_loader, device)
+        results_dict[seed]["MAX P Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(max_p_model,naive_model,forget_eval_loader,device)     
+
+        loss_results = unlearn_metrics.mia_efficacy(max_p_model,forget_loader,n_classes,device)   
+        results_dict[seed]["MAX P Unlearning"]["Loss MIA"] =   loss_results    
+
+        # results_dict[seed]["OMP Unlearning"] = {}
                                                         
-        omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
-        logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_loss')
+        # omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
+        # logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_loss')
 
-        results_dict[seed]["OMP Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(omp_model, naive_model, forget_eval_loader, device)
-        results_dict[seed]["OMP Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(omp_model,naive_model,forget_eval_loader,device)     
+        # results_dict[seed]["OMP Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(omp_model, naive_model, forget_eval_loader, device)
+        # results_dict[seed]["OMP Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(omp_model,naive_model,forget_eval_loader,device)     
 
-        loss_results = unlearn_metrics.mia_efficacy(omp_model,forget_loader,n_classes,device)   
-        results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
+        # loss_results = unlearn_metrics.mia_efficacy(omp_model,forget_loader,n_classes,device)   
+        # results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
 
         # results_dict[seed]["Cosine Unlearning"] = {} 
         # cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,seed)
@@ -164,7 +175,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
 
                 
-    with open(f"{save_dir}/unlearning_omp_results.json",'w') as f:
+    with open(f"{save_dir}/unlearning_max_p_results.json",'w') as f:
         json.dump(results_dict,f)
     
 
