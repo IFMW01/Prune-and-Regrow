@@ -94,6 +94,20 @@ def add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss
 
 
 # NAIVE  UNLEARNING
+def original_model(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,dataset_pointer,architecture,seed):
+    print("\n Original Model:")
+    print("\n")
+    utils.set_seed(seed)
+    og_model,optimizer_ga,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
+    evaluate_forget_remain_test(og_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+    ga_train = Unlearner(og_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    remain_accuracy,remain_loss,remain_ece = ga_train.evaluate(remain_eval_loader)
+    test_accuracy,test_loss,test_ece = ga_train.evaluate(test_loader)
+    forget_accuracy,forget_loss,forget_ece = ga_train.evaluate(forget_eval_loader)
+    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
+    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,0,0,0)
+    return og_model,dict
+
 def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,seed):
     impair_time = 0.0
     print("\nNaive Unlearning:")
