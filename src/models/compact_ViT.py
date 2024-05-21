@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 from einops import rearrange, repeat
 
-# helpers
 
 
 # using implementation from https://github.com/lucidrains/vit-pytorch/blob/main/vit_pytorch/cct.py#L23
