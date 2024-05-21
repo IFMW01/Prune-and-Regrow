@@ -56,7 +56,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         print(f'\nSeed: {seed}')
         results_dict[seed] = {}
         model_dir = f'Results/{dataset_pointer}/{architecture}/{seed}'
-        save_dir = f"Results/{dataset_pointer}/{architecture}/UNLEARN/{tag}/{forget_amount}/{seed}/OMP/"
+        save_dir = f"Results/{dataset_pointer}/{architecture}/UNLEARN/{tag}/{forget_amount}/{seed}/OMP"
         utils.create_dir(save_dir)
         print(f"Acessing trained model on seed: {seed}")
         model_path = glob.glob(os.path.join(model_dir,'*.pth'))
@@ -68,7 +68,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_loss')
 
         results_dict[seed]["Naive Unlearning"] = {}
-        if not os.path.isfile(f"{save_dir}Naive.pth"):
+        if not os.path.isfile(f"{save_dir}/Naive.pth"):
             naive_model,results_dict[seed]["Naive Unlearning"] = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed]["Naive Unlearning"],seed)
             logit_distributions(naive_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'naive_model_loss')
             torch.save(naive_model,f"{save_dir}Naive.pth")
