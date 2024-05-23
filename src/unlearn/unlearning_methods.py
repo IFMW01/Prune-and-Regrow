@@ -256,17 +256,12 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     end_time = time.time()
     impair_time = round((end_time -start_time),3)
 
-    # add lr 
-    pre_train = vectorise_model(omp_model).count_nonzero()
-    print(f'Number of parameters pre training: {pre_train}')
     optimizer_omp,criterion = utils.set_hyperparameters(omp_model,architecture,lr=0.01)
     print("Pruning Complete:")
     evaluate_forget_remain_test(omp_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning pruned model:")
     omp_train = Unlearner(omp_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_omp, criterion, device,0,n_epochs,n_classes,seed)
     omp_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= omp_train.fine_tune()
-    post_train = vectorise_model(omp_model).count_nonzero()
-    print(f'Number of parameters pre training: {post_train}')
     forget_accuracy,forget_loss,forget_ece = omp_train.evaluate(forget_eval_loader)
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
@@ -339,12 +334,8 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     impair_time = round((end_time - start_time),3)
 
     print(f"Percentage Prune: {prune_rate[min]:.2f}")
-    print(f"\nModel accuracies post consine pruning:")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
-    # lrrrr
-
-
     optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,architecture,lr=0.01)
     cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     consine_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= cosine_train.fine_tune()
@@ -451,11 +442,9 @@ def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test
    return ls_model,dict
 
 def vectorise_model(model):
-    """Convert Paramaters to Vector form."""
     return Params2Vec(model.parameters())
 
 def cosine_similarity(base_weights, model_weights):
-    """Calculate the cosine similairty between two vectors """
     return torch.nan_to_num(torch.clip(torch.dot(
         base_weights, model_weights
     ) / (
