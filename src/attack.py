@@ -5,9 +5,7 @@ import utils
 import json
 import glob
 import numpy as np
-from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.model_selection import train_test_split
-from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import torch.nn as nn
 import torch.optim as optim
@@ -17,55 +15,6 @@ from torch.utils.data import DataLoader
 from Trainer import Trainer
 import random
 
-def attack_models_old(num_models,x_train,y_train,x_test,y_test,attack_model,save_dir,device):
-  for i in range(num_models):
-    utils.set_seed(i)
-    if attack_model == 'xgb':
-        params = {
-            'learning_rate': 0.05,
-            'n_estimators': 150,
-            'max_depth': 8,
-            'min_child_weight': 0.5,
-            'subsample': 0.5,
-            'colsample_bytree': 0.5,
-            'reg_alpha': 0.1,
-            'reg_lambda': 0.1,
-            'scale_pos_weight': 1,
-            'random_state': i,
-            'device':device
-        }
-        model = XGBClassifier(**params)
-        model.fit(x_train, y_train)
-        save_name = f'xgboost_model_{i}.model'
-        save_path = f"{save_dir}/{save_name}"
-        model.save_model(save_path)
-    elif attack_model == 'tabnet':
-      if not isinstance(x_train, np.ndarray):
-        x_train = x_train.values
-        x_test = x_test.values
-        y_train = y_train.values
-        y_test = y_test.values
-        
-      # x_train = x_train.to(device)
-      # y_train = y_train.to(device)
-      # x_test = x_test.to(device)
-      # y_test = y_test.to(device)
-
-      model = TabNetClassifier(  n_d = 32,
-      n_a = 32,seed =i,verbose=1 )
-      model
-      model.fit(x_train, y_train,
-      eval_set=[(x_train, y_train),(x_test, y_test)],
-      max_epochs = 50,
-      patience =50,
-      eval_metric= 'auc'
-      )
-      save_name = f'tabnet_model_{i}.pth'
-      save_path = f"{save_dir}/{save_name}"
-      torch.save(model, save_path)
-       
-    print(f"ATTACK MODEL: {save_name} STATS")
-    modelstats(model,x_train,x_test,y_train,y_test)
 
 def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,device,dict):
   criterion = nn.CrossEntropyLoss()    
