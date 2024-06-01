@@ -114,17 +114,6 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         loss_results = unlearn_metrics.mia_efficacy(stochastic_teacher_model,forget_loader,n_classes,device)
         results_dict[seed]["Stochastic Teacher Unlearning"]["Loss MIA"] =   loss_results   
 
-        # results_dict[seed]["MAX P Unlearning"] = {} 
-
-        # max_p_model,results_dict[seed]["MAX P Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epoch_repair,results_dict[seed]["MAX P Unlearning"],n_classes,architecture,seed)
-        # logit_distributions(max_p_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'max_p_model_loss')
-
-        # results_dict[seed]["MAX P Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(max_p_model, naive_model, forget_eval_loader, device)
-        # results_dict[seed]["MAX P Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(max_p_model,naive_model,forget_eval_loader,device)     
-
-        # loss_results = unlearn_metrics.mia_efficacy(max_p_model,forget_loader,n_classes,device)   
-        # results_dict[seed]["MAX P Unlearning"]["Loss MIA"] =   loss_results    
-
         results_dict[seed]["OMP Unlearning"] = {}
                                                         
         omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
@@ -145,14 +134,14 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         loss_results = unlearn_metrics.mia_efficacy(cosine_model,forget_loader,n_classes,device)    
         results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
-        results_dict[seed]["Kurtosis Unlearning"] = {} 
-        kk_model,results_dict[seed]["Kurtosis Unlearning"] = um.kurtosis_of_kurtoses_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Kurtosis Unlearning"],n_classes,architecture,seed)
-        logit_distributions(kk_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'kk_model_loss')
+        results_dict[seed]["POP"] = {} 
+        pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,seed)
+        logit_distributions(pop_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'pop_model_loss')
 
-        results_dict[seed]["Kurtosis Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(kk_model, naive_model, forget_eval_loader, device)
-        results_dict[seed]["Kurtosis Unlearning"]["JS divergance"]  = unlearn_metrics.JS_divergence(kk_model,naive_model,forget_eval_loader,device)
-        loss_results = unlearn_metrics.mia_efficacy(kk_model,forget_loader,n_classes,device) 
-        results_dict[seed]["Kurtosis Unlearning"]["Loss MIA"] =   loss_results   
+        results_dict[seed]["POP"]["Activation distance"]  = unlearn_metrics.actviation_distance(pop_model, naive_model, forget_eval_loader, device)
+        results_dict[seed]["POP"]["JS divergance"]  = unlearn_metrics.JS_divergence(pop_model,naive_model,forget_eval_loader,device)
+        loss_results = unlearn_metrics.mia_efficacy(pop_model,forget_loader,n_classes,device) 
+        results_dict[seed]["POP"]["Loss MIA"] =   loss_results   
 
         results_dict[seed]["Amnesiac Unlearning"] = {} 
         randl_model,results_dict[seed]["Amnesiac Unlearning"] = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)

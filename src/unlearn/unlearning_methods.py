@@ -65,9 +65,6 @@ def evaluate_forget_remain_test(model,forget_eval_loader,remain_eval_loader,test
 def load_model(path,architecture,lr,device):
     model = torch.load(path)
     model.to(device)
-    # if architecture == 'ViTspec' or architecture == 'ViTspec':
-    #     optimizer = optim.Adam(model.parameters(), lr=lr)
-    # else:
     optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
     criterion = torch.nn.CrossEntropyLoss()
     return model,optimizer,criterion
@@ -193,7 +190,6 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
             # Calculate the true label loss
             label_loss = criterion(student_logits,labels)
             teacher_loss =  criterion(teacher_logits,labels)
-            # Weighted sum of the two losses
             loss = soft_target_loss_weight * soft_targets_loss + ce_loss_weight * label_loss
             loss.backward()
             optimizer.step()
@@ -209,8 +205,6 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
   print("\n")
   utils.set_seed(seed)
   kd_bad_lr  = 0.01
-  if architecture == 'ViTspec' or architecture == 'ViTspec':
-      kd_bad_lr  = 0.0001
       
   student_model,bad_optimizer,criterion,= load_model(path,architecture,kd_bad_lr,device)
 
@@ -235,17 +229,6 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
-def global_unstructured_pruning(model,pruning_ratio):
-    all_weights = []
-    for param in model.parameters():
-        all_weights.append(param.data.view(-1))
-    all_weights = torch.cat(all_weights)
-    threshold = np.percentile(all_weights.cpu().numpy(),pruning_ratio)
-
-    for param in model.parameters():
-        param.data[param.data.abs() < threshold] = 0
-    return model
-
 def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
     print("\nOMP Unlearning:")
     print("\n")
@@ -267,49 +250,14 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return omp_model,dict
 
-# MAX PRUNE UNLEARNING
+# CONSINE OMP PRUNE UNLEARNING
 
-def max_prune_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
-    print("\nOMP Unlearning:")
-    print("\n")
-    utils.set_seed(seed)
-    max_p_model,opimizer,criterion,= load_model(path,architecture,0.01,device)
-    start_time = time.time()
-    max_p_model = max_global_prune_without_masks(max_p_model,0.01)
-    end_time = time.time()
-    impair_time = round((end_time -start_time),3)
-
-    optimizer_max_p,criterion = utils.set_hyperparameters(max_p_model,architecture,lr=0.01)
-    print("Pruning Complete:")
-    evaluate_forget_remain_test(max_p_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    print("\nFine tuning pruned model:")
-    max_p_train = Unlearner(max_p_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_max_p, criterion, device,0,n_epochs,n_classes,seed)
-    max_p_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= max_p_train.fine_tune()
-    forget_accuracy,forget_loss,forget_ece = max_p_train.evaluate(forget_eval_loader)
-    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
-    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
-    return max_p_model,dict
-
-  # CONSINE OMP PRUNE UNLEARNING
-
-def kurtosis_of_kurtoses(model):
-  kurtosis = []
-  for mod in model.modules():
-      if hasattr(mod, "weight"):
-          if isinstance(mod.weight, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.weight.cpu().detach().numpy().flatten(), fisher=False))
-      if hasattr(mod, "bias"):
-          if isinstance(mod.bias, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.bias.cpu().detach().numpy().flatten(),  fisher=False))
-  kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
-  return kurtosis_kurtosis
 
 def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\nConsine Unlearning:")
     print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
-    # add lr 
 
     base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
@@ -344,7 +292,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return consine_model,dict
 
-def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
+def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\n Unsafe Unlearning:")
     print("\n")
     prune_rate = torch.linspace(0,1,101)
@@ -368,11 +316,6 @@ def kurtosis_of_kurtoses_unlearning(path,device,remain_loader,remain_eval_loader
         dists.append(torch.dist(i, torch.Tensor([1, 1])))
     min = torch.argmin(torch.Tensor(dists))
 
-    # kurtosis_of_kurtoses_model = kurtosis_of_kurtoses(base_model)
-    # if kurtosis_of_kurtoses_model < torch.exp(torch.Tensor([1])):
-    #     prune_modifier = 1/torch.log2(torch.Tensor([kurtosis_of_kurtoses_model]))
-    # else:
-    #     prune_modifier = 1/torch.log(torch.Tensor([kurtosis_of_kurtoses_model]))
     unsafe_prune = prune_rate[min]+0.1
     if unsafe_prune>=0.96:
         unsafe_prune = 0.95
@@ -493,6 +436,30 @@ def global_prune_with_masks(model, amount):
     )
     return model
 
+# MAX PRUNE UNLEARNING
+# NOT USED
+
+def max_prune_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
+    print("\nOMP Unlearning:")
+    print("\n")
+    utils.set_seed(seed)
+    max_p_model,opimizer,criterion,= load_model(path,architecture,0.01,device)
+    start_time = time.time()
+    max_p_model = max_global_prune_without_masks(max_p_model,0.01)
+    end_time = time.time()
+    impair_time = round((end_time -start_time),3)
+
+    optimizer_max_p,criterion = utils.set_hyperparameters(max_p_model,architecture,lr=0.01)
+    print("Pruning Complete:")
+    evaluate_forget_remain_test(max_p_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+    print("\nFine tuning pruned model:")
+    max_p_train = Unlearner(max_p_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_max_p, criterion, device,0,n_epochs,n_classes,seed)
+    max_p_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= max_p_train.fine_tune()
+    forget_accuracy,forget_loss,forget_ece = max_p_train.evaluate(forget_eval_loader)
+    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
+    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
+    return max_p_model,dict
+
 class MaxUnstructured(torch.nn.utils.prune.BasePruningMethod):
 
     PRUNING_TYPE = "unstructured"
@@ -550,6 +517,18 @@ def max_global_prune_without_masks(model, amount):
     VectorToParams(prune_net_vec, model.parameters())
     return model
 
+
+def kurtosis_of_kurtoses(model):
+  kurtosis = []
+  for mod in model.modules():
+      if hasattr(mod, "weight"):
+          if isinstance(mod.weight, torch.nn.Parameter):
+              kurtosis.append(stats.kurtosis(mod.weight.cpu().detach().numpy().flatten(), fisher=False))
+      if hasattr(mod, "bias"):
+          if isinstance(mod.bias, torch.nn.Parameter):
+              kurtosis.append(stats.kurtosis(mod.bias.cpu().detach().numpy().flatten(),  fisher=False))
+  kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
+  return kurtosis_kurtosis
 
 
 
