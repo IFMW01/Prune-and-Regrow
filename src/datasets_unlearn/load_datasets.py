@@ -17,8 +17,7 @@ from torch.utils.data import Dataset
 
 
 seed = 42
-labels = np.load('./labels/speech_commands_labels.npy')
-labels = labels.tolist()
+
 
 def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     global labels
@@ -37,13 +36,9 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     elif dataset_pointer == 'Ravdess':
         train_set, test_set = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/ravdess_label.npy')
-    elif dataset_pointer == 'CIFAR10':
-        transform = transforms.Compose([transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        train_set = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                                download=True, transform=transform)
-        test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                            download=True, transform=transform)
+    else:
+        raise Exception("Enter correct dataset pointer")
+        
     labels = labels.tolist()
 
     if unlearnng:
