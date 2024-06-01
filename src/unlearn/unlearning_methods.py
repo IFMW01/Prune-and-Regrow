@@ -309,9 +309,9 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     impair_time = round((end_time-start_time),3)
     print(f"Percentage Prune: {unsafe_prune:.2f}")
 
-    print(f"\nModel accuracies post consine pruning:")
+    print(f"\nModel accuracies post POP:")
     evaluate_forget_remain_test(pop_model,forget_loader,remain_eval_loader,test_loader,device)
-    print("\nFine tuning cosine model:")
+    print("\nFine tuning POP model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(pop_model,architecture,lr=0.01)
     kk_train = Unlearner(pop_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
     pop_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
