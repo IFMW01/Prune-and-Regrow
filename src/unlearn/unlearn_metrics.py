@@ -17,6 +17,7 @@ with open("./configs/attack_config.json", "r") as a:
 with open("./configs/unlearn_config.json","r") as u:
     config_unlearn = json.load(u)
 
+# Extracting values form the relevant configs
 dataset_pointer = config_base.get("dataset_pointer",None)
 pipeline = config_base.get("pipeline",None)
 architecture = config_base.get("architecture",None)
@@ -31,6 +32,7 @@ n_epochs_fine_tune = config_unlearn.get("n_epochs_fine_tune",None)
 forget_percentage = config_unlearn.get("forget_percentage",None)
 pruning_ratio = config_unlearn.get("pruning_ratio",None)
 
+# A DIST Metric Calculation
 def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     distances = []
     for batch, (data,label) in enumerate(dataloader):
@@ -43,6 +45,7 @@ def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     distances = torch.cat(distances, axis = 0)
     return distances.mean().item()
 
+# JS DIST Metric Calculation
 def JS_divergence(unlearn_model, retrain_model,dataloader,device):
     js_divergence = []
     for batch, (data,label) in enumerate(dataloader):
@@ -58,7 +61,7 @@ def JS_divergence(unlearn_model, retrain_model,dataloader,device):
         js_divergence.append(js)
     return statistics.mean(js_divergence)
 
-
+# MIA Efficacy Metric Calculation
 def mia_efficacy(model,forget_loader,n_classes,device):
     df_forget_loss = utils.logits_unlearn(model,forget_loader,device)
     attack_model_list=  glob.glob(f'Results/{dataset_pointer}/{architecture}/MIA/Attack/*.pth')

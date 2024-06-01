@@ -17,8 +17,6 @@ def posemb_sincos_2d(h, w, dim, temperature: int = 10000, dtype = torch.float32)
     pe = torch.cat((x.sin(), x.cos(), y.sin(), y.cos()), dim=1)
     return pe.type(dtype)
 
-# classes
-
 class FeedForward(nn.Module):
     def __init__(self, dim, hidden_dim):
         super().__init__()

@@ -5,6 +5,8 @@ from copy import deepcopy
 from torchmetrics.classification import MulticlassCalibrationError
 import time 
 
+# Class to do gradient ascent and amnesaic impair followed by fine tuning (which is used as the repair step for all unlearning methods)
+
 class Unlearner():
     def __init__(self,model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed):
         self.model = model
@@ -86,7 +88,6 @@ class Unlearner():
             start_time = time.time()
             
             self.model.train()
-            epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.remain_loader):
                 if data.device.type == 'cpu':
@@ -110,58 +111,6 @@ class Unlearner():
             print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
 
         return self.model,train_accuracy,train_loss,train_ece,test_accuracy,test_loss,test_ece,self.n_epoch_repair,fine_tune_time
-
-    def repair(self):
-        
-        utils.set_seed(self.seed)
-        train_ece = 0 
-        test_ece = 0
-        best_test_accuracy = 0 
-        best_test_loss = float('inf')
-        best_time = 0
-        repair_time = 0
-        epoch_time = 0
-
-        for epoch in tqdm(range(0, self.n_epoch_repair)):
-            start_time = time.time()
-            
-            self.model.train()
-            epoch_loss = 0.0
-
-            for batch_idx, (data, target) in enumerate(self.remain_loader):
-                if data.device.type == 'cpu':
-                    data = data.to(self.device)
-                if target.device.type == 'cpu':
-                    target = target.to(self.device)
-                self.optimizer.zero_grad()
-                output = self.model(data)
-                loss = self.criterion(output, target)
-                loss.backward()
-                self.optimizer.step()
-
-            end_time = time.time()
-            epoch_time = end_time - start_time
-            repair_time += round(epoch_time,3)
-
-            train_accuracy,train_loss,train_ece = self.evaluate(self.remain_eval_loader)
-            test_accuracy,test_loss, test_ece= self.evaluate(self.test_loader)
-
-            if test_accuracy > best_test_accuracy:
-                best_time = repair_time
-                best_test_accuracy = test_accuracy
-                best_test_loss = test_loss
-                best_model = deepcopy(self.model)
-                best_model_epoch = epoch
-                best_train_accuracy = train_accuracy
-                best_train_loss = train_loss
-                best_train_ece = train_ece
-                best_test_ece = test_ece
-
-            print(f"Epoch: {epoch}/{self.n_epoch_repair}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
-            print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
-
-        print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
-        return best_model,best_train_accuracy,best_train_loss,best_train_ece,best_test_accuracy,best_test_loss,best_test_ece,best_model_epoch,best_time
     
     def amnesiac(self):
         
@@ -175,7 +124,6 @@ class Unlearner():
             start_time = time.time()
             self.model.train()
             self.model.train()
-            epoch_loss = 0.0
 
             for batch_idx, (data, target) in enumerate(self.forget_loader):
                 if data.device.type == 'cpu':

@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from datasets import load_dataset
 from tqdm import tqdm
 
+# NOT PRESENTED IN THESIS
 
 def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
   os.makedirs(destination_folder, exist_ok=True) 

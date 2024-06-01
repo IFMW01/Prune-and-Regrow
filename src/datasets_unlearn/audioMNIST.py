@@ -15,6 +15,8 @@ from sklearn.model_selection import train_test_split
 labels = np.load('./labels/audiomnist_labels.npy')
 labels = labels.tolist()
 
+#Script to process audioMNIST
+
 def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsample=16000):
   os.makedirs(destination_folder, exist_ok=True) 
   for idx, data in enumerate(tqdm(data_folder)):
