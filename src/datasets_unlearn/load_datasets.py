@@ -15,6 +15,7 @@ import utils
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
+
 seed = 42
 labels = np.load('./labels/speech_commands_labels.npy')
 labels = labels.tolist()

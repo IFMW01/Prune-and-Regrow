@@ -46,7 +46,7 @@ def create_speechcommands(pipeline,pipeline_on_wav,dataset_pointer):
       with open("./SpeechCommands/speech_commands_v0.02/testing_list.txt", "r") as file:
         for line in file:
             test_path_arr.append((f"./SpeechCommands/speech_commands_v0.02/{line.strip()}"))
-
+      # Saves the loaded data in the correct waveform format in a separate directory
       sc_train = []
       sc_test = []       
       if pipeline:

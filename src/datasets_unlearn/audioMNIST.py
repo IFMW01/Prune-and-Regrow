@@ -38,6 +38,7 @@ def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
     if os.path.isdir(f'{temp_dir}'):
         all_data = glob.glob(f'{temp_dir}/*.pth')   
     else:
+      # Saves the loaded data in the correct waveform format in a separate directory
       if not os.path.isdir('./AudioMNIST'):
           git_clone_command = ['git', 'clone', 'https://github.com/soerenab/AudioMNIST.git']
           subprocess.run(git_clone_command, check=True)
