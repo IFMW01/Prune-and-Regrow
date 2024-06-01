@@ -72,11 +72,13 @@ def load_model(path,architecture,lr,device):
     criterion = torch.nn.CrossEntropyLoss()
     return model,optimizer,criterion
 
+# Accuracy evaluation
 def acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece):
     print(f"Forget accuracy:{forget_accuracy:.2f}%\tForget loss:{forget_loss:.2f}\tForget ECE:{forget_ece:.2f}")
     print(f"Remain accuracy:{remain_accuracy:.2f}%\tRemain loss:{remain_loss:.2f}\tRemain ECE:{remain_ece:.2f}")
     print(f"Test accuracy:{test_accuracy:.2f}%\tTest loss:{test_loss:.2f}\tTest ECE:{test_ece:.2f}")
 
+# Updates results dictionary
 def add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time):
     dict['Remain accuracy'] = remain_accuracy
     dict['Remain loss'] = remain_loss
@@ -282,7 +284,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     return consine_model,dict
 
 def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
-    print("\n Unsafe Unlearning:")
+    print("\n POP Unlearning:")
     print("\n")
     prune_rate = torch.linspace(0,1,101)
     cosine_sim = []
@@ -309,25 +311,25 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     if unsafe_prune>=0.96:
         unsafe_prune = 0.95
     
-    kk_model = global_prune_without_masks(base_model, float(unsafe_prune))
+    pop_model = global_prune_without_masks(base_model, float(unsafe_prune))
     end_time = time.time()
-    pre_train = vectorise_model(kk_model).count_nonzero()
+    pre_train = vectorise_model(pop_model).count_nonzero()
     print(f'Number of parameters pre training: {pre_train}')
     impair_time = round((end_time-start_time),3)
     print(f"Percentage Prune: {unsafe_prune:.2f}")
 
     print(f"\nModel accuracies post consine pruning:")
-    evaluate_forget_remain_test(kk_model,forget_loader,remain_eval_loader,test_loader,device)
+    evaluate_forget_remain_test(pop_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
-    optimizer_cosine,criterion = utils.set_hyperparameters(kk_model,architecture,lr=0.01)
-    kk_train = Unlearner(kk_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
-    kk_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
-    post_train = vectorise_model(kk_model).count_nonzero()
+    optimizer_cosine,criterion = utils.set_hyperparameters(pop_model,architecture,lr=0.01)
+    kk_train = Unlearner(pop_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
+    pop_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
+    post_train = vectorise_model(pop_model).count_nonzero()
     print(f'Number of parameters post training: {post_train}')
     forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_eval_loader)
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
-    return kk_model,dict
+    return pop_model,dict
 
 # Random Label Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
 
@@ -384,6 +386,7 @@ def cosine_similarity(base_weights, model_weights):
         * torch.linalg.norm(model_weights)
     ),-1, 1),0)
 
+# Removing masks from pruned model
 def global_prune_without_masks(model, amount):
     parameters_to_prune = []
     for mod in model.modules():
@@ -408,6 +411,7 @@ def global_prune_without_masks(model, amount):
                 prune.remove(mod, "bias")
     return model
 
+# Standard OMP with masks
 def global_prune_with_masks(model, amount):
     parameters_to_prune = []
     for mod in model.modules():
