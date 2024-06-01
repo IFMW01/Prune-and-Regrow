@@ -3,6 +3,7 @@ from torch import nn
 from einops import rearrange
 from einops.layers.torch import Rearrange
 
+#  Implementation modified from https://github.com/lucidrains/vit-pytorch/blob/main/vit_pytorch/simple_vit.py
 def pair(t):
     return t if isinstance(t, tuple) else (t, t)
 
