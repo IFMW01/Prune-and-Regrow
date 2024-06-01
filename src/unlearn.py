@@ -136,12 +136,12 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["POP"]["Loss MIA"] =   loss_results   
 
         results_dict[seed]["Amnesiac Unlearning"] = {} 
-        randl_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
-        logit_distributions(randl_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'randl_model_loss')
+        amnesiac_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
+        logit_distributions(amnesiac_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'amnesiac_model_loss')
 
-        results_dict[seed]["Amnesiac Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(randl_model, naive_model, forget_eval_loader, device)
-        results_dict[seed]["Amnesiac Unlearning"]["JS divergance"]  = unlearn_metrics.JS_divergence(randl_model,naive_model,forget_eval_loader,device)
-        loss_results = unlearn_metrics.mia_efficacy(randl_model,forget_loader,n_classes,device)   
+        results_dict[seed]["Amnesiac Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(amnesiac_model, naive_model, forget_eval_loader, device)
+        results_dict[seed]["Amnesiac Unlearning"]["JS divergance"]  = unlearn_metrics.JS_divergence(amnesiac_model,naive_model,forget_eval_loader,device)
+        loss_results = unlearn_metrics.mia_efficacy(amnesiac_model,forget_loader,n_classes,device)   
         results_dict[seed]["Amnesiac Unlearning"]["Loss MIA"] =   loss_results   
 
         results_dict[seed]["Label Smoothing Unlearning"] = {} 

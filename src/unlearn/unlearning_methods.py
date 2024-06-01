@@ -322,9 +322,9 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return pop_model,dict
 
-# Random Label Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
+# Amnesiac Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
 
-def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,architecture,seed):
+def amnesiac_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,architecture,seed):
     print("\nAmnesiac Unlearning:")
     print("\n")
     # add lr
@@ -422,99 +422,6 @@ def global_prune_with_masks(model, amount):
     )
     return model
 
-# MAX PRUNE UNLEARNING
-# NOT USED
-
-def max_prune_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
-    print("\nOMP Unlearning:")
-    print("\n")
-    utils.set_seed(seed)
-    max_p_model,opimizer,criterion,= load_model(path,architecture,0.01,device)
-    start_time = time.time()
-    max_p_model = max_global_prune_without_masks(max_p_model,0.01)
-    end_time = time.time()
-    impair_time = round((end_time -start_time),3)
-
-    optimizer_max_p,criterion = utils.set_hyperparameters(max_p_model,architecture,lr=0.01)
-    print("Pruning Complete:")
-    evaluate_forget_remain_test(max_p_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    print("\nFine tuning pruned model:")
-    max_p_train = Unlearner(max_p_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_max_p, criterion, device,0,n_epochs,n_classes,seed)
-    max_p_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= max_p_train.fine_tune()
-    forget_accuracy,forget_loss,forget_ece = max_p_train.evaluate(forget_eval_loader)
-    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
-    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
-    return max_p_model,dict
-
-class MaxUnstructured(torch.nn.utils.prune.BasePruningMethod):
-
-    PRUNING_TYPE = "unstructured"
-
-    def __init__(self, amount):
-        _validate_pruning_amount_init(amount)
-        self.amount = amount
-
-    def compute_mask(self, t, default_mask):
-        tensor_size = t.nelement()
-        nparams_toprune = _compute_nparams_toprune(self.amount, tensor_size)
-        _validate_pruning_amount(nparams_toprune, tensor_size)
-
-        mask = default_mask.clone(memory_format=torch.contiguous_format)
-
-        if nparams_toprune != 0:
-
-            topk = torch.topk(torch.abs(t).view(-1), k=nparams_toprune, largest=True)
-            mask.view(-1)[topk.indices] = 0
-
-        return mask
-
-    @classmethod
-    def apply(cls, module, name, amount, importance_scores=None):
-        return super().apply(
-            module, name, amount=amount, importance_scores=importance_scores
-        )
-    
-def max_global_prune_without_masks(model, amount):
-    parameters_to_prune = []
-    for mod in model.modules():
-        if hasattr(mod, "weight"):
-            if isinstance(mod.weight, torch.nn.Parameter):
-                parameters_to_prune.append((mod, "weight"))
-        if hasattr(mod, "bias"):
-            if isinstance(mod.bias, torch.nn.Parameter):
-                parameters_to_prune.append((mod, "bias"))
-    parameters_to_prune = tuple(parameters_to_prune)
-    prune.global_unstructured(
-        parameters_to_prune,
-        pruning_method=MaxUnstructured,
-        amount=amount,
-    )
-    for mod in model.modules():
-        if hasattr(mod, "weight_orig"):
-            if isinstance(mod.weight_orig, torch.nn.Parameter):
-                prune.remove(mod, "weight")
-        if hasattr(mod, "bias_orig"):
-            if isinstance(mod.bias_orig, torch.nn.Parameter):
-                prune.remove(mod, "bias")  
-    prune_net_vec = vectorise_model(model)
-    zero_indexes = torch.where(prune_net_vec==0)
-    reset_init = torch.nn.init.xavier_uniform_(torch.zeros_like(prune_net_vec.view(1, -1)))
-    prune_net_vec[zero_indexes] = reset_init.flatten()[zero_indexes]
-    VectorToParams(prune_net_vec, model.parameters())
-    return model
-
-
-def kurtosis_of_kurtoses(model):
-  kurtosis = []
-  for mod in model.modules():
-      if hasattr(mod, "weight"):
-          if isinstance(mod.weight, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.weight.cpu().detach().numpy().flatten(), fisher=False))
-      if hasattr(mod, "bias"):
-          if isinstance(mod.bias, torch.nn.Parameter):
-              kurtosis.append(stats.kurtosis(mod.bias.cpu().detach().numpy().flatten(),  fisher=False))
-  kurtosis_kurtosis = stats.kurtosis(kurtosis, fisher=False)
-  return kurtosis_kurtosis
 
 
 
