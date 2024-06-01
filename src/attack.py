@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from Trainer import Trainer
 import random
 
+# Creates attack models and saves then in predefined folders that are created 
 
 def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,device,dict):
   criterion = nn.CrossEntropyLoss()    
@@ -32,33 +33,7 @@ def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,de
     torch.save(best_model, save_path)
   return dict
 
-
-def modelstats(model,x_train,x_test,y_train,y_test):
-  y_pred_train = model.predict(x_train)
-  y_pred_test = model.predict(x_test)
-
-  train_accuracy = accuracy_score(y_train, y_pred_train)
-  test_accuracy = accuracy_score(y_test, y_pred_test)
-
-  train_precision = precision_score(y_train, y_pred_train,zero_division=1)
-  test_precision = precision_score(y_test, y_pred_test,zero_division=1)
-
-  train_recall = recall_score(y_train, y_pred_train)
-  test_recall = recall_score(y_test, y_pred_test)
-
-  train_f1 = f1_score(y_train, y_pred_train)
-  test_f1 = f1_score(y_test, y_pred_test)
-
-  print("Training Accuracy:", train_accuracy)
-  print("Testing Accuracy:", test_accuracy)
-  print("Training Precision:", train_precision)
-  print("Testing Precision:", test_precision)
-  print("Training Recall:", train_recall)
-  print("Testing Recall:", test_recall)
-  print("Training F1 Score:", train_f1)
-  print("Testing F1 Score:", test_f1)
-
-
+# Creates balanced datatset to train attack model from loss outputs of trained models
 def create_mia_datasets(data_directory):
   df = pd.DataFrame()
   list_of_files = glob.glob(f'{data_directory}/*.csv')
@@ -103,14 +78,9 @@ def main(config_attack,config_base):
   if not os.path.exists(dataset_dir):
       print(f"There are no models with this {architecture} for this {dataset_pointer} in the MIA directory. Please train relevant models")
       return
-  # logit_dir = dataset_dir + '/Logits'
   loss_dir = dataset_dir + '/Attack'
-  # logit_attack = logit_dir +"/Attack"
-  # loss_attack = loss_dir +"/Attack"
-  # utils.create_dir(logit_attack)
   utils.create_dir(loss_dir)
   results_dict = {}
-  # train_set_logits,test_set_logits = create_mia_datasets(logit_dir)
   train_set_loss,test_set_loss = create_mia_datasets(dataset_dir)
   train_loss,test_loss = create_mia_loader(train_set_loss,test_set_loss)
   results_dict['Loss'] = {}

@@ -5,6 +5,7 @@ from copy import deepcopy
 import time
 from torchmetrics.classification import MulticlassCalibrationError
 
+# Trainer class used to train base and Naive models
 class Trainer():
     def __init__(self,model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epoch,n_classes,seed):
         self.model = model
@@ -17,7 +18,7 @@ class Trainer():
         self.n_epoch = n_epoch
         self.n_classes = n_classes
         self.seed = seed
-
+# Evaluates performance obtaining loss, acc and ece
     def evaluate(self,dataloader):
         self.model.eval()
         model_loss = 0.0
@@ -42,7 +43,7 @@ class Trainer():
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
         return accuracy,model_loss, ece
-
+# Training of the model
     def train(self):
         
         utils.set_seed(self.seed)
@@ -93,7 +94,6 @@ class Trainer():
 
                 print(f"Epoch: {epoch}/{self.n_epoch}\tTrain accuracy: {train_accuracy:.2f}%\tTrain loss: {train_loss:.6f}\tTrain ECE {train_ece:.2f}")
                 print(f'Test loss: {test_loss:.6f}, Test accuracy: {test_accuracy:.2f}%\tTest ECE {test_ece:.2f}"')
-
 
         print(f"Best model achieved at epoch: {best_model_epoch}\t Train accuracy: {best_train_accuracy:.2f}\t Test accuracy: {best_test_accuracy:.2f}")
 

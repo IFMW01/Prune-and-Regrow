@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+# Modified from VGGish Implemntation: https://github.com/harritaylor/torchvggish/blob/master/docs/_example_download_weights.ipynb
+
 class VGGishMel(nn.Module):
     def __init__(self,in_channels,num_classes):
         super(VGGishMel, self).__init__()

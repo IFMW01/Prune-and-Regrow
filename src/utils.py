@@ -12,6 +12,9 @@ import random
 import torch.nn.functional as F
 from torchmetrics.classification import MulticlassCalibrationError
 
+# Utility functions used throught the sctipt
+
+# Updates the result dict
 def update_dict(dict,best_time,best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece):
     dict['Train time'] = best_time
     dict['Best epoch'] = best_epoch
@@ -23,6 +26,7 @@ def update_dict(dict,best_time,best_epoch,train_accuracy,train_loss,train_ece,te
     dict['Test ece'] = test_ece
     return dict
 
+# Sets the seed for reproducibility
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -31,22 +35,27 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+# Counts the number of parameters of a model
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+# Sets model hyperparameters
 def set_hyperparameters(model,architecture,lr):
     optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     return optimizer,criterion
 
+# Gets the device
 def get_device():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     return device
 
+# Creates directory
 def create_dir(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+# Gets the intailised model for each architetcure 
 def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     if architecture == 'VGGishMel':
         model = VGGishMel(n_inputs,n_classes)
@@ -115,11 +124,9 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion
 
+# Gets the loss of the model on datasets
 def logits(model,train_loader,test_loader,device):
     model.eval()
-    # df_train_logits = pd.DataFrame()
-    # df_test_logits = pd.DataFrame()
-    # df_all_logits = pd.DataFrame()
     df_train_loss = pd.DataFrame()
     df_test_loss = pd.DataFrame()
     df_all_loss = pd.DataFrame()
@@ -150,6 +157,7 @@ def logits(model,train_loader,test_loader,device):
     df_all_loss = pd.concat([df_train_loss,df_test_loss],ignore_index=True)
     return df_all_loss
 
+# Gets the loss of the model on the forget dataset
 def logits_unlearn(model,forget_loader,device):
     model.eval()
     df_forget_loss = pd.DataFrame()
@@ -165,6 +173,8 @@ def logits_unlearn(model,forget_loader,device):
     df_forget_loss['label'] = 1
     return df_forget_loss
 
+
+# Provides accuracy score on a dataset for a model
 def evaluate(model,dataloader,device):
     model.eval()
     correct = 0
@@ -179,6 +189,7 @@ def evaluate(model,dataloader,device):
     accuracy = 100 * correct / total
     return accuracy
 
+# Provides accuracy score on a dataset for a model
 def evaluate_test(model,test_loader,criterion,n_classes,device):
     metric = MulticlassCalibrationError(n_classes, n_bins=15, norm='l1')
     model.eval()
