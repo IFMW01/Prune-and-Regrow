@@ -5,14 +5,13 @@ from Trainer import Trainer
 from datasets_unlearn import load_datasets as ld
 import utils 
 
-# from transformer import SimpleViT
-
+#Train base models for seeds proivded in the config automatically and save the resulting model along with saving loss outputs for train and test set
+ 
 def create_base_model(train,save_model_path,save_mia_path,device,seed,train_loader,test_loader,results_dict):
     results_dict[f'{seed}'] = {}
     best_model,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece,best_epoch,best_time= train.train()
     torch.save(best_model,f"{save_model_path}Model_{test_acc:.5f}_{test_loss:.5f}.pth")
     df_loss_outputs = utils.logits(best_model,train_loader,test_loader,device)
-    # df_softmax_outputs.to_csv(f'{save_path}softmax_outputs.csv',index = False)
     df_loss_outputs.to_csv(f'{save_model_path}loss_outputs.csv',index = False)
     df_loss_outputs.to_csv(f'{save_mia_path}{seed}_loss_outputs.csv',index = False)
     results_dict[f'{seed}'] = utils.update_dict(results_dict[f'{seed}'],best_time,best_epoch,train_accuracy,train_loss,train_ece,test_acc,test_loss,test_ece)
@@ -39,7 +38,7 @@ def main(config):
     device = utils.get_device()
     results_dict = {}
 
-
+    # Iterates over the provided seeds and creates model 
     train_loader,train_eval_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
     for seed in seeds:
 

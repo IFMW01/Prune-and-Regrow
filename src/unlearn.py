@@ -13,11 +13,12 @@ from unlearn import Unlearner
 from torch.utils.data import DataLoader
 from datasets_unlearn import load_datasets as ld
 
-
+# gets the loss for an unlearned model
 def unlearn_logits(model,loader,device,save_dir,filename_loss):
     loss = utils.logits_unlearn(model,loader,device)
     loss.to_csv(f'{save_dir}{filename_loss}.csv',index = False)
 
+# gets the loss for an unlearned model on the ramin, forget and test set
 def logit_distributions(model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,filename_loss):
    unlearn_logits(model,remain_eval_loader,device,save_dir,f'{filename_loss}_remain')
    unlearn_logits(model,forget_eval_loader,device,save_dir,f'{filename_loss}_forget')
@@ -34,6 +35,7 @@ def randomise_lables(data_set):
         data_set[i][1] = current_label    
     return data_set
 
+# Creates the data loaders for remain, forget and test set as well as creating the random labelled datalaoder for AM
 def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
     remain_loader = DataLoader(remain_set, batch_size=256,
                                         shuffle=True)
@@ -49,6 +51,8 @@ def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
                                         shuffle=True)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
 
+
+# Calls all unlearning methods to be perfromed on the base models that have been created and saves the results
 def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,pruning_ratio,tag,device):
             
     results_dict = {}
@@ -64,7 +68,6 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
                 
         orginal_model,optimizer,criterion = um.load_model(model_path,architecture,0.01,device)
         results_dict[seed]["Original Model"] = {}
-        og_model,results_dict[seed]["Original Model"] = um.original_model(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Original Model"],n_classes,forget_amount,dataset_pointer,architecture,seed)
         logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_loss')
 
         results_dict[seed]["Naive Unlearning"] = {}
@@ -72,9 +75,9 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
             naive_model,results_dict[seed]["Naive Unlearning"] = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed]["Naive Unlearning"],seed)
             logit_distributions(naive_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'naive_model_loss')
             torch.save(naive_model,f"{save_dir}Naive.pth")
-            results_dict[seed]["Original Model"]["Activation distance"] = unlearn_metrics.actviation_distance(og_model, naive_model, forget_eval_loader, device)
-            results_dict[seed]["Original Model"]["JS divergance"]  = unlearn_metrics.JS_divergence(og_model,naive_model,forget_eval_loader,device)
-            loss_results = unlearn_metrics.mia_efficacy(og_model,forget_loader,n_classes,device)
+            results_dict[seed]["Original Model"]["Activation distance"] = unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device)
+            results_dict[seed]["Original Model"]["JS divergance"]  = unlearn_metrics.JS_divergence(orginal_model,naive_model,forget_eval_loader,device)
+            loss_results = unlearn_metrics.mia_efficacy(orginal_model,forget_loader,n_classes,device)
             results_dict[seed]["Original Model"]["Loss MIA"] = loss_results
 
             results_dict[seed]["Naive Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(naive_model, naive_model, forget_eval_loader, device)
@@ -167,7 +170,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     with open(f"{save_dir}unlearning_results.json",'w') as f:
         json.dump(results_dict,f)
     
-
+# Removes random instances from the dataset to form the forget and remain set
 def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_classes):
     train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
     forget_instances_num = math.ceil(((len(train_set)/100)*forget_percentage)) 
@@ -188,7 +191,7 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set
 
-
+# Removes random from the dataset to form the forget and remain set
 def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device):
     train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
     print(f"Number of classes to remove  {forget_classes_num}")
