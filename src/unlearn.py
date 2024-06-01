@@ -24,17 +24,6 @@ def logit_distributions(model,remain_eval_loader,forget_eval_loader,test_loader,
    unlearn_logits(model,forget_eval_loader,device,save_dir,f'{filename_loss}_forget')
    unlearn_logits(model,test_loader,device,save_dir,f'{filename_loss}_test')
      
-def randomise_lables(data_set):
-    labels = np.load('./labels/cifar10_labels.npy')
-    labels = labels.tolist()
-    for i in range(len(data_set)):
-        label = data_set[i][1]
-        current_label = label
-        while current_label == label:
-            current_label = random.randint(0, (len(labels)-1))  
-        data_set[i][1] = current_label    
-    return data_set
-
 # Creates the data loaders for remain, forget and test set as well as creating the random labelled datalaoder for AM
 def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
     remain_loader = DataLoader(remain_set, batch_size=256,
@@ -147,7 +136,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["POP"]["Loss MIA"] =   loss_results   
 
         results_dict[seed]["Amnesiac Unlearning"] = {} 
-        randl_model,results_dict[seed]["Amnesiac Unlearning"] = um.randl_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
+        randl_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
         logit_distributions(randl_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'randl_model_loss')
 
         results_dict[seed]["Amnesiac Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(randl_model, naive_model, forget_eval_loader, device)
@@ -180,14 +169,11 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
     num_forget_set = len(forget_set)
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
-    if dataset_pointer == 'CIFAR10':
-        forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-    elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':
-        forget_randl_set = forget_set
-        remain_set = ld.DatasetProcessor(remain_set,device)
-        forget_set = ld.DatasetProcessor(forget_set,device)
-        test_set = ld.DatasetProcessor(test_set,device)
-        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
+    forget_randl_set = forget_set
+    remain_set = ld.DatasetProcessor(remain_set,device)
+    forget_set = ld.DatasetProcessor(forget_set,device)
+    test_set = ld.DatasetProcessor(test_set,device)
+    forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set
 
@@ -196,19 +182,16 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
     train_set,test_set = ld.load_datasets(dataset_pointer,pipeline,True)
     print(f"Number of classes to remove  {forget_classes_num}")
     print("Creating remain and forget datasets")
-    if dataset_pointer == 'CIFAR10':
-        forget_randl_data = randomise_lables(forget_set,dataset_pointer)
-    elif dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or  dataset_pointer == 'Ravdess':        
-        forget_set,remain_set,test_set = um.class_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set)
-        num_remain_set = len(remain_set)
-        num_forget_set = len(forget_set)
-        print(f"Remain instances: {num_remain_set}")
-        print(f"Forget instances: {num_forget_set}")
-        forget_randl_set = forget_set
-        test_set = ld.DatasetProcessor(test_set,device)
-        remain_set = ld.DatasetProcessor(remain_set,device)
-        forget_set = ld.DatasetProcessor(forget_set,device)
-        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
+    forget_set,remain_set,test_set = um.class_removal(dataset_pointer,forget_classes_num,n_classes,train_set,test_set)
+    num_remain_set = len(remain_set)
+    num_forget_set = len(forget_set)
+    print(f"Remain instances: {num_remain_set}")
+    print(f"Forget instances: {num_forget_set}")
+    forget_randl_set = forget_set
+    test_set = ld.DatasetProcessor(test_set,device)
+    remain_set = ld.DatasetProcessor(remain_set,device)
+    forget_set = ld.DatasetProcessor(forget_set,device)
+    forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
 
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set

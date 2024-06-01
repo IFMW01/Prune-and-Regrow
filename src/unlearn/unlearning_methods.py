@@ -19,16 +19,10 @@ def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed
     utils.set_seed(seed)
     forget_set = []
     remain_set = train_set
-    if dataset_pointer == 'CIFAR10':
-        total_instances = len(remain_set)
-        random_indices = np.random.choice(total_instances, forget_instances_num, replace=False)
-        forget_set = [remain_set[i] for i in random_indices]
-        remain_set = [instance for i, instance in enumerate(remain_set) if i not in random_indices]
-    else:
-        print(len(remain_set))
-        print(type(remain_set))
-        forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
-        remain_set = list(set(remain_set) - set(forget_set))
+    print(len(remain_set))
+    print(type(remain_set))
+    forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
+    remain_set = list(set(remain_set) - set(forget_set))
     return remain_set,forget_set
 
 # Creates the forget and remain set for random Class Removal, ensuring that d forget is removed from d remain
@@ -117,10 +111,7 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    if dataset_pointer == 'CIFAR10':
-        ga_model,optimizer_ga,criterion = load_model(path,architecture,0.1,device)
-    else:
-        ga_model,optimizer_ga,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
+    ga_model,optimizer_ga,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
     evaluate_forget_remain_test(ga_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model,impair_time = ga_train.gradient_ascent()
@@ -337,23 +328,25 @@ def randl_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_lo
     print("\nAmnesiac Unlearning:")
     print("\n")
     # add lr
-    randl_model,optimizer_ft,criterion = load_model(path,architecture,0.001,device)
+    amnesiac_model,optimizer_ft,criterion = load_model(path,architecture,0.001,device)
     print("\n Orignial model accuracy:")
-    evaluate_forget_remain_test(randl_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    randl_train = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-    randl_model,impair_time=  randl_train.amnesiac()
+    evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+    randl_train = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    amnesiac_model,impair_time=  randl_train.amnesiac()
     print("Performed Amnesiac Unlearning")
-    evaluate_forget_remain_test(randl_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+    evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
 
     print("\nFine tuning amnesiac model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(randl_model,architecture,lr=0.01)
-    randl_fine_tune = Unlearner(randl_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-    randl_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= randl_fine_tune.fine_tune()
+    optimizer_ft,criterion = utils.set_hyperparameters(amnesiac_model,architecture,lr=0.01)
+    randl_fine_tune = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    amnesiac_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= randl_fine_tune.fine_tune()
     forget_accuracy,forget_loss,forget_ece = randl_fine_tune.evaluate(forget_eval_loader)
     
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
-    return randl_model,dict
+    return amnesiac_model,dict
+
+# LABEL SMOOTHING UNLEARNING
 
 def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,architecture,seed):
    print("\n Label Smoothing Unlearning:")
