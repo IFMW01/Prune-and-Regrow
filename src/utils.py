@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import os
 from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
-from models.transformer import ViTmel, ViTspec
-from models.compact_ViT import CCT
+from models.transformer import ViTmel, ViTspec, ViTcifar
+from models.compact_ViT import CCT,CCTcifar
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
@@ -119,7 +119,10 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         )
     elif architecture == 'VGG9':
         model = VGG9()
-
+    elif architecture == 'CTCcifar':
+        CCTcifar( img_size=32, embedding_dim=768, n_input_channels=3,n_conv_layers=1, kernel_size=7,stride=2,padding=3,pooling_kernel_size=3,pooling_stride=2,pooling_padding=1)
+    elif architecture == 'ViTcifar':
+        ViTcifar(n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
     model = model.to(device)
     optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torchvision
 import random
+import torchvision.datasets as cifar_datasets
 import torchvision.transforms as transforms
 from datasets_unlearn import ravdess
 from datasets_unlearn  import audioMNIST
@@ -36,6 +37,41 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     elif dataset_pointer == 'Ravdess':
         train_set, test_set = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/ravdess_label.npy')
+    elif dataset_pointer =="CIFAR10":
+        base_transformations = transforms.Compose(
+            [transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ]
+        )
+        train_set =  cifar_datasets.CIFAR10(
+            train=True,
+            download=True,
+            transform= base_transformations,
+        )
+
+        test_set = cifar_datasets.CIFAR10(
+            train=False,
+            download=True,
+            transform=base_transformations,
+        )
+    elif dataset_pointer =="CIFAR100":
+        base_transformations = transforms.Compose(
+            [transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ]
+        )
+        train_set =  cifar_datasets.CIFAR100(
+            train=True,
+            download=True,
+            transform= base_transformations,
+        )
+
+        test_set = cifar_datasets.CIFAR100(
+            train=False,
+            download=True,
+            transform=base_transformations,
+        )
+
     else:
         raise Exception("Enter correct dataset pointer")
         
@@ -130,3 +166,25 @@ class WavToSpec(torch.nn.Module):
         spec = self.spec(waveform)
         spec = torch.from_numpy(librosa.power_to_db(spec))
         return spec
+
+class DatasetProcessor_randl_cifar(Dataset):
+  def __init__(self, dataset,device,num_classes):
+    self.data = []
+    self.labels = []
+    for inx, (data, label) in enumerate(dataset):
+        self.data.append(inx[data].to(device))
+        while new_label == inx[label]:
+                new_label = random.randint(0, (num_classes-1))
+        new_label = torch.tensor(new_label).to(device)
+        self.labels.append(new_label)
+
+  def __len__(self):
+    return len(self.dataset)
+  
+  def __getitem__(self, idx):
+    return self.data[idx], self.labels[idx] 
+
+
+
+
+

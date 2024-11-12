@@ -173,7 +173,10 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
     remain_set = ld.DatasetProcessor(remain_set,device)
     forget_set = ld.DatasetProcessor(forget_set,device)
     test_set = ld.DatasetProcessor(test_set,device)
-    forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
+    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
+        forget_randl_data = ld.DatasetProcessor_randl_cifar(forget_randl_set,device,num_classes)
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set
 
