@@ -13,6 +13,7 @@ from unlearn import unlearn_metrics
 from datasets_unlearn import load_datasets as ld
 import numpy as np
 import random
+import argparse
 
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
@@ -63,7 +64,7 @@ def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
 
 
 # Calls all unlearning methods to be perfromed on the base models that have been created and saves the results
-def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,pruning_ratio,tag,device):
+def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,tag,device):
             
     results_dict = {}
     for seed in seeds:
@@ -138,7 +139,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
 
         results_dict[seed]["OMP Unlearning"] = {}
                                                         
-        omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
+        omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
         logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_loss')
 
         results_dict[seed]["OMP Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(omp_model, naive_model, forget_eval_loader, device)
@@ -213,24 +214,120 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
 
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set
+
+def options_parser():
+    parser = argparse.ArgumentParser(description="Arguments for creating model")
+    parser.add_argument(
+        "--dataset_pointer",
+        required=True,
+        type=str
+    )
+    parser.add_argument(
+        "--pipeline",
+        required=False,
+        default='mel',
+        type=str,
+    )
+    parser.add_argument(
+        "--architecture",
+        required=True,
+        type=str,
+    )
+
+    parser.add_argument(
+        "--n_epochs",
+        required=True,
+        type=int,
+    )
+    parser.add_argument(
+        "--seed",
+        required=True,
+        type=int,
+    )
+
+    parser.add_argument(
+        "--n_classes", 
+        required=True, 
+        type=int, 
+    )
+    parser.add_argument(
+        "--n_inputs",
+        required=False,
+        default=1,
+        type=int,
+        help="This is only used for audio which is mono",
+    )
+
+    parser.add_argument(
+        "--unlearning",
+        required=False,
+        default=True,
+        type=bool,
+    )
+
+    parser.add_argument(
+        "--n_epoch_impair",
+        required=True,
+        type=int,
+    )
+
+    parser.add_argument(
+        "--n_epoch_repair",
+        required=True,
+        type=int,
+    )
+
+    parser.add_argument(
+        "--n_epochs_fine_tune",
+        required=True,
+        type=int,
+    )
+
+    parser.add_argument(
+        "--forget_random",
+        required=False,
+        type=bool,
+    )
+
+    parser.add_argument(
+        "--forget_percentage",
+        required=False,
+        type=int,
+    )
+
+    parser.add_argument(
+        "--forget_classes",
+        required=False,
+        type=bool,
+    )
+
+    parser.add_argument(
+        "--forget_classes_num",
+        required=False,
+        type=int,
+    )
+
+    args = parser.parse_args()
+
+    return args
+
     
-def main(config_unlearn,config_base):
-    dataset_pointer = config_base.get("dataset_pointer",None)
-    pipeline = config_base.get("pipeline",None)
-    architecture = config_base.get("architecture",None)
-    n_epochs = config_base.get("n_epochs",None)
-    seeds = config_base.get("seeds",None)
-    n_classes = config_base.get("n_classes",None)
-    n_inputs = config_base.get("n_inputs",None)
-    unlearning = config_unlearn.get("unlearning",None)
-    n_epoch_impair = config_unlearn.get("n_epoch_impair",None)
-    n_epoch_repair = config_unlearn.get("n_epoch_repair",None)
-    n_epochs_fine_tune = config_unlearn.get("n_epochs_fine_tune",None)
-    forget_random = config_unlearn.get("forget_random",None)
-    forget_percentage = config_unlearn.get("forget_percentage",None)
-    forget_classes = config_unlearn.get("forget_classes",None)
-    forget_classes_num = config_unlearn.get("forget_classes_num",None)
-    pruning_ratio = config_unlearn.get("pruning_ratio",None)
+def main(args):
+    dataset_pointer = args.dataset_pointer
+    pipeline = args.pipeline
+    architecture = args.architecture
+    n_epochs =args.n_epochs
+    seeds = args.seeds
+    n_classes = args.n_classes
+    n_inputs = args.n_inputs
+    unlearning = args.unlearning
+    n_epoch_impair = args.n_epoch_impair
+    n_epoch_repair = args.n_epoch_repair
+    n_epochs_fine_tune = args.n_epochs_fine_tune
+    forget_random = args.forget_random
+    forget_percentage = args.forget_percentage
+    forget_classes = args.forget_classes
+    forget_classes_num = args.forget_classes_num
     
     print("Received arguments from config file:")
     print(f"Unlearning: {unlearning}")
@@ -250,7 +347,6 @@ def main(config_unlearn,config_base):
     if  forget_classes == True:
         tag = 'Class_Removal'
         print(f"Number of classes to forget: {forget_classes_num}")
-    print(f"Pruning ratio: {pruning_ratio}")
     device = utils.get_device()
 
     model_dir = f'Results/{dataset_pointer}/{architecture}'
@@ -262,12 +358,9 @@ def main(config_unlearn,config_base):
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,n_classes) 
         elif forget_classes == True:
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device) 
-        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_number,pruning_ratio,tag,device)
+        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_number,tag,device)
     print("FIN")
 
 if __name__ == "__main__":
-    with open("./configs/base_config.json","r") as b:
-        config_base = json.load(b)    
-    with open("./configs/unlearn_config.json","r") as u:
-        config_unlearn = json.load(u)
-    main(config_unlearn,config_base)
+    args = options_parser()   
+    main(args)

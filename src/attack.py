@@ -15,6 +15,7 @@ import models.attack_model as attack_model
 import utils
 from Trainer import Trainer
 import random
+import argparse
 
 # Creates attack models and saves then in predefined folders that are created 
 def seed_worker(worker_id):
@@ -76,11 +77,40 @@ def create_mia_loader(train_set,test_set):
         generator=generator)
   return train_loader,test_loader
 
-def main(config_attack,config_base):
-  dataset_pointer = config_base.get("dataset_pointer", None)
-  architecture = config_base.get("architecture", None)
-  n_classes = config_base.get("n_classes", None)
-  n_attack_models = config_attack.get("n_attack_models", None)
+def options_parser():
+    parser = argparse.ArgumentParser(description="Arguments for creating model")
+    parser.add_argument(
+        "--dataset_pointer",
+        required=True,
+        type=str
+    )
+    parser.add_argument(
+        "--architecture",
+        required=True,
+        type=str,
+    )
+
+    parser.add_argument(
+        "--n_classes", 
+        required=True, 
+        type=int,
+    ) 
+
+    parser.add_argument(
+        "--n_attack_models", 
+        required=True, 
+        type=int,
+    ) 
+
+    args = parser.parse_args()
+
+    return args
+
+def main(args):
+  dataset_pointer = args.dataset_pointer
+  architecture = args.architecture
+  n_classes = args.n_classes
+  n_attack_models = args.n_attack_models
 
   device = utils.get_device()
   dataset_dir = f'Results/{dataset_pointer}/{architecture}/MIA'
@@ -100,8 +130,5 @@ def main(config_attack,config_base):
   print("FIN")
 
 if __name__ == "__main__":
-  with open("./configs/base_config.json","r") as b:
-      config_base = json.load(b)    
-  with open("./configs/attack_config.json", "r") as a:
-      config_attack = json.load(a)
-  main(config_attack,config_base)
+  args = options_parser()   
+  main(args)

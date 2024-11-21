@@ -242,13 +242,13 @@ def amnesiac_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget
 
   # ONE-SHOT MAGNITUTE UNLEARNING
   
-def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
+def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,n_classes,architecture,seed):
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
     omp_model,opimizer,criterion,= load_model(path,0.01,device)
     start_time = time.time()
-    omp_model = global_prune_with_masks(omp_model,pruning_ratio)
+    omp_model = global_prune_with_masks(omp_model,0.95)
     end_time = time.time()
     impair_time = round((end_time -start_time),3)
 
