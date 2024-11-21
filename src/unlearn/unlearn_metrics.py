@@ -11,6 +11,8 @@ import statistics
 import utils
 from models.attack_model import SoftmaxModel
 from torch.utils.data import DataLoader
+import numpy as np 
+import random
 
 with open("./configs/base_config.json","r") as b:
     config_base = json.load(b)    
@@ -33,6 +35,11 @@ n_epoch_repair = config_unlearn.get("n_epoch_repair",None)
 n_epochs_fine_tune = config_unlearn.get("n_epochs_fine_tune",None)
 forget_percentage = config_unlearn.get("forget_percentage",None)
 pruning_ratio = config_unlearn.get("pruning_ratio",None)
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 # A DIST Metric Calculation
 def actviation_distance(unlearn_model, retrain_model, dataloader, device):
@@ -84,7 +91,10 @@ def attack_results(model_list,n_inputs,df,device):
     x_train = torch.tensor(df.values,dtype=torch.float)
     y_train = torch.tensor(labels.values,dtype=torch.long)
     forget_set = [(x_train[i], y_train[i]) for i in range(len(x_train))]
-    forget_laoder = DataLoader(forget_set, batch_size=264, shuffle=True)
+    generator = torch.Generator()
+    generator.manual_seed(0)
+    forget_laoder = DataLoader(forget_set, batch_size=264, shuffle=True,worker_init_fn=seed_worker,
+        generator=generator)
     criterion = nn.CrossEntropyLoss()
     for attack_path in model_list:
         attack_model = torch.load(attack_path)
