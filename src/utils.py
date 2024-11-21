@@ -191,7 +191,7 @@ def dummy_model(architecture,n_inputs,n_classes,device):
         )
     elif architecture == 'CCTspec':
         model= CCT(
-            img_size = (257, 63),
+            img_size = (32, 32),
             embedding_dim = 256,
             n_conv_layers = 2,
             kernel_size = 7,
@@ -205,7 +205,7 @@ def dummy_model(architecture,n_inputs,n_classes,device):
             mlp_ratio = 2.,
             num_classes = n_classes,
             positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
-            n_input_channels=1,
+            n_input_channels=3,
         )
     elif architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
@@ -225,7 +225,7 @@ def dummy_model(architecture,n_inputs,n_classes,device):
             mlp_ratio = 2.,
             num_classes = n_classes,
             positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
-            n_input_channels=1,
+            n_input_channels=3,
         )
     elif architecture == 'ViTcifar':
         model = ViTcifar(num_classes = n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
