@@ -70,7 +70,7 @@ def main(args):
     pipeline = args.pipeline
     architecture = args.architecture
     n_epochs =args.n_epochs
-    seeds = args.seeds
+    seed = args.seed
     n_classes = args.n_classes
     n_inputs = args.n_inputs
 
@@ -79,7 +79,7 @@ def main(args):
     print(f"Pipeline: {pipeline}")
     print(f"Architecture: {architecture}")
     print(f"Number of epochs: {n_epochs}")
-    print(f"Seeds: {seeds}")
+    print(f"Seeds: {seed}")
     print(f"Number of classes: {n_classes}")
     print(f"Number of inputs: {n_inputs}")
 
@@ -88,17 +88,17 @@ def main(args):
 
     # Iterates over the provided seeds and creates model 
     train_loader,train_eval_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
-    for seed in seeds:
-        save_dir = f"Results/{dataset_pointer}/{architecture}"
-        utils.set_seed(seed)
-        model,optimizer,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
-        utils.create_dir(save_dir)
-        save_model_path = f'{save_dir}/{seed}/'
-        utils.create_dir(save_model_path)
-        save_mia_path = f'{save_dir}/MIA/'
-        utils.create_dir(save_mia_path)
-        train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
-        results_dict = create_base_model(train,save_model_path,save_mia_path,device,seed,train_loader,test_loader,results_dict)
+
+    save_dir = f"Results/{dataset_pointer}/{architecture}"
+    utils.set_seed(seed)
+    model,optimizer,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
+    utils.create_dir(save_dir)
+    save_model_path = f'{save_dir}/{seed}/'
+    utils.create_dir(save_model_path)
+    save_mia_path = f'{save_dir}/MIA/'
+    utils.create_dir(save_mia_path)
+    train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
+    results_dict = create_base_model(train,save_model_path,save_mia_path,device,seed,train_loader,test_loader,results_dict)
 
     print(f'Final of all trained models: {results_dict}')
 
