@@ -191,7 +191,7 @@ def dummy_model(architecture,n_inputs,n_classes,device):
         )
     elif architecture == 'CCTspec':
         model= CCT(
-            img_size = (32, 32),
+            img_size = (32, 63),
             embedding_dim = 256,
             n_conv_layers = 2,
             kernel_size = 7,

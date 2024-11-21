@@ -157,7 +157,7 @@ class ViTspec(nn.Module):
       return self.linear_head(x)
     
 class ViTcifar(nn.Module):
-    def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, channels = 1, dim_head = 64):
+    def __init__(self, *, num_classes, dim, depth, heads, mlp_dim, channels = 3, dim_head = 64):
         super().__init__()
         image_height, image_width = (32,32)
         patch_height, patch_width = (4,4)

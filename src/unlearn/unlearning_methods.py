@@ -353,7 +353,7 @@ def cs_prune(base_model_vec, ord):
     for idx, i in enumerate(cs_and_percentage.T):
         dists[idx] = torch.dist(i, utopia)
     percentage_idx = distances_idx(dists)
-    return percentage[percentage_idx].item()
+    return round(percentage[percentage_idx].item(),2)
 
 def prune_and_regrow(model2prune, init_model, amount, device):
     parameters_to_prune = []
