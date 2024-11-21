@@ -12,6 +12,7 @@ import torchvision.transforms as transforms
 from datasets_unlearn import ravdess
 from datasets_unlearn  import audioMNIST
 from datasets_unlearn  import speech_commands
+from datasets_unlearn import ubransound8k
 import utils
 
 from torch.utils.data import DataLoader
@@ -35,6 +36,9 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         labels = np.load('./labels/audiomnist_labels.npy')
     elif dataset_pointer == 'Ravdess':
         train_set, test_set = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
+        labels = np.load('./labels/ravdess_label.npy')
+    elif dataset_pointer == 'UrbanSound8K':
+        train_set, test_set = ubransound8k.create_UrbanSound8K(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/ravdess_label.npy')
     elif dataset_pointer =="CIFAR10":
         base_transformations = transforms.Compose(
@@ -79,7 +83,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if unlearnng:
         return train_set,test_set
     device  = utils.get_device()
-    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
         train_set = DatasetProcessor(train_set,device)
         test_set = DatasetProcessor(test_set,device)
 

@@ -160,7 +160,7 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
     forget_randl_set = forget_set
-    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
         remain_set = ld.DatasetProcessor(remain_set,device)
         forget_set = ld.DatasetProcessor(forget_set,device)
         test_set = ld.DatasetProcessor(test_set,device)
@@ -181,7 +181,7 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
     forget_randl_set = forget_set
-    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer =='UrbanSound8K':
         remain_set = ld.DatasetProcessor(remain_set,device)
         forget_set = ld.DatasetProcessor(forget_set,device)
         test_set = ld.DatasetProcessor(test_set,device)

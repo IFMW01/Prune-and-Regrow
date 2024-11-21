@@ -116,7 +116,7 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer =='UrbanSound8K':
         ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
     elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CFIAR100':
         ga_model,optimizer_ga,criterion = load_model(path,(0.01),device)
