@@ -64,7 +64,7 @@ def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
 
 
 # Calls all unlearning methods to be perfromed on the base models that have been created and saves the results
-def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_amount,tag,device):
+def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,forget_amount,tag,device):
             
     results_dict = {}
 
@@ -110,7 +110,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Gradient Ascent Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Fine Tune Unlearning"] = {}
-    fine_tuning_model,results_dict[seed]["Fine Tune Unlearning"] = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs_fine_tune,results_dict[seed]["Fine Tune Unlearning"],n_classes,architecture,seed)
+    fine_tuning_model,results_dict[seed]["Fine Tune Unlearning"] = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Fine Tune Unlearning"],n_classes,architecture,seed)
     logit_distributions(fine_tuning_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'fine_tuning_model_loss')
 
     results_dict[seed]["Fine Tune Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(fine_tuning_model, naive_model, forget_eval_loader, device)
@@ -276,11 +276,6 @@ def options_parser():
         type=int,
     )
 
-    parser.add_argument(
-        "--n_epochs_fine_tune",
-        required=True,
-        type=int,
-    )
 
     parser.add_argument(
         "--forget_random",
@@ -322,7 +317,6 @@ def main(args):
     unlearning = args.unlearning
     n_epoch_impair = args.n_epoch_impair
     n_epoch_repair = args.n_epoch_repair
-    n_epochs_fine_tune = args.n_epochs_fine_tune
     forget_random = args.forget_random
     forget_percentage = args.forget_percentage
     forget_classes = args.forget_classes
@@ -337,7 +331,6 @@ def main(args):
     print(f"Seeds: {seeds}")
     print(f"Number of impair epochs: {n_epoch_impair}")
     print(f"Number of repair epochs: {n_epoch_repair}")
-    print(f"Number of fine tuning epochs: {n_epochs_fine_tune}")
     print(f"Forgetting random samples : {forget_random}")
     if forget_random == True:
         tag = 'Item_Removal'
@@ -357,7 +350,7 @@ def main(args):
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,n_classes) 
         elif forget_classes == True:
             remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device) 
-        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,n_epochs_fine_tune,forget_number,tag,device)
+        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seeds,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,forget_number,tag,device)
     print("FIN")
 
 if __name__ == "__main__":
