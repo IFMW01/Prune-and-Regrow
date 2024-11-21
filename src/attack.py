@@ -17,6 +17,10 @@ from Trainer import Trainer
 import random
 
 # Creates attack models and saves then in predefined folders that are created 
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,device,dict):
   criterion = nn.CrossEntropyLoss()    
@@ -64,8 +68,12 @@ def create_mia_datasets(data_directory):
   return train_set,test_set
 
 def create_mia_loader(train_set,test_set):
-  train_loader = DataLoader(train_set, batch_size=264, shuffle=True)
-  test_loader = DataLoader(test_set, batch_size=264, shuffle=False)
+  generator = torch.Generator()
+  generator.manual_seed(0)
+  train_loader = DataLoader(train_set, batch_size=264, shuffle=True,worker_init_fn=seed_worker,
+        generator=generator)
+  test_loader = DataLoader(test_set, batch_size=264, shuffle=False,worker_init_fn=seed_worker,
+        generator=generator)
   return train_loader,test_loader
 
 def main(config_attack,config_base):

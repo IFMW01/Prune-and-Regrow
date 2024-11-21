@@ -130,7 +130,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     optimizer,criterion = set_hyperparameters(model,architecture,lr) 
     return model,optimizer,criterion
 
-def dummy_model(architecture,n_inputs,n_classes,device,lr=0.01):
+def dummy_model(architecture,n_inputs,n_classes,device):
     if architecture == 'VGGishMel':
         model = VGGishMel(n_inputs,n_classes)
     elif architecture == 'VGGishSpec':

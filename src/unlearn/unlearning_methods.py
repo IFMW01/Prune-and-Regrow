@@ -266,7 +266,7 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
 # CONSINE OMP PRUNE UNLEARNING
 
 
-def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
+def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
     print("\nConsine Unlearning:")
     print("\n")
 
@@ -274,9 +274,9 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    prune_rate = cs_prune(base_vec,'pop')
- 
-    consine_model = global_prune_without_masks(base_model, prune_rate)
+    prune_rate = cs_prune(base_vec,'cs')
+    dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
+    consine_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
     end_time = time.time()
     impair_time = round((end_time - start_time),3)
 
@@ -284,14 +284,14 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     evaluate_forget_remain_test(consine_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,architecture,lr=0.01)
-    cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
+    cosine_train = Unlearner(consine_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,n_repair,n_classes,seed)
     consine_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= cosine_train.fine_tune()
     forget_accuracy,forget_loss,forget_ece = cosine_train.evaluate(forget_eval_loader)
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return consine_model,dict
 
-def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
+def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
     print("\n POP Unlearning:")
     print("\n")
 
@@ -300,8 +300,8 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     prune_rate = cs_prune(base_vec,'pop')
-    
-    pop_model = global_prune_without_masks(base_model, float(prune_rate))
+    dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
+    pop_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
     end_time = time.time()
     pre_train = vectorise_model(pop_model).count_nonzero()
     print(f'Number of parameters pre training: {pre_train}')
@@ -357,10 +357,9 @@ def cs_prune(base_model_vec, ord):
     percentage_idx = distances_idx(dists)
     return percentage[percentage_idx].item()
 
-# Removing masks from pruned model
-def global_prune_without_masks(model, amount):
+def prune_and_regrow(model2prune, init_model, amount, device):
     parameters_to_prune = []
-    for mod in model.modules():
+    for mod in model2prune.modules():
         if hasattr(mod, "weight"):
             if isinstance(mod.weight, torch.nn.Parameter):
                 parameters_to_prune.append((mod, "weight"))
@@ -373,14 +372,20 @@ def global_prune_without_masks(model, amount):
         pruning_method=prune.L1Unstructured,
         amount=amount,
     )
-    for mod in model.modules():
-        if hasattr(mod, "weight_orig"):
-            if isinstance(mod.weight_orig, torch.nn.Parameter):
-                prune.remove(mod, "weight")
-        if hasattr(mod, "bias_orig"):
-            if isinstance(mod.bias_orig, torch.nn.Parameter):
-                prune.remove(mod, "bias")
-    return model
+    
+    for prune_mod, init_mod in zip(model2prune.modules(), init_model.modules()):
+        if hasattr(prune_mod, "weight_orig"):
+            if isinstance(prune_mod.weight_orig, torch.nn.Parameter):
+                prune.remove(prune_mod, "weight")
+                mask = prune_mod.weight==0
+                prune_mod.weight = torch.nn.Parameter(prune_mod.weight + mask.int()*init_mod.weight).to(device)
+            if isinstance(prune_mod.bias_orig, torch.nn.Parameter):
+                prune.remove(prune_mod, "bias")
+                mask = prune_mod.bias==0
+                prune_mod.bias = torch.nn.Parameter(prune_mod.bias + mask.int()*init_mod.bias).to(device)
+                
+    return  model2prune
+
 
 # Standard OMP with masks
 def global_prune_with_masks(model, amount):

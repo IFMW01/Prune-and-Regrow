@@ -18,7 +18,10 @@ import utils
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
-
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     global labels
@@ -86,10 +89,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
         train_set = DatasetProcessor(train_set,device)
         test_set = DatasetProcessor(test_set,device)
-
-    train_loader = DataLoader(train_set, batch_size=256,shuffle=True)
-    train_eval_loader = DataLoader(train_set, batch_size=256,shuffle=False)
-    test_loader = DataLoader(test_set, batch_size=256,shuffle=False)
+    generator = torch.Generator()
+    generator.manual_seed(0)
+    train_loader = DataLoader(train_set, batch_size=256,shuffle=True,worker_init_fn=seed_worker,
+        generator=generator)
+    train_eval_loader = DataLoader(train_set, batch_size=256,shuffle=False,worker_init_fn=seed_worker,
+        generator=generator)
+    test_loader = DataLoader(test_set, batch_size=256,shuffle=False,worker_init_fn=seed_worker,
+        generator=generator)
         
     return train_loader,train_eval_loader,test_loader
 

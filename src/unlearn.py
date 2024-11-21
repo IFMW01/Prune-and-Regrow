@@ -11,6 +11,14 @@ import os.path
 from unlearn import unlearning_methods as um
 from unlearn import unlearn_metrics
 from datasets_unlearn import load_datasets as ld
+import numpy as np
+import random
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
 
 # gets the loss for an unlearned model
 def unlearn_logits(model,loader,device,save_dir,filename_loss):
@@ -25,18 +33,32 @@ def logit_distributions(model,remain_eval_loader,forget_eval_loader,test_loader,
      
 # Creates the data loaders for remain, forget and test set as well as creating the random labelled datalaoder for AM
 def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
+    generator = torch.Generator()
+    generator.manual_seed(0)
     remain_loader = DataLoader(remain_set, batch_size=256,
-                                        shuffle=True)
+                                shuffle=True,
+                                worker_init_fn=seed_worker,
+                                generator=generator)
     remain_eval_loader = DataLoader(remain_set, batch_size=256,
-                                        shuffle=False)
+                                    shuffle=False,
+                                    worker_init_fn=seed_worker,
+                                    generator=generator)
     forget_loader = DataLoader(forget_set, batch_size=256,
-                                        shuffle=True)
+                                shuffle=True,
+                                worker_init_fn=seed_worker,
+                                generator=generator)
     forget_eval_loader = DataLoader(forget_set, batch_size=256,
-                                        shuffle=False)       
+                                    huffle=False,
+                                    worker_init_fn=seed_worker,
+                                    generator=generator)       
     test_loader = DataLoader(test_set, batch_size=256,
-                                        shuffle=False)
+                            shuffle=False,
+                            worker_init_fn=seed_worker,
+                            generator=generator)
     forget_randl_loader = DataLoader(forget_randl_data, batch_size=256,
-                                        shuffle=True)
+                                    shuffle=True,
+                                    worker_init_fn=seed_worker,
+                                    generator=generator)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader
 
 
@@ -126,7 +148,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
 
         results_dict[seed]["Cosine Unlearning"] = {} 
-        cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,seed)
+        cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,n_inputs,seed)
         logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_loss')
         
         results_dict[seed]["Cosine Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(cosine_model, naive_model, forget_eval_loader, device)
@@ -135,7 +157,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
         results_dict[seed]["POP"] = {} 
-        pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,seed)
+        pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,n_inputs,seed)
         logit_distributions(pop_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'pop_model_loss')
 
         results_dict[seed]["POP"]["Activation distance"]  = unlearn_metrics.actviation_distance(pop_model, naive_model, forget_eval_loader, device)
