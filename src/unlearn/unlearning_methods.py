@@ -22,7 +22,8 @@ def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed
     remain_set = []
     print(len(remain_set))
     print(type(remain_set))
-    forget_set = np.random.choice(train_set,forget_instances_num, replace=False) 
+    rng = np.random.default_rng(seed=42)
+    forget_set = rng.choice(train_set,forget_instances_num, replace=False) 
     for index in range(len(train_set)):
         if index in forget_set:
             continue
@@ -38,8 +39,8 @@ def class_removal(dataset_pointer,forget_classes_num,num_classes,train_set,test_
 
     test_remove = []
     test_keep = []
-
-    classes_to_forget = random.sample(range(num_classes), forget_classes_num)
+    random_state = random.Random(42)
+    classes_to_forget = random_state.sample(range(num_classes), forget_classes_num)
     for index in range(len(train_set)):
         if torch.load(remain_set[i])['label'] in classes_to_forget:
             forget_set.append(remain_set[i])
@@ -195,7 +196,7 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
   utils.set_seed(seed)
   kd_bad_lr  = 0.01
       
-  student_model,bad_optimizer,criterion,= load_model(path,architecture,kd_bad_lr,device)
+  student_model,bad_optimizer,criterion,= load_model(path,kd_bad_lr,device)
 
   stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
   evaluate_forget_remain_test(student_model,forget_eval_loader,remain_eval_loader,test_loader,device)
@@ -204,7 +205,7 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
   print("Stochastic teacher knowledge distillation complete")
   evaluate_forget_remain_test(student_model,forget_eval_loader,remain_eval_loader,test_loader,device)
   optimizer_gt,criterion_gt = utils.set_hyperparameters(student_model,architecture,0.01)  
-  gt_model,optimizer_nn,criterion,= load_model(path,architecture,0.5,device) 
+  gt_model,optimizer_nn,criterion,= load_model(path,0.5,device) 
   student_model,fine_tune_time = train_knowledge_distillation(optimizer_gt,criterion_gt,teacher=gt_model,student=student_model,train_loader=remain_loader,epochs=n_repair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
   print("Good teacher knowledge distillation complete")
 
@@ -221,7 +222,7 @@ def amnesiac_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget
     print("\nAmnesiac Unlearning:")
     print("\n")
     # add lr
-    amnesiac_model,optimizer_ft,criterion = load_model(path,architecture,0.001,device)
+    amnesiac_model,optimizer_ft,criterion = load_model(path,0.001,device)
     print("\n Orignial model accuracy:")
     evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     randl_train = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
@@ -245,7 +246,7 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     print("\nOMP Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    omp_model,opimizer,criterion,= load_model(path,architecture,0.01,device)
+    omp_model,opimizer,criterion,= load_model(path,0.01,device)
     start_time = time.time()
     omp_model = global_prune_with_masks(omp_model,pruning_ratio)
     end_time = time.time()
@@ -269,7 +270,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     print("\nConsine Unlearning:")
     print("\n")
 
-    base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
+    base_model,optimizer,criterion,= load_model(path,0.01,device)
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
@@ -294,7 +295,7 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     print("\n POP Unlearning:")
     print("\n")
 
-    base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
+    base_model,optimizer,criterion,= load_model(path,0.01,device)
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
