@@ -43,7 +43,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 # Sets model hyperparameters
-def set_hyperparameters(model,architecture,lr):
+def set_hyperparameters(model,lr):
     optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     return optimizer,criterion
@@ -127,7 +127,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     elif architecture == 'ViTcifar':
         ViTcifar(n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
     model = model.to(device)
-    optimizer,criterion = set_hyperparameters(model,architecture,lr) 
+    optimizer,criterion = set_hyperparameters(model,lr) 
     return model,optimizer,criterion
 
 def dummy_model(architecture,n_inputs,n_classes,device):

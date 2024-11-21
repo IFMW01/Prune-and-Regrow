@@ -12,7 +12,7 @@ import torchvision.transforms as transforms
 from datasets_unlearn import ravdess
 from datasets_unlearn  import audioMNIST
 from datasets_unlearn  import speech_commands
-from datasets_unlearn import ubransound8k
+from datasets_unlearn import urbansound8k
 import utils
 
 from torch.utils.data import DataLoader
