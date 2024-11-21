@@ -240,8 +240,10 @@ def logits(model,train_loader,test_loader,device):
     df_all_loss = pd.DataFrame()
 
     # Process training set
-    for batch_idx,(data,target) in enumerate(tqdm(train_loader)):
-        with torch.no_grad():
+    with torch.no_grad():
+        for batch_idx,(data,target) in enumerate(tqdm(train_loader)):
+            data = data.to(device)
+            target= target.to(device)
             logits_train = model(data)
             # logits_train_softmax = F.softmax(logits_train,dim=1)
             loss = F.cross_entropy(logits_train, target,reduction ='none')
@@ -255,6 +257,8 @@ def logits(model,train_loader,test_loader,device):
     # Process test set
     with torch.no_grad():
         for data,target in test_loader:
+            data = data.to(device)
+            target= target.to(device)
             logits_test = model(data)
             loss = F.cross_entropy(logits_test, target,reduction ='none')
             numpy_test_loss = loss.cpu().numpy()
@@ -273,6 +277,8 @@ def logits_unlearn(model,forget_loader,device):
     # Process training set
     with torch.no_grad():
         for batch_idx,(data,target) in enumerate(tqdm(forget_loader)):
+            data = data.to(device)
+            target= target.to(device)
             logits = model(data)
             loss = F.cross_entropy(logits, target,reduction ='none')
             numpy_loss = loss.cpu().numpy()
