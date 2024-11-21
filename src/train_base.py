@@ -102,7 +102,7 @@ def main(args):
 
     print(f'Final of all trained models: {results_dict}')
 
-    with open(f"{save_dir}/training_results.json",'w') as f:
+    with open(f"{save_model_path}/training_results.json",'w') as f:
 
         json.dump(results_dict,f)
 

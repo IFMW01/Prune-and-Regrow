@@ -41,7 +41,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         train_set, test_set = ravdess.create_ravdess(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/ravdess_label.npy')
     elif dataset_pointer == 'UrbanSound8K':
-        train_set, test_set = ubransound8k.create_UrbanSound8K(pipeline,pipeline_on_wav,dataset_pointer)
+        train_set, test_set = urbansound8k.create_UrbanSound8K(pipeline,pipeline_on_wav,dataset_pointer)
         labels = np.load('./labels/ravdess_label.npy')
     elif dataset_pointer =="CIFAR10":
         base_transformations = transforms.Compose(
@@ -50,12 +50,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
             ]
         )
         train_set =  cifar_datasets.CIFAR10(
+            root ='./',
             train=True,
             download=True,
             transform= base_transformations,
         )
 
         test_set = cifar_datasets.CIFAR10(
+            root ='./',
             train=False,
             download=True,
             transform=base_transformations,
@@ -67,12 +69,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
             ]
         )
         train_set =  cifar_datasets.CIFAR100(
+            root ='./',
             train=True,
             download=True,
             transform= base_transformations,
         )
 
         test_set = cifar_datasets.CIFAR100(
+            root ='./',
             train=False,
             download=True,
             transform=base_transformations,
@@ -81,14 +85,14 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
     else:
         raise Exception("Enter correct dataset pointer")
         
-    labels = labels.tolist()
-
     if unlearnng:
         return train_set,test_set
     device  = utils.get_device()
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
+        labels = labels.tolist()
         train_set = DatasetProcessor(train_set,device)
         test_set = DatasetProcessor(test_set,device)
+        
     generator = torch.Generator()
     generator.manual_seed(0)
     train_loader = DataLoader(train_set, batch_size=256,shuffle=True,worker_init_fn=seed_worker,

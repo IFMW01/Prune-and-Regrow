@@ -27,7 +27,6 @@ def create_attack_model(num_models,train_loader,test_loader,n_inputs,save_dir,de
   criterion = nn.CrossEntropyLoss()    
   for i in range(num_models):
     dict[f'{i}'] = {}
-    utils.set_seed(i)
     model = attack_model.softmax_net(n_inputs)
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(),0.001)
@@ -113,6 +112,7 @@ def main(args):
   n_attack_models = args.n_attack_models
 
   device = utils.get_device()
+  utils.set_seed(42)
   dataset_dir = f'Results/{dataset_pointer}/{architecture}/MIA'
   if not os.path.exists(dataset_dir):
       print(f"There are no models with this {architecture} for this {dataset_pointer} in the MIA directory. Please train relevant models")

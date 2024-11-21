@@ -59,7 +59,7 @@ def create_UrbanSound8K(pipeline,pipeline_on_wav,dataset_pointer):
         os.remove(output_file)
         os.makedirs(temp_dir, exist_ok=True)
         shutil.copy('./UrbanSound8K/metadata/UrbanSound8K.csv', f'{temp_dir}/UrbanSound8K.csv')
-    print(f'{temp_dir}/train.csv')
+
 
     if not os.path.isfile(f'{temp_dir}/train.csv') or not os.path.isfile(f'{temp_dir}/test.csv'):
           dataset = pd.read_csv(f'{temp_dir}/UrbanSound8K.csv')
@@ -77,10 +77,8 @@ def train_test(all_data,temp_dir,seed):
   if os.path.isfile(f'{temp_dir}/train.csv') or os.path.isfile(f'{temp_dir}/test.csv'):
     train = pd.read_csv(f'{temp_dir}/train.csv')
     test = pd.read_csv(f'{temp_dir}/test.csv')
-    print(test)
     train = (train.values.flatten().tolist())
     test = (test.values.flatten().tolist())
-    print(test)
   else:
     train, test = train_test_split(all_data, test_size=0.2, random_state=seed,shuffle=True)
     print("VERIFYING UrbanSound8K DATASET")

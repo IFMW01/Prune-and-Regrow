@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 import os
-from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr
+from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr, make_vgg
 from models.transformer import ViTmel, ViTspec, ViTcifar
 from models.compact_ViT import CCT,CCTcifar
 from tqdm import tqdm
@@ -56,7 +56,7 @@ def get_device():
 # Creates directory
 def create_dir(directory):
     if not os.path.exists(directory):
-        os.makedirs(directory)
+        os.makedirs(directory,exist_ok=True)
 
 # Gets the intailised model for each architetcure 
 def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
@@ -84,7 +84,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
         heads = 6,
         mlp_dim = 1024
         )
-    elif architecture == 'CTCmel':
+    elif architecture == 'CCTmel':
         model = CCT(
             img_size = (32, 63),
             embedding_dim = 256,
@@ -102,7 +102,7 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
             positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
             n_input_channels=1,
         )
-    elif architecture == 'CTCspec':
+    elif architecture == 'CCTspec':
         model= CCT(
             img_size = (257, 63),
             embedding_dim = 256,
@@ -120,12 +120,28 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
             positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
             n_input_channels=1,
         )
-    elif architecture == 'VGG9':
-        model = VGG9()
-    elif architecture == 'CTCcifar':
-        CCTcifar( img_size=32, embedding_dim=768, n_input_channels=3,n_conv_layers=1, kernel_size=7,stride=2,padding=3,pooling_kernel_size=3,pooling_stride=2,pooling_padding=1)
+    elif architecture == 'VGG16':
+        model = make_vgg('VGG16',n_classes)
+    elif architecture == 'CCTcifar':
+        model = CCT(
+            img_size = (32, 32),
+            embedding_dim = 256,
+            n_conv_layers = 2,
+            kernel_size = 7,
+            stride = 2,
+            padding = 3,
+            pooling_kernel_size = 3,
+            pooling_stride = 2,
+            pooling_padding = 1,
+            num_layers = 6,
+            num_heads = 4,
+            mlp_ratio = 2.,
+            num_classes = n_classes,
+            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
+            n_input_channels=1,
+        )
     elif architecture == 'ViTcifar':
-        ViTcifar(n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
+        model = ViTcifar(num_classes = n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
     model = model.to(device)
     optimizer,criterion = set_hyperparameters(model,lr) 
     return model,optimizer,criterion
@@ -155,7 +171,7 @@ def dummy_model(architecture,n_inputs,n_classes,device):
         heads = 6,
         mlp_dim = 1024
         )
-    elif architecture == 'CTCmel':
+    elif architecture == 'CCTmel':
         model = CCT(
             img_size = (32, 63),
             embedding_dim = 256,
@@ -173,7 +189,7 @@ def dummy_model(architecture,n_inputs,n_classes,device):
             positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
             n_input_channels=1,
         )
-    elif architecture == 'CTCspec':
+    elif architecture == 'CCTspec':
         model= CCT(
             img_size = (257, 63),
             embedding_dim = 256,
@@ -191,12 +207,28 @@ def dummy_model(architecture,n_inputs,n_classes,device):
             positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
             n_input_channels=1,
         )
-    elif architecture == 'VGG9':
-        model = VGG9()
-    elif architecture == 'CTCcifar':
-        CCTcifar( img_size=32, embedding_dim=768, n_input_channels=3,n_conv_layers=1, kernel_size=7,stride=2,padding=3,pooling_kernel_size=3,pooling_stride=2,pooling_padding=1)
+    elif architecture == 'VGG16':
+        model = make_vgg('VGG16',n_classes)
+    elif architecture == 'CCTcifar':
+        model = CCT(
+            img_size = (32, 32),
+            embedding_dim = 256,
+            n_conv_layers = 2,
+            kernel_size = 7,
+            stride = 2,
+            padding = 3,
+            pooling_kernel_size = 3,
+            pooling_stride = 2,
+            pooling_padding = 1,
+            num_layers = 6,
+            num_heads = 4,
+            mlp_ratio = 2.,
+            num_classes = n_classes,
+            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
+            n_input_channels=1,
+        )
     elif architecture == 'ViTcifar':
-        ViTcifar(n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
+        model = ViTcifar(num_classes = n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
     model = model.to(device)
     return model
 
