@@ -1,4 +1,6 @@
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 import utils
 from tqdm import tqdm
 from copy import deepcopy
@@ -45,7 +47,6 @@ class Trainer():
         return accuracy,model_loss, ece
 # Training of the model
     def train(self):
-        
         utils.set_seed(self.seed)
         train_ece = 0 
         test_ece = 0

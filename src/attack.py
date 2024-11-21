@@ -1,4 +1,9 @@
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
 import pandas as pd
 import os
 import utils
@@ -6,12 +11,8 @@ import json
 import glob
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import torch.nn as nn
-import torch.optim as optim
 import models.attack_model as attack_model
 import utils
-from torch.utils.data import DataLoader
 from Trainer import Trainer
 import random
 

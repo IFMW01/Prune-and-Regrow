@@ -1,9 +1,11 @@
+import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+import torch.nn as nn
 import glob
 import librosa
 import os
-import torch
 import soundfile as sf
-import torch.nn as nn
 import numpy as np
 import utils
 from tqdm import tqdm

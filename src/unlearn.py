@@ -1,16 +1,15 @@
+import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+from torch.utils.data import DataLoader
 import json
 import os
 import glob
 import utils 
 import math
-import random
-import numpy as np
-import torch
 import os.path
 from unlearn import unlearning_methods as um
 from unlearn import unlearn_metrics
-from unlearn import Unlearner
-from torch.utils.data import DataLoader
 from datasets_unlearn import load_datasets as ld
 
 # gets the loss for an unlearned model
@@ -55,7 +54,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         model_path = glob.glob(os.path.join(model_dir,'*.pth'))
         model_path = model_path[0]
                 
-        orginal_model,optimizer,criterion = um.load_model(model_path,architecture,0.01,device)
+        orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
         results_dict[seed]["Original Model"] = {}
         logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_loss')
 
@@ -76,7 +75,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
             with open(f"{save_dir}Niave.json",'w') as f:
                 json.dump(results_dict,f)
         else:
-            naive_model,optimizer,criterion = um.load_model(f"{save_dir}Naive.pth",architecture,0.01,device)
+            naive_model,optimizer,criterion = um.load_model(f"{save_dir}Naive.pth",0.01,device)
         
         results_dict[seed]["Gradient Ascent Unlearning"] = {}
         gradient_ascent_model,results_dict[seed]["Gradient Ascent Unlearning"] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Gradient Ascent Unlearning"],n_classes,forget_amount,dataset_pointer,architecture,seed)
@@ -105,6 +104,15 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
 
         loss_results = unlearn_metrics.mia_efficacy(stochastic_teacher_model,forget_loader,n_classes,device)
         results_dict[seed]["Stochastic Teacher Unlearning"]["Loss MIA"] =   loss_results   
+
+        results_dict[seed]["Amnesiac Unlearning"] = {} 
+        amnesiac_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
+        logit_distributions(amnesiac_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'amnesiac_model_loss')
+
+        results_dict[seed]["Amnesiac Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(amnesiac_model, naive_model, forget_eval_loader, device)
+        results_dict[seed]["Amnesiac Unlearning"]["JS divergance"]  = unlearn_metrics.JS_divergence(amnesiac_model,naive_model,forget_eval_loader,device)
+        loss_results = unlearn_metrics.mia_efficacy(amnesiac_model,forget_loader,n_classes,device)   
+        results_dict[seed]["Amnesiac Unlearning"]["Loss MIA"] =   loss_results   
 
         results_dict[seed]["OMP Unlearning"] = {}
                                                         
@@ -135,24 +143,6 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         loss_results = unlearn_metrics.mia_efficacy(pop_model,forget_loader,n_classes,device) 
         results_dict[seed]["POP"]["Loss MIA"] =   loss_results   
 
-        results_dict[seed]["Amnesiac Unlearning"] = {} 
-        amnesiac_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
-        logit_distributions(amnesiac_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'amnesiac_model_loss')
-
-        results_dict[seed]["Amnesiac Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(amnesiac_model, naive_model, forget_eval_loader, device)
-        results_dict[seed]["Amnesiac Unlearning"]["JS divergance"]  = unlearn_metrics.JS_divergence(amnesiac_model,naive_model,forget_eval_loader,device)
-        loss_results = unlearn_metrics.mia_efficacy(amnesiac_model,forget_loader,n_classes,device)   
-        results_dict[seed]["Amnesiac Unlearning"]["Loss MIA"] =   loss_results   
-
-        results_dict[seed]["Label Smoothing Unlearning"] = {} 
-        ls_model,results_dict[seed]["Label Smoothing Unlearning"] = um.label_smoothing_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,results_dict[seed]["Label Smoothing Unlearning"],n_classes,forget_amount,architecture,seed)
-        logit_distributions(ls_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'label_smoothing_loss')
-        
-        results_dict[seed]["Label Smoothing Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(ls_model, naive_model, forget_eval_loader, device)
-        results_dict[seed]["Label Smoothing Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(ls_model,naive_model,forget_eval_loader,device)  
-        loss_results = unlearn_metrics.mia_efficacy(ls_model,forget_loader,n_classes,device)
-        results_dict[seed]["Label Smoothing Unlearning"]["Loss MIA"] =   loss_results   
-
         print(f'All unlearning methods applied for seed: {seed}.\n{results_dict}')
 
                 
@@ -170,10 +160,10 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
     forget_randl_set = forget_set
-    remain_set = ld.DatasetProcessor(remain_set,device)
-    forget_set = ld.DatasetProcessor(forget_set,device)
-    test_set = ld.DatasetProcessor(test_set,device)
     if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+        remain_set = ld.DatasetProcessor(remain_set,device)
+        forget_set = ld.DatasetProcessor(forget_set,device)
+        test_set = ld.DatasetProcessor(test_set,device)
         forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
     elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
         forget_randl_data = ld.DatasetProcessor_randl_cifar(forget_randl_set,device,num_classes)
@@ -191,10 +181,13 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
     forget_randl_set = forget_set
-    test_set = ld.DatasetProcessor(test_set,device)
-    remain_set = ld.DatasetProcessor(remain_set,device)
-    forget_set = ld.DatasetProcessor(forget_set,device)
-    forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+        remain_set = ld.DatasetProcessor(remain_set,device)
+        forget_set = ld.DatasetProcessor(forget_set,device)
+        test_set = ld.DatasetProcessor(test_set,device)
+        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
+    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
+        forget_randl_data = ld.DatasetProcessor_randl_cifar(forget_randl_set,device,n_classes)
 
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set

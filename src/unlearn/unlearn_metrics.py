@@ -1,12 +1,14 @@
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 import torch.nn.functional as F
+import torch.nn as nn
 import json
 import glob
 import pandas as pd
 from sklearn.metrics import accuracy_score
 import statistics
 import utils
-import torch.nn as nn
 from models.attack_model import SoftmaxModel
 from torch.utils.data import DataLoader
 
@@ -35,30 +37,36 @@ pruning_ratio = config_unlearn.get("pruning_ratio",None)
 # A DIST Metric Calculation
 def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     distances = []
-    for batch, (data,label) in enumerate(dataloader):
-        data = data.to(device)
-        unlearn_outputs = unlearn_model(data)
-        retrain_outputs = retrain_model(data)
-        diff = torch.sqrt(torch.sum(torch.square(F.softmax(unlearn_outputs, dim = 1) - F.softmax(retrain_outputs, dim = 1)), axis = 1))
-        diff = diff.detach().cpu()
-        distances.append(diff)
+    unlearn_model.eval()
+    retrain_model.eval()
+    with torch.no_grad():
+        for batch, (data,label) in enumerate(dataloader):
+            data = data.to(device)
+            unlearn_outputs = unlearn_model(data)
+            retrain_outputs = retrain_model(data)
+            diff = torch.sqrt(torch.sum(torch.square(F.softmax(unlearn_outputs, dim = 1) - F.softmax(retrain_outputs, dim = 1)), axis = 1))
+            diff = diff.detach().cpu()
+            distances.append(diff)
     distances = torch.cat(distances, axis = 0)
     return distances.mean().item()
 
 # JS DIST Metric Calculation
 def JS_divergence(unlearn_model, retrain_model,dataloader,device):
     js_divergence = []
-    for batch, (data,label) in enumerate(dataloader):
-        data = data.to(device)
-        unlearn_outputs = unlearn_model(data)
-        retrain_outputs = retrain_model(data)
-        unlearn_outputs = F.softmax(unlearn_outputs,dim=1)
-        retrain_outputs = F.softmax(retrain_outputs,dim=1)
-        unlearn_loss = F.cross_entropy(unlearn_outputs, label,reduction ='none')
-        retrain_loss = F.cross_entropy(retrain_outputs, label,reduction ='none')
-        diff = (unlearn_loss+retrain_loss)/2 
-        js = (0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)).detach().cpu().item()
-        js_divergence.append(js)
+    unlearn_model.eval()
+    retrain_model.eval()
+    with torch.no_grad():
+        for batch, (data,label) in enumerate(dataloader):
+            data = data.to(device)
+            unlearn_outputs = unlearn_model(data)
+            retrain_outputs = retrain_model(data)
+            unlearn_outputs = F.softmax(unlearn_outputs,dim=1)
+            retrain_outputs = F.softmax(retrain_outputs,dim=1)
+            unlearn_loss = F.cross_entropy(unlearn_outputs, label,reduction ='none')
+            retrain_loss = F.cross_entropy(retrain_outputs, label,reduction ='none')
+            diff = (unlearn_loss+retrain_loss)/2 
+            js = (0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)).detach().cpu().item()
+            js_divergence.append(js)
     return statistics.mean(js_divergence)
 
 # MIA Efficacy Metric Calculation
@@ -86,19 +94,19 @@ def attack_results(model_list,n_inputs,df,device):
         correct = 0
         total = 0
 
-        for data, target in forget_laoder:
-            with torch.no_grad():
-                data = data.to(device)
-                target = target.to(device)
-                output = attack_model(data)
-                loss = criterion(output, target)
-                model_loss += loss.item()
-                _, predicted = torch.max(output, 1)
-                total += target.size(0)
-                correct += (predicted == target).sum().item()
-        model_loss /= len(forget_laoder)
-        accuracy = 100 * correct / total
-        attack_sucess.append(accuracy)
+        with torch.no_grad():
+            for data, target in forget_laoder:
+                    data = data.to(device)
+                    target = target.to(device)
+                    output = attack_model(data)
+                    loss = criterion(output, target)
+                    model_loss += loss.item()
+                    _, predicted = torch.max(output, 1)
+                    total += target.size(0)
+                    correct += (predicted == target).sum().item()
+            model_loss /= len(forget_laoder)
+            accuracy = 100 * correct / total
+            attack_sucess.append(accuracy)
     return attack_sucess 
 
 

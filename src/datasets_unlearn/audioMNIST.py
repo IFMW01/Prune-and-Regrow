@@ -1,10 +1,11 @@
+import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+import torch.nn as nn
 import glob
 import librosa
 import os
-import torch
 import soundfile as sf
-import utils
-import torch.nn as nn
 import numpy as np
 import subprocess
 import shutil
@@ -32,7 +33,6 @@ def convert_to_spectograms(data_folder, destination_folder,pipeline=False,downsa
       
 
 def create_audioMNIST(pipeline,pipeline_on_wav,dataset_pointer):
-    utils.set_seed(42)
     data_folder = './AudioMNIST/data/*/'
     temp_dir = f'./{pipeline}/{dataset_pointer}'
     if os.path.isdir(f'{temp_dir}'):

@@ -1,9 +1,10 @@
+import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 import torchaudio
 import os
-import torch
 import librosa
 import numpy as np
-import torch
 import torchvision
 import random
 import torchvision.datasets as cifar_datasets
@@ -16,8 +17,6 @@ import utils
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
-
-seed = 42
 
 
 def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):

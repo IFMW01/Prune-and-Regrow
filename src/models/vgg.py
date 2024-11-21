@@ -1,4 +1,6 @@
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 import torch.nn as nn
 
 # Modified from VGGish Implemntation: https://github.com/harritaylor/torchvggish/blob/master/docs/_example_download_weights.ipynb

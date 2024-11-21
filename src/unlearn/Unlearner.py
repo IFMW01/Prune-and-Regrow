@@ -1,4 +1,6 @@
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 import utils
 from tqdm import tqdm
 from copy import deepcopy
@@ -30,8 +32,8 @@ class Unlearner():
         total = 0
         ece = 0
         ece = MulticlassCalibrationError(self.n_classes, n_bins=15, norm='l1')
-        for data, target in dataloader:
-            with torch.no_grad():
+        with torch.no_grad():
+            for data, target in dataloader:
                 output = self.model(data)
                 loss = self.criterion(output, target)
                 ece.update(torch.softmax(output, dim=1),target)

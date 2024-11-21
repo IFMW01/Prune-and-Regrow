@@ -1,13 +1,15 @@
 # https://github.com/teobaluta/etio/blob/main/attack/attack_models.py
 
 #  Using implementation from shokri shadow model attack as attack models.
-
-import json
-import sys
-from torch.nn import init
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+from torch.nn import init
 import torch.nn as nn
 import torch.nn.functional as F
+import json
+import sys
+
 
 class SoftmaxModel(nn.Module):
     def __init__(self, n_in, n_out):

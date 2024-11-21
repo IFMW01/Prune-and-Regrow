@@ -1,52 +1,56 @@
 import torch
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 import torch.nn as nn
 import torch.optim as optim
+from torch.nn.utils import parameters_to_vector as Params2Vec
+from torch.nn.utils import vector_to_parameters as VectorToParams
 import random
 import utils
 import numpy as np
 import Trainer
-import scipy.stats as stats
 import torch.nn.utils.prune as prune
 import time
 from Trainer import Trainer
 from unlearn.Unlearner import Unlearner
-from torch.nn.utils import parameters_to_vector as Params2Vec
-from torch.nn.utils import vector_to_parameters as VectorToParams
-from torch.nn.utils.prune import _validate_pruning_amount, _validate_pruning_amount_init, _compute_nparams_toprune
+
 
 # Creates the forget and remain set for random Item Removal, ensuring that d forget is removed from d remain
 def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed=42):
     utils.set_seed(seed)
     forget_set = []
-    remain_set = train_set
+    remain_set = []
     print(len(remain_set))
     print(type(remain_set))
-    forget_set = np.random.choice(remain_set,forget_instances_num, replace=False) 
-    remain_set = list(set(remain_set) - set(forget_set))
+    forget_set = np.random.choice(train_set,forget_instances_num, replace=False) 
+    for index in range(len(train_set)):
+        if index in forget_set:
+            continue
+        else:
+            remain_set.append(train_set[index])
     return remain_set,forget_set
 
 # Creates the forget and remain set for random Class Removal, ensuring that d forget is removed from d remain
 def class_removal(dataset_pointer,forget_classes_num,num_classes,train_set,test_set,seed=42):
     utils.set_seed(seed)
     forget_set = []
-    remain_set = train_set
+    remain_set = []
 
     test_remove = []
-    test_keep = test_set
+    test_keep = []
 
     classes_to_forget = random.sample(range(num_classes), forget_classes_num)
-    for i in range(len(remain_set)):
+    for index in range(len(train_set)):
         if torch.load(remain_set[i])['label'] in classes_to_forget:
             forget_set.append(remain_set[i])
-
-    remain_set = list(set(remain_set) - set(forget_set))
+        else:
+            remain_set.append(train_set[index])
             
-    for i in range(len(test_keep)):
-        if torch.load(test_keep[i])['label'] in classes_to_forget:
-            test_remove.append(test_keep[i])
-
-    test_keep = list(set(test_keep) - set(test_remove))
-    
+    for i in range(len(test_set)):
+        if torch.load(test_set[i])['label'] in classes_to_forget:
+            test_remove.append(test_set[i])
+        else:
+            test_keep.append(test_set[i])    
     return forget_set,remain_set,test_keep
 
 # Gets accuracy for a model on the forget, remian and test set
@@ -59,7 +63,7 @@ def evaluate_forget_remain_test(model,forget_eval_loader,remain_eval_loader,test
     print(f"Test set Accuracy: {test_set_acc:.2f}")
 
 # Loads a model provided a path and returns an optimizer and criterion
-def load_model(path,architecture,lr,device):
+def load_model(path,lr,device):
     model = torch.load(path)
     model.to(device)
     optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
@@ -111,13 +115,16 @@ def gradient_ascent(path,remain_loader,remain_eval_loader,test_loader,forget_loa
     print("\nGradient Ascent Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    ga_model,optimizer_ga,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess':
+        ga_model,optimizer_ga,criterion = load_model(path,(0.01*(256/forget_instances_num)),device)
+    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CFIAR100':
+        ga_model,optimizer_ga,criterion = load_model(path,(0.01),device)
     evaluate_forget_remain_test(ga_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     ga_train = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ga, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model,impair_time = ga_train.gradient_ascent()
 
     print("\nFine tuning gradient ascent model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(ga_model,architecture,lr=0.01)
+    optimizer_ft,criterion = utils.set_hyperparameters(ga_model,lr=0.01)
     ga_fine_tune = Unlearner(ga_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
     ga_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= ga_fine_tune.fine_tune()
     forget_accuracy,forget_loss,forget_ece = ga_fine_tune.evaluate(forget_eval_loader)
@@ -131,7 +138,7 @@ def fine_tuning_unlearning(path,device,remain_loader,remain_eval_loader,test_loa
    print("\nFine Tuning Unlearning:")
    utils.set_seed(seed)
    impair_time = 0.0
-   ft_model,optimizer_ft,criterion = load_model(path,architecture,0.01,device)
+   ft_model,optimizer_ft,criterion = load_model(path,0.01,device)
    ft_train = Unlearner(ft_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,0,n_epochs,n_classes,seed)
    ft_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,best_epoch,fine_tune_time = ft_train.fine_tune()
    forget_accuracy,forget_loss,forget_ece= ft_train.evaluate(forget_eval_loader)
@@ -176,9 +183,9 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
-            end_time = time.time()
-            epoch_time = end_time - start_time
-            train_time += round(epoch_time,3)
+        end_time = time.time()
+        epoch_time = end_time - start_time
+        train_time += round(epoch_time,3)
         print(f"Epoch {epoch+1}/{epochs},Loss: {running_loss / len(train_loader)}")
     return student,train_time
 
@@ -209,6 +216,29 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
   dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,n_repair_epochs,impair_time,fine_tune_time)
   return student_model,dict
 
+# Amnesiac Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
+def amnesiac_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,architecture,seed):
+    print("\nAmnesiac Unlearning:")
+    print("\n")
+    # add lr
+    amnesiac_model,optimizer_ft,criterion = load_model(path,architecture,0.001,device)
+    print("\n Orignial model accuracy:")
+    evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+    randl_train = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    amnesiac_model,impair_time=  randl_train.amnesiac()
+    print("Performed Amnesiac Unlearning")
+    evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+
+    print("\nFine tuning amnesiac model:")
+    optimizer_ft,criterion = utils.set_hyperparameters(amnesiac_model,architecture,lr=0.01)
+    randl_fine_tune = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
+    amnesiac_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= randl_fine_tune.fine_tune()
+    forget_accuracy,forget_loss,forget_ece = randl_fine_tune.evaluate(forget_eval_loader)
+    
+    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
+    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
+    return amnesiac_model,dict
+
   # ONE-SHOT MAGNITUTE UNLEARNING
   
 def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,pruning_ratio,n_epochs,dict,n_classes,architecture,seed):
@@ -238,32 +268,18 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
 def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\nConsine Unlearning:")
     print("\n")
-    prune_rate = torch.linspace(0,1,101)
-    cosine_sim = []
 
     base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    for pruning_ratio in prune_rate:
-        pruning_ratio = float(pruning_ratio)
-        prune_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
-        prune_model = global_prune_without_masks(prune_model,pruning_ratio)
-        prune_model_vec = vectorise_model(prune_model)
-        cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
+    prune_rate = cs_prune(base_vec,'pop')
  
-    c = torch.vstack((torch.Tensor(cosine_sim), prune_rate))
-    d = c.T
-    dists = []
-    for i in d:
-        dists.append(torch.dist(i, torch.Tensor([1, 1])))
-    min = torch.argmin(torch.Tensor(dists))
-
-    consine_model = global_prune_without_masks(base_model, float(prune_rate[min]))
+    consine_model = global_prune_without_masks(base_model, prune_rate)
     end_time = time.time()
     impair_time = round((end_time - start_time),3)
 
-    print(f"Percentage Prune: {prune_rate[min]:.2f}")
+    print(f"Percentage Prune: {prune_rate}")
     evaluate_forget_remain_test(consine_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning cosine model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(consine_model,architecture,lr=0.01)
@@ -277,43 +293,25 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
 def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\n POP Unlearning:")
     print("\n")
-    prune_rate = torch.linspace(0,1,101)
-    cosine_sim = []
 
     base_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    for pruning_ratio in prune_rate:
-        pruning_ratio = float(pruning_ratio)
-        prune_model,optimizer,criterion,= load_model(path,architecture,0.01,device)
-        prune_model = global_prune_without_masks(prune_model,pruning_ratio)
-        prune_model_vec = vectorise_model(prune_model)
-        cosine_sim.append(cosine_similarity(base_vec, prune_model_vec).item())
- 
-    c = torch.vstack((torch.Tensor(cosine_sim), prune_rate))
-    d = c.T
-    dists = []
-    for i in d:
-        dists.append(torch.dist(i, torch.Tensor([1, 1])))
-    min = torch.argmin(torch.Tensor(dists))
-
-    unsafe_prune = prune_rate[min]+0.1
-    if unsafe_prune>=0.96:
-        unsafe_prune = 0.95
+    prune_rate = cs_prune(base_vec,'pop')
     
-    pop_model = global_prune_without_masks(base_model, float(unsafe_prune))
+    pop_model = global_prune_without_masks(base_model, float(prune_rate))
     end_time = time.time()
     pre_train = vectorise_model(pop_model).count_nonzero()
     print(f'Number of parameters pre training: {pre_train}')
     impair_time = round((end_time-start_time),3)
-    print(f"Percentage Prune: {unsafe_prune:.2f}")
+    print(f"Percentage Prune: {prune_rate:.2f}")
 
     print(f"\nModel accuracies post POP:")
     evaluate_forget_remain_test(pop_model,forget_loader,remain_eval_loader,test_loader,device)
     print("\nFine tuning POP model:")
     optimizer_cosine,criterion = utils.set_hyperparameters(pop_model,architecture,lr=0.01)
-    kk_train = Unlearner(pop_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,5,n_classes,seed)
+    kk_train = Unlearner(pop_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,n_repair,n_classes,seed)
     pop_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
     post_train = vectorise_model(pop_model).count_nonzero()
     print(f'Number of parameters post training: {post_train}')
@@ -321,52 +319,6 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return pop_model,dict
-
-# Amnesiac Unlearning - Know as "Unlearning" from Amnesiac Machine Learning paper
-
-def amnesiac_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_rand_lables_loader,device,n_epoch_impair,n_epoch_repair,dict,n_classes,architecture,seed):
-    print("\nAmnesiac Unlearning:")
-    print("\n")
-    # add lr
-    amnesiac_model,optimizer_ft,criterion = load_model(path,architecture,0.001,device)
-    print("\n Orignial model accuracy:")
-    evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    randl_train = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_rand_lables_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-    amnesiac_model,impair_time=  randl_train.amnesiac()
-    print("Performed Amnesiac Unlearning")
-    evaluate_forget_remain_test(amnesiac_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-
-    print("\nFine tuning amnesiac model:")
-    optimizer_ft,criterion = utils.set_hyperparameters(amnesiac_model,architecture,lr=0.01)
-    randl_fine_tune = Unlearner(amnesiac_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-    amnesiac_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= randl_fine_tune.fine_tune()
-    forget_accuracy,forget_loss,forget_ece = randl_fine_tune.evaluate(forget_eval_loader)
-    
-    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
-    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
-    return amnesiac_model,dict
-
-# LABEL SMOOTHING UNLEARNING
-
-def label_smoothing_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_impair,n_epoch_repair,dict,n_classes,forget_instances_num,architecture,seed):
-   print("\n Label Smoothing Unlearning:")
-   utils.set_seed(seed)
-   ls_model,optimizer,criterion = load_model(path,architecture,(0.01*(256/forget_instances_num)),device)
-   criterion_ls = nn.CrossEntropyLoss(label_smoothing=1)
-   ls_train = Trainer(ls_model, forget_loader, forget_eval_loader, test_loader, optimizer, criterion_ls, device, n_epoch_impair,n_classes,seed)
-   ls_model,forget_accuracy,forget_loss,forget_ece,test_accuracy,test_loss,test_ece,best_epoch,impair_time = ls_train.train()
-   print(f"\nModel accuracies post label smoothing:")
-   evaluate_forget_remain_test(ls_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-
-   print(f"\nFine Tuning:")
-   optimizer_ft,criterion = utils.set_hyperparameters(ls_model,architecture,lr=0.01)
-   ls_fine_tune = Unlearner(ls_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_ft, criterion, device,n_epoch_impair,n_epoch_repair,n_classes,seed)
-   ls_model, remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= ls_fine_tune.fine_tune()
-   forget_accuracy,forget_loss,forget_ece = ls_fine_tune.evaluate(forget_eval_loader)
-
-   acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
-   dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
-   return ls_model,dict
 
 def vectorise_model(model):
     return Params2Vec(model.parameters())
@@ -378,6 +330,31 @@ def cosine_similarity(base_weights, model_weights):
         torch.linalg.norm(base_weights)
         * torch.linalg.norm(model_weights)
     ),-1, 1),0)
+
+def cs_prune(base_model_vec, ord):
+    if ord == "opt":
+        utopia = torch.Tensor([1, 1]) # prune, cs
+        distances_idx = torch.argmin
+    elif ord == "pop":
+        utopia = torch.Tensor([0, 0]) # prune , cs
+        distances_idx = torch.argmax
+    prune_vec = base_model_vec.clone()
+    prune_vec_abs = torch.abs(prune_vec)
+    l1_idx = torch.argsort(prune_vec_abs)
+    fidelity = [101] # 1% jumps 
+    prune_rate = torch.linspace(0, len(prune_vec), fidelity[0], dtype=int)
+    cs = torch.zeros(size=(fidelity[0],))
+    cs[0] = 1
+    for i in range(fidelity[0]):
+        prune_vec[l1_idx[prune_rate[i]:prune_rate[i + 1]]] = 0
+        cs[i + 1] = cosine_similarity(base_model_vec, prune_vec).item()
+    percentage = torch.linspace(0, 1, fidelity[0])
+    cs_and_percentage = torch.vstack((torch.Tensor(percentage), torch.Tensor(cs)))
+    dists = torch.zeros(size=(fidelity[0],))
+    for idx, i in enumerate(cs_and_percentage.T):
+        dists[idx] = torch.dist(i, utopia)
+    percentage_idx = distances_idx(dists)
+    return percentage[percentage_idx].item()
 
 # Removing masks from pruned model
 def global_prune_without_masks(model, amount):
