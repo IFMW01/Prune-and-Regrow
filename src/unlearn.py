@@ -157,6 +157,15 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     loss_results = unlearn_metrics.mia_efficacy(cosine_model,forget_loader,n_classes,dataset_pointer,architecture,device)    
     results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
+    results_dict[seed]["Orth"] = {} 
+    orth_model,results_dict[seed]["Orth"] = um.orth_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Orth"],n_classes,architecture,n_inputs,seed)
+    logit_distributions(orth_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orth_model_loss')
+
+    results_dict[seed]["Orth"]["Activation distance"]  = unlearn_metrics.actviation_distance(orth_model, naive_model, forget_eval_loader, device)
+    results_dict[seed]["Orth"]["JS divergance"]  = unlearn_metrics.JS_divergence(orth_model,naive_model,forget_eval_loader,device)
+    loss_results = unlearn_metrics.mia_efficacy(orth_model,forget_loader,n_classes,dataset_pointer,architecture,device) 
+    results_dict[seed]["Orth"]["Loss MIA"] =   loss_results   
+
     results_dict[seed]["POP"] = {} 
     pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,n_inputs,seed)
     logit_distributions(pop_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'pop_model_loss')

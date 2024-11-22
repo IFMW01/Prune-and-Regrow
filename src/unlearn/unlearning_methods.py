@@ -20,8 +20,7 @@ def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed
     utils.set_seed(seed)
     forget_set = []
     remain_set = []
-    rng = np.random.default_rng(seed=42)
-    forget_set = rng.choice(train_set,forget_instances_num, replace=False) 
+    forget_set = np.random.choice(train_set,forget_instances_num, replace=False) 
     for index in range(len(train_set)):
         if train_set[index] in forget_set:
             continue
@@ -37,19 +36,31 @@ def class_removal(dataset_pointer,forget_classes_num,num_classes,train_set,test_
 
     test_remove = []
     test_keep = []
-    random_state = random.Random(42)
-    classes_to_forget = random_state.sample(range(num_classes), forget_classes_num)
-    for index in range(len(train_set)):
-        if torch.load(train_set[i])['label'] in classes_to_forget:
-            forget_set.append(train_set[i])
-        else:
-            remain_set.append(train_set[index])
-            
-    for i in range(len(test_set)):
-        if torch.load(test_set[i])['label'] in classes_to_forget:
-            test_remove.append(test_set[i])
-        else:
-            test_keep.append(test_set[i])    
+    classes_to_forget = random.sample(range(num_classes), forget_classes_num)
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
+        for index in range(len(train_set)):
+            if torch.load(train_set[index])['label'] in classes_to_forget:
+                forget_set.append(train_set[index])
+            else:
+                remain_set.append(train_set[index])
+                
+        for index in range(len(test_set)):
+            if torch.load(test_set[index])['label'] in classes_to_forget:
+                test_remove.append(test_set[index])
+            else:
+                test_keep.append(test_set[index])  
+    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
+        for index,(data,label) in enumerate(train_set):
+            if label in classes_to_forget:
+                forget_set.append(train_set[index])
+            else:
+                remain_set.append(train_set[index])
+                
+        for index,(data,label) in enumerate(test_set):
+            if label in classes_to_forget:
+                test_remove.append(test_set[index])
+            else:
+                test_keep.append(test_set[index])  
     return forget_set,remain_set,test_keep
 
 # Gets accuracy for a model on the forget, remian and test set
@@ -289,6 +300,36 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return consine_model,dict
 
+def orth_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
+    print("\n Orth Unlearning:")
+    print("\n")
+
+    base_model,optimizer,criterion,= load_model(path,0.01,device)
+    start_time = time.time()
+    base_vec = vectorise_model(base_model)
+    evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
+    prune_rate = cs_prune(base_vec,'orth')
+    dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
+    orth_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
+    end_time = time.time()
+    pre_train = vectorise_model(orth_model).count_nonzero()
+    print(f'Number of parameters pre training: {pre_train}')
+    impair_time = round((end_time-start_time),3)
+    print(f"Percentage Prune: {prune_rate:.2f}")
+
+    print(f"\nModel accuracies post Orth:")
+    evaluate_forget_remain_test(orth_model,forget_loader,remain_eval_loader,test_loader,device)
+    print("\nFine tuning Orth model:")
+    optimizer_cosine,criterion = utils.set_hyperparameters(orth_model,lr=0.01)
+    kk_train = Unlearner(orth_model,remain_loader, remain_eval_loader, forget_loader,forget_eval_loader,test_loader, optimizer_cosine, criterion, device,0,n_repair,n_classes,seed)
+    orth_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss, test_ece,best_epoch,fine_tune_time= kk_train.fine_tune()
+    post_train = vectorise_model(orth_model).count_nonzero()
+    print(f'Number of parameters post training: {post_train}')
+    forget_accuracy,forget_loss,forget_ece = kk_train.evaluate(forget_eval_loader)
+    acc_scores(forget_accuracy,forget_loss,forget_ece,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece)
+    dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
+    return orth_model,dict
+
 def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
     print("\n POP Unlearning:")
     print("\n")
@@ -297,7 +338,7 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     start_time = time.time()
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
-    prune_rate = cs_prune(base_vec,'pop')
+    prune_rate = cs_prune(base_vec,'orth')
     dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
     pop_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
     end_time = time.time()
@@ -334,9 +375,13 @@ def cs_prune(base_model_vec, ord):
     if ord == "opt":
         utopia = torch.Tensor([1, 1]) # prune, cs
         distances_idx = torch.argmin
-    elif ord == "pop":
+    elif ord == "orth":
         utopia = torch.Tensor([0, 0]) # prune , cs
         distances_idx = torch.argmax
+    elif ord == "pop":
+        utopia = torch.Tensor([-1, 0]) # prune , cs
+        distances_idx = torch.argmax
+
     prune_vec = base_model_vec.clone()
     prune_vec_abs = torch.abs(prune_vec)
     l1_idx = torch.argsort(prune_vec_abs)
@@ -353,7 +398,7 @@ def cs_prune(base_model_vec, ord):
     for idx, i in enumerate(cs_and_percentage.T):
         dists[idx] = torch.dist(i, utopia)
     percentage_idx = distances_idx(dists)
-    return round(percentage[percentage_idx].item(),2)
+    return percentage[percentage_idx].item()
 
 def prune_and_regrow(model2prune, init_model, amount, device):
     parameters_to_prune = []
@@ -377,6 +422,7 @@ def prune_and_regrow(model2prune, init_model, amount, device):
                 prune.remove(prune_mod, "weight")
                 mask = prune_mod.weight==0
                 prune_mod.weight = torch.nn.Parameter(prune_mod.weight + mask.int()*init_mod.weight).to(device)
+        if hasattr(prune_mod, "bias_orig"):
             if isinstance(prune_mod.bias_orig, torch.nn.Parameter):
                 prune.remove(prune_mod, "bias")
                 mask = prune_mod.bias==0
