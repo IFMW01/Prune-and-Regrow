@@ -62,7 +62,7 @@ def mia_efficacy(model,forget_loader,n_classes,dataset_pointer,architecture,devi
     loss_results = attack_results(attack_model_list,1,df_forget_loss,device)
     return loss_results
 
-def attack_results(model_list,n_inputs,df,device):
+def attack_results(model_list,df,device):
     attack_sucess = []
     labels = df['label']
     df = df.drop(['label'],axis=1)

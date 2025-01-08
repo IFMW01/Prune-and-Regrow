@@ -59,7 +59,7 @@ def create_dir(directory):
         os.makedirs(directory,exist_ok=True)
 
 # Gets the intailised model for each architetcure 
-def initialise_model(architecture,n_classes,device,lr=0.01):
+def initialise_model(architecture,n_classes,device,lr=0.001):
     if architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
     elif architecture == 'CCTcifar':
