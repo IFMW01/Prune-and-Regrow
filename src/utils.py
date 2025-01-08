@@ -295,6 +295,8 @@ def evaluate(model,dataloader,device):
     total = 0
     with torch.no_grad():
         for data, target in dataloader:
+            data = data.to(device)
+            target = target.to(device)
             output = model(data)
             _, predicted = torch.max(output, 1)
             total += target.size(0)
@@ -313,6 +315,8 @@ def evaluate_test(model,test_loader,criterion,n_classes,device):
     ece = 0
     with torch.no_grad():
         for data, target in test_loader:
+            data = data.to(device)
+            target = target.to(device)
             output = model(data)
             loss = criterion(output, target)
             ece += metric(output,target).item()

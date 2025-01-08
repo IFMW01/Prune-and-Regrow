@@ -20,13 +20,22 @@ def create_forget_remain_set(dataset_pointer,forget_instances_num,train_set,seed
     utils.set_seed(seed)
     forget_set = []
     remain_set = []
-    forget_set = np.random.choice(train_set,forget_instances_num, replace=False) 
-    for index in range(len(train_set)):
-        if train_set[index] in forget_set:
-            continue
-        else:
-            remain_set.append(train_set[index])
+    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
+        forget_set = np.random.choice(train_set,forget_instances_num, replace=False) 
+        for index in range(len(train_set)):
+            if train_set[index] in forget_set:
+                continue
+            else:
+                remain_set.append(train_set[index])
+    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
+        forget_index = np.random.choice(len(train_set), forget_instances_num,replace=False)
+        for index in range(len(train_set)):
+            if index in forget_index:
+                forget_set.append(train_set[index])
+            else:
+                remain_set.append(train_set[index])
     return remain_set,forget_set
+    
 
 # Creates the forget and remain set for random Class Removal, ensuring that d forget is removed from d remain
 def class_removal(dataset_pointer,forget_classes_num,num_classes,train_set,test_set,seed=42):

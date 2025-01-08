@@ -28,6 +28,7 @@ def actviation_distance(unlearn_model, retrain_model, dataloader, device):
     with torch.no_grad():
         for batch, (data,label) in enumerate(dataloader):
             data = data.to(device)
+            label = label.to(device)
             unlearn_outputs = unlearn_model(data)
             retrain_outputs = retrain_model(data)
             diff = torch.sqrt(torch.sum(torch.square(F.softmax(unlearn_outputs, dim = 1) - F.softmax(retrain_outputs, dim = 1)), axis = 1))
@@ -44,14 +45,13 @@ def JS_divergence(unlearn_model, retrain_model,dataloader,device):
     with torch.no_grad():
         for batch, (data,label) in enumerate(dataloader):
             data = data.to(device)
+            label = label.to(device)
             unlearn_outputs = unlearn_model(data)
             retrain_outputs = retrain_model(data)
             unlearn_outputs = F.softmax(unlearn_outputs,dim=1)
             retrain_outputs = F.softmax(retrain_outputs,dim=1)
-            unlearn_loss = F.cross_entropy(unlearn_outputs, label,reduction ='none')
-            retrain_loss = F.cross_entropy(retrain_outputs, label,reduction ='none')
-            diff = (unlearn_loss+retrain_loss)/2 
-            js = (0.5*F.kl_div(torch.log(unlearn_loss), diff) + 0.5*F.kl_div(torch.log(retrain_loss), diff)).detach().cpu().item()
+            diff = (unlearn_outputs+retrain_outputs)/2 
+            js = (0.5*F.kl_div(torch.log(unlearn_outputs), diff) + 0.5*F.kl_div(torch.log(retrain_outputs), diff)).detach().cpu().item()
             js_divergence.append(js)
     return statistics.mean(js_divergence)
 

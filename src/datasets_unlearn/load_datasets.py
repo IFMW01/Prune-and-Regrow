@@ -83,7 +83,7 @@ def load_datasets(dataset_pointer :str,pipeline:str,unlearnng:bool):
         )
 
     else:
-        raise Exception("Enter correct dataset pointer")
+        raise Exception("Enter valid dataset pointer: e.g. SpeechCommands,audioMNIST,UrbanSound8K,CIFAR10")
         
     if unlearnng:
         return train_set,test_set
@@ -183,11 +183,13 @@ class WavToSpec(torch.nn.Module):
 
 class DatasetProcessor_randl_cifar(Dataset):
   def __init__(self, dataset,device,num_classes):
+    self.dataset = dataset
     self.data = []
     self.labels = []
     for inx, (data, label) in enumerate(dataset):
-        self.data.append(inx[data].to(device))
-        while new_label == inx[label]:
+        self.data.append(data.to(device))
+        new_label = label
+        while new_label == label:
                 new_label = random.randint(0, (num_classes-1))
         new_label = torch.tensor(new_label).to(device)
         self.labels.append(new_label)
