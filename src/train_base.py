@@ -32,7 +32,7 @@ def options_parser():
     parser.add_argument(
         "--lr",
         required=False,
-        type=int,
+        type=float,
         default= 0.001
 
     )
@@ -43,7 +43,7 @@ def options_parser():
         type=int,
         default= 200
     )
-    
+
     parser.add_argument(
         "--seed",
         required=True,

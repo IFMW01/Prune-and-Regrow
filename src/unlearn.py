@@ -236,7 +236,7 @@ def options_parser():
     parser.add_argument(
         "--lr",
         required=False,
-        type=int,
+        type=float,
         default= 0.001
 
     )
