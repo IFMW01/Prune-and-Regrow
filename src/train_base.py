@@ -16,12 +16,7 @@ def options_parser():
         required=True,
         type=str
     )
-    parser.add_argument(
-        "--pipeline",
-        required=False,
-        default='mel',
-        type=str,
-    )
+
     parser.add_argument(
         "--architecture",
         required=True,
@@ -39,18 +34,6 @@ def options_parser():
         type=int,
     )
 
-    parser.add_argument(
-        "--n_classes", 
-        required=True, 
-        type=int, 
-    )
-    parser.add_argument(
-        "--n_inputs",
-        required=False,
-        default=1,
-        type=int,
-        help="This is only used for audio which is mono",
-    )
     args = parser.parse_args()
 
     return args
@@ -67,21 +50,22 @@ def create_base_model(train,save_model_path,save_mia_path,device,seed,train_load
 
 def main(args):
     dataset_pointer = args.dataset_pointer
-    pipeline = args.pipeline
     architecture = args.architecture
     n_epochs =args.n_epochs
     seed = args.seed
-    n_classes = args.n_classes
-    n_inputs = args.n_inputs
+    if dataset_pointer == 'CIFAR10':
+        n_classes = 10
+    elif dataset_pointer == 'CIFAR100': 
+        n_classes = 100
+    elif dataset_pointer == 'Tiny ImageNet': 
+        n_classes = 200
 
-    print("Received arguments from args:")
+    print("Experiemental setup")
     print(f"Dataset pointer: {dataset_pointer}")
-    print(f"Pipeline: {pipeline}")
     print(f"Architecture: {architecture}")
     print(f"Number of epochs: {n_epochs}")
     print(f"Seeds: {seed}")
     print(f"Number of classes: {n_classes}")
-    print(f"Number of inputs: {n_inputs}")
 
     device = utils.get_device()
     results_dict = {}

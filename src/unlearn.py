@@ -64,7 +64,7 @@ def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
 
 
 # Calls all unlearning methods to be perfromed on the base models that have been created and saves the results
-def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,forget_amount,tag,device):
+def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_epoch_impair,n_epoch_repair,forget_amount,tag,device):
             
     results_dict = {}
 
@@ -83,7 +83,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
 
     results_dict[seed]["Naive Unlearning"] = {}
     if not os.path.isfile(f"{save_dir}Naive.pth"):
-        naive_model,results_dict[seed]["Naive Unlearning"] = um.naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed]["Naive Unlearning"],seed)
+        naive_model,results_dict[seed]["Naive Unlearning"] = um.naive_unlearning(architecture,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed]["Naive Unlearning"],seed)
         logit_distributions(naive_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'naive_model_loss')
         torch.save(naive_model,f"{save_dir}Naive.pth")
         results_dict[seed]["Original Model"]["Activation distance"] = unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device)
@@ -120,7 +120,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Fine Tune Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Stochastic Teacher Unlearning"] = {}
-    stochastic_teacher_model,results_dict[seed]["Stochastic Teacher Unlearning"]= um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,results_dict[seed]["Stochastic Teacher Unlearning"],n_epoch_impair,n_epoch_repair,seed)
+    stochastic_teacher_model,results_dict[seed]["Stochastic Teacher Unlearning"]= um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_classes,architecture,results_dict[seed]["Stochastic Teacher Unlearning"],n_epoch_impair,n_epoch_repair,seed)
     logit_distributions(stochastic_teacher_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'stochastic_teacher_model_loss')
     results_dict[seed]["Stochastic Teacher Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(stochastic_teacher_model, naive_model, forget_eval_loader, device)
     results_dict[seed]["Stochastic Teacher Unlearning"]["JS divergance"]= unlearn_metrics.JS_divergence(stochastic_teacher_model,naive_model,forget_eval_loader,device)     
@@ -149,7 +149,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Cosine Unlearning"] = {} 
-    cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,n_inputs,seed)
+    cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,seed)
     logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_loss')
     
     results_dict[seed]["Cosine Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(cosine_model, naive_model, forget_eval_loader, device)
@@ -158,7 +158,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Orth"] = {} 
-    orth_model,results_dict[seed]["Orth"] = um.orth_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Orth"],n_classes,architecture,n_inputs,seed)
+    orth_model,results_dict[seed]["Orth"] = um.orth_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Orth"],n_classes,architecture,seed)
     logit_distributions(orth_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orth_model_loss')
 
     results_dict[seed]["Orth"]["Activation distance"]  = unlearn_metrics.actviation_distance(orth_model, naive_model, forget_eval_loader, device)
@@ -167,7 +167,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Orth"]["Loss MIA"] =   loss_results   
 
     results_dict[seed]["POP"] = {} 
-    pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,n_inputs,seed)
+    pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,seed)
     logit_distributions(pop_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'pop_model_loss')
 
     results_dict[seed]["POP"]["Activation distance"]  = unlearn_metrics.actviation_distance(pop_model, naive_model, forget_eval_loader, device)
@@ -192,12 +192,7 @@ def forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,num_c
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
     forget_randl_set = forget_set
-    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer == 'UrbanSound8K':
-        remain_set = ld.DatasetProcessor(remain_set,device)
-        forget_set = ld.DatasetProcessor(forget_set,device)
-        test_set = ld.DatasetProcessor(test_set,device)
-        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,num_classes)
-    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
+    if dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
         forget_randl_data = ld.DatasetProcessor_randl_cifar(forget_randl_set,device,num_classes)
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
     return remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,num_forget_set
@@ -213,12 +208,7 @@ def forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,
     print(f"Remain instances: {num_remain_set}")
     print(f"Forget instances: {num_forget_set}")
     forget_randl_set = forget_set
-    if dataset_pointer == 'SpeechCommands' or dataset_pointer == 'audioMNIST' or dataset_pointer == 'Ravdess' or dataset_pointer =='UrbanSound8K':
-        remain_set = ld.DatasetProcessor(remain_set,device)
-        forget_set = ld.DatasetProcessor(forget_set,device)
-        test_set = ld.DatasetProcessor(test_set,device)
-        forget_randl_data = ld.DatasetProcessor_randl(forget_randl_set,device,n_classes)
-    elif dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
+    if dataset_pointer == 'CIFAR10' or dataset_pointer == 'CIFAR100':
         forget_randl_data = ld.DatasetProcessor_randl_cifar(forget_randl_set,device,n_classes)
 
     remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader = create_loaders(remain_set,forget_set,test_set,forget_randl_data)
@@ -230,12 +220,6 @@ def options_parser():
         "--dataset_pointer",
         required=True,
         type=str
-    )
-    parser.add_argument(
-        "--pipeline",
-        required=False,
-        default='mel',
-        type=str,
     )
     parser.add_argument(
         "--architecture",
@@ -252,19 +236,6 @@ def options_parser():
         "--seed",
         required=True,
         type=int,
-    )
-
-    parser.add_argument(
-        "--n_classes", 
-        required=True, 
-        type=int, 
-    )
-    parser.add_argument(
-        "--n_inputs",
-        required=False,
-        default=1,
-        type=int,
-        help="This is only used for audio which is mono",
     )
 
     parser.add_argument(
@@ -318,12 +289,9 @@ def options_parser():
     
 def main(args):
     dataset_pointer = args.dataset_pointer
-    pipeline = args.pipeline
     architecture = args.architecture
     n_epochs =args.n_epochs
     seed = args.seed
-    n_classes = args.n_classes
-    n_inputs = args.n_inputs
     unlearning = args.unlearning
     n_epoch_impair = args.n_epoch_impair
     n_epoch_repair = args.n_epoch_repair
@@ -335,13 +303,20 @@ def main(args):
     print("Received arguments from config file:")
     print(f"Unlearning: {unlearning}")
     print(f"Dataset pointer: {dataset_pointer}")
-    print(f"pipeline: {pipeline}")
     print(f"Architecture: {architecture}")
     print(f"Number of retrain epochs: {n_epochs}")
     print(f"Seeds: {seed}")
     print(f"Number of impair epochs: {n_epoch_impair}")
     print(f"Number of repair epochs: {n_epoch_repair}")
     print(f"Forgetting random samples : {forget_random}")
+
+    if dataset_pointer == 'CIFAR10':
+        n_classes = 10
+    elif dataset_pointer == 'CIFAR100': 
+        n_classes = 100
+    elif dataset_pointer == 'Tiny ImageNet': 
+        n_classes = 200
+
     if forget_random == True:
         tag = 'Item_Removal'
         print(f"Percentage of data to forget: {forget_percentage}")
@@ -357,10 +332,10 @@ def main(args):
         return
     else:
         if forget_random == True:
-            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_rand_datasets(dataset_pointer,pipeline,forget_percentage,device,n_classes) 
+            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_rand_datasets(dataset_pointer,forget_percentage,device,n_classes) 
         elif forget_classes == True:
-            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_class_datasets(dataset_pointer,pipeline,forget_classes_num,n_classes,device) 
-        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_inputs,n_epoch_impair,n_epoch_repair,forget_number,tag,device)
+            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_class_datasets(dataset_pointer,forget_classes_num,n_classes,device) 
+        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_epoch_impair,n_epoch_repair,forget_number,tag,device)
     print("FIN")
 
 if __name__ == "__main__":

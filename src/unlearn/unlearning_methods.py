@@ -114,12 +114,12 @@ def add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss
 
 
 # NAIVE  UNLEARNING
-def naive_unlearning(architecture,n_inputs,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,seed):
+def naive_unlearning(architecture,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,dict,seed):
     impair_time = 0.0
     print("\nNaive Unlearning:")
     print("\n")
     utils.set_seed(seed)
-    naive_model,optimizer_nu,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
+    naive_model,optimizer_nu,criterion = utils.initialise_model(architecture,n_classes,device)
     train_naive = Trainer(naive_model, remain_loader, remain_eval_loader, test_loader, optimizer_nu, criterion, device, n_epochs,n_classes,seed)
     naive_model,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,best_epoch,fine_tune_time = train_naive.train()
     forget_accuracy,forget_loss,forget_ece = train_naive.evaluate(forget_eval_loader)
@@ -173,7 +173,6 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
     student.train() # Student to train mode
     teacher.to(device)
     student.to(device)
-    impair_time = 0
     train_time = 0
     for epoch in range(epochs):
         running_loss = 0.0
@@ -208,7 +207,7 @@ def train_knowledge_distillation(optimizer,criterion,teacher,student,train_loade
         print(f"Epoch {epoch+1}/{epochs},Loss: {running_loss / len(train_loader)}")
     return student,train_time
 
-def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_inputs,n_classes,architecture,dict,n_impair_epochs,n_repair_epochs,seed):
+def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_classes,architecture,dict,n_impair_epochs,n_repair_epochs,seed):
   print("\nStochastic Teacher Unlearning:")
   print("\n")
   utils.set_seed(seed)
@@ -216,7 +215,7 @@ def stochastic_teacher_unlearning(path,remain_loader,remain_eval_loader,test_loa
       
   student_model,bad_optimizer,criterion,= load_model(path,kd_bad_lr,device)
 
-  stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_inputs,n_classes,device,seed)
+  stochastic_teacher,stochastic_teacher_optimizer,stochastic_teacher_criterion= utils.initialise_model(architecture,n_classes,device,seed)
   evaluate_forget_remain_test(student_model,forget_eval_loader,remain_eval_loader,test_loader,device)
 
   student_model,impair_time =  train_knowledge_distillation(bad_optimizer,criterion,teacher=stochastic_teacher,student=student_model,train_loader=forget_loader,epochs=n_impair_epochs,T=1,soft_target_loss_weight=1.0,ce_loss_weight=0,device=device)
@@ -284,7 +283,7 @@ def omp_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
 # CONSINE OMP PRUNE UNLEARNING
 
 
-def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
+def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\nConsine Unlearning:")
     print("\n")
 
@@ -293,7 +292,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     prune_rate = cs_prune(base_vec,'opt')
-    dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
+    dummy_model = utils.dummy_model(architecture,n_classes,device)
     consine_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
     end_time = time.time()
     impair_time = round((end_time - start_time),3)
@@ -309,7 +308,7 @@ def cosine_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,f
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return consine_model,dict
 
-def orth_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
+def orth_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\n Orth Unlearning:")
     print("\n")
 
@@ -318,7 +317,7 @@ def orth_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,for
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     prune_rate = cs_prune(base_vec,'orth')
-    dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
+    dummy_model = utils.dummy_model(architecture,n_classes,device)
     orth_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
     end_time = time.time()
     pre_train = vectorise_model(orth_model).count_nonzero()
@@ -339,7 +338,7 @@ def orth_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,for
     dict =  add_data(dict,remain_accuracy,remain_loss,remain_ece,test_accuracy,test_loss,test_ece,forget_accuracy,forget_loss,forget_ece,best_epoch,impair_time,fine_tune_time)
     return orth_model,dict
 
-def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,n_inputs,seed):
+def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_repair,dict,n_classes,architecture,seed):
     print("\n POP Unlearning:")
     print("\n")
 
@@ -348,7 +347,7 @@ def pop_unlearning(path,device,remain_loader,remain_eval_loader,test_loader,forg
     base_vec = vectorise_model(base_model)
     evaluate_forget_remain_test(base_model,forget_eval_loader,remain_eval_loader,test_loader,device)
     prune_rate = cs_prune(base_vec,'orth')
-    dummy_model = utils.dummy_model(architecture,n_inputs,n_classes,device)
+    dummy_model = utils.dummy_model(architecture,n_classes,device)
     pop_model = prune_and_regrow(base_model, dummy_model, prune_rate, device)
     end_time = time.time()
     pre_train = vectorise_model(pop_model).count_nonzero()

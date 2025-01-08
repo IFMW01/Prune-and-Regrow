@@ -59,68 +59,8 @@ def create_dir(directory):
         os.makedirs(directory,exist_ok=True)
 
 # Gets the intailised model for each architetcure 
-def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
-    if architecture == 'VGGishMel':
-        model = VGGishMel(n_inputs,n_classes)
-    elif architecture == 'VGGishSpec':
-        model = VGGishSpec(n_inputs,n_classes)
-    elif architecture == 'VGGishMelr':
-        model = VGGishMelr(n_inputs,n_classes)
-    elif architecture == 'VGGishSpecr':
-        model = VGGishSpecr(n_inputs,n_classes)
-    elif architecture == 'ViTmel':
-        model = ViTmel(
-        num_classes = n_classes,
-        dim = 512,
-        depth = 6,
-        heads = 6,
-        mlp_dim = 1024
-        )
-    elif architecture == 'ViTspec':
-        model = ViTspec(
-        num_classes = n_classes,
-        dim = 512,
-        depth = 6,
-        heads = 6,
-        mlp_dim = 1024
-        )
-    elif architecture == 'CCTmel':
-        model = CCT(
-            img_size = (32, 63),
-            embedding_dim = 256,
-            n_conv_layers = 2,
-            kernel_size = 7,
-            stride = 2,
-            padding = 3,
-            pooling_kernel_size = 3,
-            pooling_stride = 2,
-            pooling_padding = 1,
-            num_layers = 6,
-            num_heads = 4,
-            mlp_ratio = 2.,
-            num_classes = n_classes,
-            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
-            n_input_channels=1,
-        )
-    elif architecture == 'CCTspec':
-        model= CCT(
-            img_size = (257, 63),
-            embedding_dim = 256,
-            n_conv_layers = 2,
-            kernel_size = 7,
-            stride = 2,
-            padding = 3,
-            pooling_kernel_size = 3,
-            pooling_stride = 2,
-            pooling_padding = 1,
-            num_layers = 6,
-            num_heads = 4,
-            mlp_ratio = 2.,
-            num_classes = n_classes,
-            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
-            n_input_channels=1,
-        )
-    elif architecture == 'VGG16':
+def initialise_model(architecture,n_classes,device,lr=0.01):
+    if architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
     elif architecture == 'CCTcifar':
         model = CCT(
@@ -146,68 +86,8 @@ def initialise_model(architecture,n_inputs,n_classes,device,lr=0.01):
     optimizer,criterion = set_hyperparameters(model,lr) 
     return model,optimizer,criterion
 
-def dummy_model(architecture,n_inputs,n_classes,device):
-    if architecture == 'VGGishMel':
-        model = VGGishMel(n_inputs,n_classes)
-    elif architecture == 'VGGishSpec':
-        model = VGGishSpec(n_inputs,n_classes)
-    elif architecture == 'VGGishMelr':
-        model = VGGishMelr(n_inputs,n_classes)
-    elif architecture == 'VGGishSpecr':
-        model = VGGishSpecr(n_inputs,n_classes)
-    elif architecture == 'ViTmel':
-        model = ViTmel(
-        num_classes = n_classes,
-        dim = 512,
-        depth = 6,
-        heads = 6,
-        mlp_dim = 1024
-        )
-    elif architecture == 'ViTspec':
-        model = ViTspec(
-        num_classes = n_classes,
-        dim = 512,
-        depth = 6,
-        heads = 6,
-        mlp_dim = 1024
-        )
-    elif architecture == 'CCTmel':
-        model = CCT(
-            img_size = (32, 63),
-            embedding_dim = 256,
-            n_conv_layers = 2,
-            kernel_size = 7,
-            stride = 2,
-            padding = 3,
-            pooling_kernel_size = 3,
-            pooling_stride = 2,
-            pooling_padding = 1,
-            num_layers = 6,
-            num_heads = 4,
-            mlp_ratio = 2.,
-            num_classes = n_classes,
-            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
-            n_input_channels=1,
-        )
-    elif architecture == 'CCTspec':
-        model= CCT(
-            img_size = (257, 63),
-            embedding_dim = 256,
-            n_conv_layers = 2,
-            kernel_size = 7,
-            stride = 2,
-            padding = 3,
-            pooling_kernel_size = 3,
-            pooling_stride = 2,
-            pooling_padding = 1,
-            num_layers = 6,
-            num_heads = 4,
-            mlp_ratio = 2.,
-            num_classes = n_classes,
-            positional_embedding = 'learnable', # ['sine', 'learnable', 'none'],
-            n_input_channels=3,
-        )
-    elif architecture == 'VGG16':
+def dummy_model(architecture,n_classes,device):
+    if architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
     elif architecture == 'CCTcifar':
         model = CCT(
@@ -229,7 +109,9 @@ def dummy_model(architecture,n_inputs,n_classes,device):
         )
     elif architecture == 'ViTcifar':
         model = ViTcifar(num_classes = n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
-    model = model.to(device)
+    
+    if model.device.type == 'cpu':
+        model = model.to(device)
     return model
 
 # Gets the loss of the model on datasets
@@ -242,10 +124,11 @@ def logits(model,train_loader,test_loader,device):
     # Process training set
     with torch.no_grad():
         for batch_idx,(data,target) in enumerate(tqdm(train_loader)):
-            data = data.to(device)
-            target= target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             logits_train = model(data)
-            # logits_train_softmax = F.softmax(logits_train,dim=1)
             loss = F.cross_entropy(logits_train, target,reduction ='none')
             numpy_train_loss = loss.cpu().numpy()
             train_loss = pd.DataFrame(numpy_train_loss)
@@ -257,8 +140,10 @@ def logits(model,train_loader,test_loader,device):
     # Process test set
     with torch.no_grad():
         for data,target in test_loader:
-            data = data.to(device)
-            target= target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             logits_test = model(data)
             loss = F.cross_entropy(logits_test, target,reduction ='none')
             numpy_test_loss = loss.cpu().numpy()
@@ -277,8 +162,10 @@ def logits_unlearn(model,forget_loader,device):
     # Process training set
     with torch.no_grad():
         for batch_idx,(data,target) in enumerate(tqdm(forget_loader)):
-            data = data.to(device)
-            target= target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             logits = model(data)
             loss = F.cross_entropy(logits, target,reduction ='none')
             numpy_loss = loss.cpu().numpy()
@@ -295,8 +182,10 @@ def evaluate(model,dataloader,device):
     total = 0
     with torch.no_grad():
         for data, target in dataloader:
-            data = data.to(device)
-            target = target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             output = model(data)
             _, predicted = torch.max(output, 1)
             total += target.size(0)
@@ -315,8 +204,10 @@ def evaluate_test(model,test_loader,criterion,n_classes,device):
     ece = 0
     with torch.no_grad():
         for data, target in test_loader:
-            data = data.to(device)
-            target = target.to(device)
+            if data.device.type == 'cpu':
+                data = data.to(device)
+            if target.device.type == 'cpu':
+                target = target.to(device)
             output = model(data)
             loss = criterion(output, target)
             ece += metric(output,target).item()
