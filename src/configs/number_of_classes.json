@@ -1,7 +1,0 @@
-{    
-"classes_cifar10": 10,
-"classes_audioMNIST": 10,
-"classes_SpeechCommands": 35,
-"classes_urbansound8k": 10
-}
-
