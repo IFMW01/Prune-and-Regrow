@@ -76,11 +76,16 @@ def main(args):
     print("Experiemental setup")
     print(f"Dataset pointer: {args.dataset_pointer}")
     print(f"Architecture: {args.architecture}")
+    print(f"Optimizer: {args.opt}")
+    print(f"Learning Rate: {args.lr}")
     print(f"Number of epochs: {args.n_epochs}")
-    print(f"Seeds: {args.seed}")
+    print(f"Seed: {args.seed}")
     print(f"Number of classes: {n_classes}")
 
     device = utils.get_device()
+    device = utils.get_device()
+    print("Device Stats")
+    print(device)
     results_dict = {}
 
     # Iterates over the provided seeds and creates model 

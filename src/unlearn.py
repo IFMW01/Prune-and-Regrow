@@ -303,7 +303,7 @@ def main(args):
     print(f"Optimizer: {args.opt}")
     print(f"Learning Rate: {args.lr}")
     print(f"Number of retrain epochs: {args.n_epochs}")
-    print(f"Seeds: {args.seed}")
+    print(f"Seed: {args.seed}")
     print(f"Number of impair epochs: {args.n_epoch_impair}")
     print(f"Number of repair epochs: {args.n_epoch_repair}")
     print(f"Forgetting random samples : {args.forget_random}")
@@ -323,6 +323,9 @@ def main(args):
         tag = 'Class_Removal'
         print(f"Number of classes to forget: {args.forget_classes_num}")
     device = utils.get_device()
+    device = utils.get_device()
+    print("Device Stats")
+    print(device)
 
     model_dir = f'Results/{args.dataset_pointer}/{args.architecture}'
     if not os.path.exists(model_dir):
