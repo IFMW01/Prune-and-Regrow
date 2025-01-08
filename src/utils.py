@@ -7,12 +7,12 @@ import torch.nn.functional as F
 import os
 from models.vgg import make_vgg
 from models.transformer import ViTcifar
-from models.compact_ViT import CCT,CCTcifar
+from models.compact_ViT import CCT
+from models.resnet import ResNet18
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import random
-
 from torchmetrics.classification import MulticlassCalibrationError
 
 # Utility functions used throught the sctipt
@@ -65,6 +65,8 @@ def create_dir(directory):
 def initialise_model(architecture,opt,n_classes,device,lr=0.001): 
     if architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
+    if architecture =='ResNet18':
+        model = ResNet18(n_classes)
     elif architecture == 'CCTcifar':
         model = CCT(
             img_size = (32, 32),
@@ -92,6 +94,8 @@ def initialise_model(architecture,opt,n_classes,device,lr=0.001):
 def dummy_model(architecture,n_classes,device):
     if architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
+    if architecture =='ResNet18':
+        model = ResNet18(n_classes)
     elif architecture == 'CCTcifar':
         model = CCT(
             img_size = (32, 32),

@@ -20,6 +20,7 @@ class Trainer():
         self.n_epoch = n_epoch
         self.n_classes = n_classes
         self.seed = seed
+
 # Evaluates performance obtaining loss, acc and ece
     def evaluate(self,dataloader):
         self.model.eval()
@@ -45,6 +46,7 @@ class Trainer():
         model_loss /= len(dataloader)
         accuracy = 100 * correct / total
         return accuracy,model_loss, ece
+    
 # Training of the model
     def train(self):
         utils.set_seed(self.seed)
