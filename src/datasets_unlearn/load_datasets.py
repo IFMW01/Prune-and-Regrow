@@ -1,11 +1,7 @@
 import torch
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-import torchaudio
-import os
-import librosa
 import numpy as np
-import torchvision
 import random
 import torchvision.datasets as cifar_datasets
 import torchvision.transforms as transforms

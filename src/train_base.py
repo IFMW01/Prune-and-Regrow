@@ -24,10 +24,26 @@ def options_parser():
     )
 
     parser.add_argument(
-        "--n_epochs",
+        "--opt",
         required=True,
-        type=int,
+        type=str
     )
+
+    parser.add_argument(
+        "--lr",
+        required=False,
+        type=int,
+        default= 0.001
+
+    )
+
+    parser.add_argument(
+        "--n_epochs",
+        required=False,
+        type=int,
+        default= 200
+    )
+    
     parser.add_argument(
         "--seed",
         required=True,
@@ -49,40 +65,37 @@ def create_base_model(train,save_model_path,save_mia_path,device,seed,train_load
     return results_dict
 
 def main(args):
-    dataset_pointer = args.dataset_pointer
-    architecture = args.architecture
-    n_epochs =args.n_epochs
-    seed = args.seed
-    if dataset_pointer == 'CIFAR10':
+ 
+    if args.dataset_pointer == 'CIFAR10':
         n_classes = 10
-    elif dataset_pointer == 'CIFAR100': 
+    elif args.dataset_pointer == 'CIFAR100': 
         n_classes = 100
-    elif dataset_pointer == 'Tiny ImageNet': 
+    elif args.dataset_pointer == 'Tiny ImageNet': 
         n_classes = 200
 
     print("Experiemental setup")
-    print(f"Dataset pointer: {dataset_pointer}")
-    print(f"Architecture: {architecture}")
-    print(f"Number of epochs: {n_epochs}")
-    print(f"Seeds: {seed}")
+    print(f"Dataset pointer: {args.dataset_pointer}")
+    print(f"Architecture: {args.architecture}")
+    print(f"Number of epochs: {args.n_epochs}")
+    print(f"Seeds: {args.seed}")
     print(f"Number of classes: {n_classes}")
 
     device = utils.get_device()
     results_dict = {}
 
     # Iterates over the provided seeds and creates model 
-    train_loader,train_eval_loader,test_loader = ld.load_datasets(dataset_pointer,pipeline,False)
+    train_loader,train_eval_loader,test_loader = ld.load_datasets(args.dataset_pointer,False)
 
-    save_dir = f"Results/{dataset_pointer}/{architecture}"
-    utils.set_seed(seed)
-    model,optimizer,criterion = utils.initialise_model(architecture,n_inputs,n_classes,device)
+    save_dir = f"Results/{args.dataset_pointer}/{args.architecture}"
+    utils.set_seed(args.seed)
+    model,optimizer,criterion = utils.initialise_model(args.architecture,args.opt,n_classes,device)
     utils.create_dir(save_dir)
-    save_model_path = f'{save_dir}/{seed}/'
+    save_model_path = f'{save_dir}/{args.seed}/'
     utils.create_dir(save_model_path)
     save_mia_path = f'{save_dir}/MIA/'
     utils.create_dir(save_mia_path)
-    train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, n_epochs,n_classes,seed)
-    results_dict = create_base_model(train,save_model_path,save_mia_path,device,seed,train_loader,test_loader,results_dict)
+    train = Trainer(model, train_loader, train_eval_loader, test_loader, optimizer, criterion, device, args.n_epochs,n_classes,args.seed)
+    results_dict = create_base_model(train,save_model_path,save_mia_path,device,args.seed,train_loader,test_loader,results_dict)
 
     print(f'Final of all trained models: {results_dict}')
 

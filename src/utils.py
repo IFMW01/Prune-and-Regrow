@@ -5,8 +5,8 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 import os
-from models.vgg import VGGishMel,VGGishSpec,VGG9,VGGishMelr,VGGishSpecr, make_vgg
-from models.transformer import ViTmel, ViTspec, ViTcifar
+from models.vgg import make_vgg
+from models.transformer import ViTcifar
 from models.compact_ViT import CCT,CCTcifar
 from tqdm import tqdm
 import numpy as np
@@ -43,8 +43,11 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 # Sets model hyperparameters
-def set_hyperparameters(model,lr):
-    optimizer = optim.SGD(model.parameters(),lr=lr,momentum=0.9)
+def set_hyperparameters(model,opt,lr):
+    if opt == "adam":
+        optimizer = optim.Adam(model.parameters(), lr=lr)
+    elif opt == "sgd":
+        optimizer = optim.SGD(model.parameters(), lr=lr) 
     criterion = nn.CrossEntropyLoss()
     return optimizer,criterion
 
@@ -59,7 +62,7 @@ def create_dir(directory):
         os.makedirs(directory,exist_ok=True)
 
 # Gets the intailised model for each architetcure 
-def initialise_model(architecture,n_classes,device,lr=0.001):
+def initialise_model(architecture,opt,n_classes,device,lr=0.001): 
     if architecture == 'VGG16':
         model = make_vgg('VGG16',n_classes)
     elif architecture == 'CCTcifar':
@@ -83,7 +86,7 @@ def initialise_model(architecture,n_classes,device,lr=0.001):
     elif architecture == 'ViTcifar':
         model = ViTcifar(num_classes = n_classes, dim = 512, depth = 6, heads = 6, mlp_dim = 1024)
     model = model.to(device)
-    optimizer,criterion = set_hyperparameters(model,lr) 
+    optimizer,criterion = set_hyperparameters(model,opt,lr) 
     return model,optimizer,criterion
 
 def dummy_model(architecture,n_classes,device):

@@ -64,7 +64,7 @@ def create_loaders(remain_set,forget_set,test_set,forget_randl_data):
 
 
 # Calls all unlearning methods to be perfromed on the base models that have been created and saves the results
-def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_epoch_impair,n_epoch_repair,forget_amount,tag,device):
+def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,opt,lr,n_epochs,seed,n_classes,n_epoch_impair,n_epoch_repair,forget_amount,tag,device):
             
     results_dict = {}
 
@@ -77,13 +77,13 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     model_path = glob.glob(os.path.join(model_dir,'*.pth'))
     model_path = model_path[0]
             
-    orginal_model,optimizer,criterion = um.load_model(model_path,0.01,device)
+    orginal_model= um.load_model(model_path,0.01,device)
     results_dict[seed]["Original Model"] = {}
     logit_distributions(orginal_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orginal_model_loss')
 
     results_dict[seed]["Naive Unlearning"] = {}
     if not os.path.isfile(f"{save_dir}Naive.pth"):
-        naive_model,results_dict[seed]["Naive Unlearning"] = um.naive_unlearning(architecture,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epochs,results_dict[seed]["Naive Unlearning"],seed)
+        naive_model,results_dict[seed]["Naive Unlearning"] = um.naive_unlearning(architecture,n_classes,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,opt,lr,n_epochs,results_dict[seed]["Naive Unlearning"],seed)
         logit_distributions(naive_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'naive_model_loss')
         torch.save(naive_model,f"{save_dir}Naive.pth")
         results_dict[seed]["Original Model"]["Activation distance"] = unlearn_metrics.actviation_distance(orginal_model, naive_model, forget_eval_loader, device)
@@ -98,10 +98,10 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
         with open(f"{save_dir}Niave.json",'w') as f:
             json.dump(results_dict,f)
     else:
-        naive_model,optimizer,criterion = um.load_model(f"{save_dir}Naive.pth",0.01,device)
+        naive_model = um.load_model(f"{save_dir}Naive.pth",0.01,device)
     
     results_dict[seed]["Gradient Ascent Unlearning"] = {}
-    gradient_ascent_model,results_dict[seed]["Gradient Ascent Unlearning"] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Gradient Ascent Unlearning"],n_classes,forget_amount,dataset_pointer,architecture,seed)
+    gradient_ascent_model,results_dict[seed]["Gradient Ascent Unlearning"] = um.gradient_ascent(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,opt,lr,n_epoch_impair,n_epoch_repair,results_dict[seed]["Gradient Ascent Unlearning"],n_classes,forget_amount,dataset_pointer,architecture,seed)
     logit_distributions(gradient_ascent_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'gradient_ascent_model_loss')
     results_dict[seed]["Gradient Ascent Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(gradient_ascent_model, naive_model, forget_eval_loader, device)
     results_dict[seed]["Gradient Ascent Unlearning"]["JS divergance"] = unlearn_metrics.JS_divergence(gradient_ascent_model,naive_model,forget_eval_loader,device)
@@ -110,7 +110,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Gradient Ascent Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Fine Tune Unlearning"] = {}
-    fine_tuning_model,results_dict[seed]["Fine Tune Unlearning"] = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Fine Tune Unlearning"],n_classes,architecture,seed)
+    fine_tuning_model,results_dict[seed]["Fine Tune Unlearning"] = um.fine_tuning_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,opt,lr,n_epoch_repair,results_dict[seed]["Fine Tune Unlearning"],n_classes,architecture,seed)
     logit_distributions(fine_tuning_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'fine_tuning_model_loss')
 
     results_dict[seed]["Fine Tune Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(fine_tuning_model, naive_model, forget_eval_loader, device)
@@ -120,7 +120,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Fine Tune Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Stochastic Teacher Unlearning"] = {}
-    stochastic_teacher_model,results_dict[seed]["Stochastic Teacher Unlearning"]= um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,n_classes,architecture,results_dict[seed]["Stochastic Teacher Unlearning"],n_epoch_impair,n_epoch_repair,seed)
+    stochastic_teacher_model,results_dict[seed]["Stochastic Teacher Unlearning"]= um.stochastic_teacher_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,device,opt,lr,n_classes,architecture,results_dict[seed]["Stochastic Teacher Unlearning"],n_epoch_impair,n_epoch_repair,seed)
     logit_distributions(stochastic_teacher_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'stochastic_teacher_model_loss')
     results_dict[seed]["Stochastic Teacher Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(stochastic_teacher_model, naive_model, forget_eval_loader, device)
     results_dict[seed]["Stochastic Teacher Unlearning"]["JS divergance"]= unlearn_metrics.JS_divergence(stochastic_teacher_model,naive_model,forget_eval_loader,device)     
@@ -129,7 +129,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Stochastic Teacher Unlearning"]["Loss MIA"] =   loss_results   
 
     results_dict[seed]["Amnesiac Unlearning"] = {} 
-    amnesiac_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
+    amnesiac_model,results_dict[seed]["Amnesiac Unlearning"] = um.amnesiac_unlearning(model_path,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,forget_randl_loader,device,opt,lr,n_epoch_impair,n_epoch_repair,results_dict[seed]["Amnesiac Unlearning"],n_classes,architecture,seed)
     logit_distributions(amnesiac_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'amnesiac_model_loss')
 
     results_dict[seed]["Amnesiac Unlearning"]["Activation distance"]  = unlearn_metrics.actviation_distance(amnesiac_model, naive_model, forget_eval_loader, device)
@@ -139,7 +139,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
 
     results_dict[seed]["OMP Unlearning"] = {}
                                                     
-    omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
+    omp_model,results_dict[seed]["OMP Unlearning"] = um.omp_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,opt,lr,n_epoch_repair,results_dict[seed]["OMP Unlearning"],n_classes,architecture,seed)
     logit_distributions(omp_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'omp_model_loss')
 
     results_dict[seed]["OMP Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(omp_model, naive_model, forget_eval_loader, device)
@@ -149,7 +149,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["OMP Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Cosine Unlearning"] = {} 
-    cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,seed)
+    cosine_model,results_dict[seed]["Cosine Unlearning"] = um.cosine_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,opt,lr,n_epoch_repair,results_dict[seed]["Cosine Unlearning"],n_classes,architecture,seed)
     logit_distributions(cosine_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'cosine_model_loss')
     
     results_dict[seed]["Cosine Unlearning"]["Activation distance"] = unlearn_metrics.actviation_distance(cosine_model, naive_model, forget_eval_loader, device)
@@ -158,7 +158,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Cosine Unlearning"]["Loss MIA"] =   loss_results    
 
     results_dict[seed]["Orth"] = {} 
-    orth_model,results_dict[seed]["Orth"] = um.orth_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["Orth"],n_classes,architecture,seed)
+    orth_model,results_dict[seed]["Orth"] = um.orth_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,opt,lr,n_epoch_repair,results_dict[seed]["Orth"],n_classes,architecture,seed)
     logit_distributions(orth_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'orth_model_loss')
 
     results_dict[seed]["Orth"]["Activation distance"]  = unlearn_metrics.actviation_distance(orth_model, naive_model, forget_eval_loader, device)
@@ -167,7 +167,7 @@ def unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eva
     results_dict[seed]["Orth"]["Loss MIA"] =   loss_results   
 
     results_dict[seed]["POP"] = {} 
-    pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,seed)
+    pop_model,results_dict[seed]["POP"] = um.pop_unlearning(model_path,device,remain_loader,remain_eval_loader,test_loader,forget_loader,forget_eval_loader,opt,lr,n_epoch_repair,results_dict[seed]["POP"],n_classes,architecture,seed)
     logit_distributions(pop_model,remain_eval_loader,forget_eval_loader,test_loader,device,save_dir,'pop_model_loss')
 
     results_dict[seed]["POP"]["Activation distance"]  = unlearn_metrics.actviation_distance(pop_model, naive_model, forget_eval_loader, device)
@@ -228,21 +228,30 @@ def options_parser():
     )
 
     parser.add_argument(
-        "--n_epochs",
+        "--opt",
         required=True,
-        type=int,
+        type=str
     )
+
+    parser.add_argument(
+        "--lr",
+        required=False,
+        type=int,
+        default= 0.001
+
+    )
+
+    parser.add_argument(
+        "--n_epochs",
+        required=False,
+        type=int,
+        default= 200
+    )
+    
     parser.add_argument(
         "--seed",
         required=True,
         type=int,
-    )
-
-    parser.add_argument(
-        "--unlearning",
-        required=False,
-        default=True,
-        type=bool,
     )
 
     parser.add_argument(
@@ -287,55 +296,44 @@ def options_parser():
     return args
 
     
-def main(args):
-    dataset_pointer = args.dataset_pointer
-    architecture = args.architecture
-    n_epochs =args.n_epochs
-    seed = args.seed
-    unlearning = args.unlearning
-    n_epoch_impair = args.n_epoch_impair
-    n_epoch_repair = args.n_epoch_repair
-    forget_random = args.forget_random
-    forget_percentage = args.forget_percentage
-    forget_classes = args.forget_classes
-    forget_classes_num = args.forget_classes_num
-    
+def main(args):    
     print("Received arguments from config file:")
-    print(f"Unlearning: {unlearning}")
-    print(f"Dataset pointer: {dataset_pointer}")
-    print(f"Architecture: {architecture}")
-    print(f"Number of retrain epochs: {n_epochs}")
-    print(f"Seeds: {seed}")
-    print(f"Number of impair epochs: {n_epoch_impair}")
-    print(f"Number of repair epochs: {n_epoch_repair}")
-    print(f"Forgetting random samples : {forget_random}")
+    print(f"Dataset pointer: {args.dataset_pointer}")
+    print(f"Architecture: {args.architecture}")
+    print(f"Optimizer: {args.opt}")
+    print(f"Learning Rate: {args.lr}")
+    print(f"Number of retrain epochs: {args.n_epochs}")
+    print(f"Seeds: {args.seed}")
+    print(f"Number of impair epochs: {args.n_epoch_impair}")
+    print(f"Number of repair epochs: {args.n_epoch_repair}")
+    print(f"Forgetting random samples : {args.forget_random}")
 
-    if dataset_pointer == 'CIFAR10':
+    if args.dataset_pointer == 'CIFAR10':
         n_classes = 10
-    elif dataset_pointer == 'CIFAR100': 
+    elif args.dataset_pointer == 'CIFAR100': 
         n_classes = 100
-    elif dataset_pointer == 'Tiny ImageNet': 
+    elif args.dataset_pointer == 'Tiny ImageNet': 
         n_classes = 200
 
-    if forget_random == True:
+    if args.forget_random == True:
         tag = 'Item_Removal'
-        print(f"Percentage of data to forget: {forget_percentage}")
-    print(f"Forgetting classes : {forget_classes}")
-    if  forget_classes == True:
+        print(f"Percentage of data to forget: {args.forget_percentage}")
+    print(f"Forgetting classes : {args.forget_classes}")
+    if  args.forget_classes == True:
         tag = 'Class_Removal'
-        print(f"Number of classes to forget: {forget_classes_num}")
+        print(f"Number of classes to forget: {args.forget_classes_num}")
     device = utils.get_device()
 
-    model_dir = f'Results/{dataset_pointer}/{architecture}'
+    model_dir = f'Results/{args.dataset_pointer}/{args.architecture}'
     if not os.path.exists(model_dir):
-        print(f"There are no models with this {architecture} for this {dataset_pointer} in the TRAIN directory. Please train relevant models")
+        print(f"There are no models with this {args.architecture} for this {args.dataset_pointer} in the TRAIN directory. Please train relevant models")
         return
     else:
-        if forget_random == True:
-            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_rand_datasets(dataset_pointer,forget_percentage,device,n_classes) 
-        elif forget_classes == True:
-            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_class_datasets(dataset_pointer,forget_classes_num,n_classes,device) 
-        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,dataset_pointer,architecture,n_epochs,seed,n_classes,n_epoch_impair,n_epoch_repair,forget_number,tag,device)
+        if args.forget_random == True:
+            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_rand_datasets(args.dataset_pointer,args.forget_percentage,device,n_classes) 
+        elif args.forget_classes == True:
+            remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,forget_number = forget_class_datasets(args.dataset_pointer,args.forget_classes_num,n_classes,device) 
+        unlearning_process(remain_loader,remain_eval_loader,forget_loader,forget_eval_loader,test_loader,forget_randl_loader,args.dataset_pointer,args.architecture,args.opt,args.lr,args.n_epochs,args.seed,n_classes,args.n_epoch_impair,args.n_epoch_repair,forget_number,tag,device)
     print("FIN")
 
 if __name__ == "__main__":
